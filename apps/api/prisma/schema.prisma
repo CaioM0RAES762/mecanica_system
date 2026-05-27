@@ -69,10 +69,11 @@ model ordens_servico {
   criado_em                  DateTime  @default(now()) @db.DateTime2
   atualizado_em              DateTime  @updatedAt @db.DateTime2
 
-  supervisor  usuarios              @relation("supervisor", fields: [supervisor_id], references: [id])
-  mecanico    usuarios?             @relation("mecanico", fields: [mecanico_id], references: [id])
-  categoria   categorias            @relation(fields: [categoria_id], references: [id])
-  veiculo     veiculos              @relation(fields: [veiculo_id], references: [id])
+  // D-26: NoAction em todas as FKs de usuarios para evitar multiple cascade paths no SQL Server
+  supervisor  usuarios              @relation("supervisor", fields: [supervisor_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  mecanico    usuarios?             @relation("mecanico", fields: [mecanico_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  categoria   categorias            @relation(fields: [categoria_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  veiculo     veiculos              @relation(fields: [veiculo_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
   fechamento  registros_fechamento?
   anexos      anexos[]
   logs        logs_auditoria[]
@@ -93,8 +94,8 @@ model registros_fechamento {
   obs_adicionais    String?  @db.NVarChar(500)
   fechado_em        DateTime @db.DateTime2
 
-  ordem_servico ordens_servico @relation(fields: [ordem_servico_id], references: [id])
-  fechado_por   usuarios       @relation(fields: [fechado_por_id], references: [id])
+  ordem_servico ordens_servico @relation(fields: [ordem_servico_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  fechado_por   usuarios       @relation(fields: [fechado_por_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
 }
 
 model anexos {
@@ -107,8 +108,8 @@ model anexos {
   enviado_por_id   String   @db.UniqueIdentifier
   criado_em        DateTime @default(now()) @db.DateTime2
 
-  ordem_servico ordens_servico @relation(fields: [ordem_servico_id], references: [id])
-  enviado_por   usuarios       @relation(fields: [enviado_por_id], references: [id])
+  ordem_servico ordens_servico @relation(fields: [ordem_servico_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  enviado_por   usuarios       @relation(fields: [enviado_por_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
 }
 
 // D-10: tabela de auditoria imutável — nunca implementar UPDATE/DELETE
@@ -121,8 +122,8 @@ model logs_auditoria {
   novos_valores     String?  @db.NVarChar(Max)
   ocorrido_em       DateTime @default(now()) @db.DateTime2
 
-  ordem_servico ordens_servico? @relation(fields: [ordem_servico_id], references: [id])
-  ator          usuarios        @relation(fields: [ator_id], references: [id])
+  ordem_servico ordens_servico? @relation(fields: [ordem_servico_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  ator          usuarios        @relation(fields: [ator_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
   // Índice de performance (SDD § 4.3)
   @@index([ordem_servico_id, ocorrido_em(sort: Desc)])

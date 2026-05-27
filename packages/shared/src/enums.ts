@@ -64,3 +64,36 @@ export const RESULTADO_LABEL: Record<ResultadoFechamento, string> = {
   parcial: 'Parcial',
   nao_resolvido: 'Não resolvido',
 }
+
+// Ações canônicas de auditoria (D-10)
+export const AcaoAuditoria = {
+  OS_CRIADA:               'OS_CRIADA',
+  OS_EDITADA:              'OS_EDITADA',
+  OS_FECHADA:              'OS_FECHADA',
+  OS_REATRIBUIDA:          'OS_REATRIBUIDA',
+  OS_MARCADA_ATRASADA:     'OS_MARCADA_ATRASADA',
+  ANEXO_ENVIADO:           'ANEXO_ENVIADO',
+  ANEXO_REMOVIDO:          'ANEXO_REMOVIDO',
+  USUARIO_CRIADO:          'USUARIO_CRIADO',
+  USUARIO_DESATIVADO:      'USUARIO_DESATIVADO',
+  USUARIO_PERFIL_ALTERADO: 'USUARIO_PERFIL_ALTERADO',
+} as const
+
+export type AcaoAuditoria = (typeof AcaoAuditoria)[keyof typeof AcaoAuditoria]
+
+// Categorias base do seed (D-18)
+export interface CategoriaBase {
+  nome: string
+  cor: string
+}
+
+export const CATEGORIAS_BASE: CategoriaBase[] = [
+  { nome: 'Motor',                  cor: '#1D6FE8' },
+  { nome: 'Transmissão',            cor: '#7C5CFC' },
+  { nome: 'Elétrica',               cor: '#E8A020' },
+  { nome: 'Freios',                 cor: '#E24B4A' },
+  { nome: 'Suspensão',              cor: '#0AA89D' },
+  { nome: 'Funilaria',              cor: '#D95C9A' },
+  { nome: 'Manutenção Preventiva',  cor: '#1D9E75' },
+  { nome: 'Outros',                 cor: '#6b7689' },
+]

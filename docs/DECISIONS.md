@@ -152,3 +152,9 @@ Jest 29 requer `ts-node` para ler arquivo de configuração TypeScript. Como `ts
 ## D-25 — Função `buildLogger()` retorna `any` na API
 
 O tipo de retorno de `buildLogger()` inclui a propriedade `transport` do pino-pretty, que não está declarada em `FastifyLoggerOptions` do Fastify 4. Usar `any` como tipo de retorno da função local limita o escopo do relaxamento de tipos sem afetar o resto do código. Decidido na Sprint 2.
+
+---
+
+## D-26 — `onUpdate: NoAction, onDelete: NoAction` em todas as FKs do schema Prisma
+
+SQL Server não permite múltiplos caminhos de CASCADE em FKs do mesmo modelo (erro "multiple cascade paths"). Como o modelo `usuarios` tem duas relações com `ordens_servico` (supervisor e mecanico) e relações indiretas via `registros_fechamento`, `anexos` e `logs_auditoria`, o Prisma `validate` falha sem referential actions explícitas. Solução: `onUpdate: NoAction, onDelete: NoAction` em todas as relações. A integridade referencial é garantida pela lógica de soft-delete (campo `ativo`) na camada de aplicação — nenhum registro é deletado fisicamente. Decidido na Sprint 3.

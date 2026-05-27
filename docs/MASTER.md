@@ -157,118 +157,15 @@ Resumo: monorepo pnpm criado com `apps/web` (Next.js 15 + App Router), `apps/api
 
 Objetivo: criar a base técnica do monorepo com frontend, backend, shared, Docker e scripts.
 
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-01-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 2 — Setup do Monorepo:
-
-Crie a estrutura:
-
-- `apps/web` — Next.js 15 + React 19 + TypeScript + App Router.
-- `apps/api` — Fastify + TypeScript + Zod + Prisma.
-- `packages/shared` — enums, tipos e schemas compartilhados.
-- `docs/` — documentação do projeto.
-
-Arquivos raiz obrigatórios:
-- `package.json` com scripts pnpm workspaces.
-- `pnpm-workspace.yaml`.
-- `tsconfig.base.json`.
-- `.eslintrc` ou configuração ESLint equivalente.
-- `.prettierrc`.
-- `.gitignore`.
-- `.env.example` com todas as variáveis conhecidas.
-- `docker-compose.yml` com SQL Server e Redis para desenvolvimento.
-- `README.md` com setup inicial.
-
-Backend mínimo:
-- `GET /api/v1/health`.
-- bootstrap Fastify com Helmet, CORS, Zod error handling, logger e prefixo `/api/v1`.
-- Prisma configurado para SQL Server.
-
-Frontend mínimo:
-- layout raiz.
-- rota `/login` placeholder.
-- rota `/ativar-conta` placeholder.
-- rota `/dashboard` placeholder protegida futuramente.
-- design tokens globais em CSS.
-
-Shared mínimo:
-- enums `PerfilUsuario`, `PrioridadeOS`, `StatusOS`, `ResultadoFechamento`.
-- tipos de paginação e resposta padrão.
-
-Validações obrigatórias:
-- `pnpm install` deve funcionar.
-- `pnpm typecheck` deve passar ou documentar pendência real.
-- `pnpm lint` deve passar ou documentar pendência real.
-- Health check da API deve responder localmente quando possível.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 2 como CONCLUÍDA.
-- Gere `docs/SPRINT-02-HANDOFF.md`.
-```
 
 ---
 
 ## SPRINT 3 — BANCO DE DADOS, PRISMA E SEED
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: schema Prisma revisado e corrigido (D-26: `onUpdate/onDelete: NoAction` para resolver multiple cascade paths do SQL Server); `prisma validate` e `prisma generate` passaram; migration `20260527181356_init` criada e aplicada com sucesso no SQL Server local (Docker); seed criado com admin inicial lido de `.env`, 8 categorias base (D-18) e 5 veículos demo (quando `SEED_DEMO_DATA=true`); `packages/shared` atualizado com `AcaoAuditoria` e `CATEGORIAS_BASE`; `pino-pretty` adicionado como devDependency da API.
 
 Objetivo: implementar o modelo de dados completo do SDD no Prisma/SQL Server.
-
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-02-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 3 — Banco de Dados, Prisma e Seed:
-
-Implemente em `apps/api/prisma/schema.prisma` os models:
-- `usuarios`
-- `veiculos`
-- `categorias`
-- `ordens_servico`
-- `registros_fechamento`
-- `anexos`
-- `logs_auditoria`
-
-Requisitos obrigatórios:
-- Usar provider SQL Server.
-- Respeitar nomes e campos do SDD, em português minúsculo.
-- Criar enums quando fizer sentido, mantendo compatibilidade com valores do SDD.
-- Configurar relacionamentos conforme o SDD.
-- Adicionar índices de performance definidos no SDD.
-- Garantir `created`/`updated` onde aplicável (`criado_em`, `atualizado_em`).
-- Criar migration inicial versionada.
-- Criar seed com:
-  - usuário admin inicial lido de `.env`;
-  - categorias base;
-  - veículos de exemplo apenas se `SEED_DEMO_DATA=true`.
-
-Atualize `packages/shared` para refletir enums reais do banco.
-
-Validações obrigatórias:
-- `prisma validate`.
-- `prisma generate`.
-- `prisma migrate dev --name init` quando SQL Server local estiver disponível.
-- Se a migration não puder rodar por ausência de Docker/SQL Server, documentar exatamente a pendência no handoff.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 3 como CONCLUÍDA ou BLOQUEADA com motivo.
-- Gere `docs/SPRINT-03-HANDOFF.md`.
-```
 
 ---
 
@@ -974,7 +871,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 0 | Documentação base e regras do projeto | CONCLUÍDA |
 | 1 | Auditoria do SDD e planejamento final | CONCLUÍDA |
 | 2 | Setup do monorepo | CONCLUÍDA |
-| 3 | Banco de dados, Prisma e seed | PENDENTE |
+| 3 | Banco de dados, Prisma e seed | CONCLUÍDA |
 | 4 | Autenticação, ativação de conta e RBAC | PENDENTE |
 | 5 | Shell do frontend, layout responsivo e design system | PENDENTE |
 | 6 | Ordens de serviço: backend core | PENDENTE |
