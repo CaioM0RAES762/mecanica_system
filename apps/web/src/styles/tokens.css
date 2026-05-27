@@ -1,0 +1,151 @@
+/* Metalsider — Design Tokens */
+/* Mantidos como CSS custom properties globais (SDD § 5.5) */
+
+:root {
+  /* ------------------------------------------------------------------ */
+  /* Cores — Paleta Base                                                  */
+  /* ------------------------------------------------------------------ */
+
+  /* Navy (sidebar, painel esquerdo do login) */
+  --color-navy-900: #1a2030;
+  --color-navy-800: #232b3e;
+  --color-navy-700: #2c3654;
+  --color-navy-600: #3b4a6b;
+  --color-navy-500: #4a5d82;
+
+  /* Amber (acento ativo, avisos) */
+  --color-amber-500: #e8a020;
+  --color-amber-400: #f0b840;
+  --color-amber-300: #f5cc70;
+  --color-amber-100: #fef3dc;
+
+  /* Neutros */
+  --color-white: #ffffff;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Prioridades (SDD § 8.1) */
+  --color-prioridade-baixa: #1d9e75;
+  --color-prioridade-media: #e8a020;
+  --color-prioridade-alta: #e24b4a;
+  --color-prioridade-critica: #1a2030;
+
+  /* Feedback */
+  --color-success: #1d9e75;
+  --color-warning: #e8a020;
+  --color-error: #e24b4a;
+  --color-info: #3b82f6;
+
+  /* ------------------------------------------------------------------ */
+  /* Tipografia                                                           */
+  /* ------------------------------------------------------------------ */
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: clamp(0.688rem, 0.65rem + 0.19vw, 0.75rem);
+  --text-sm: clamp(0.813rem, 0.77rem + 0.22vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.83rem + 0.23vw, 1rem);
+  --text-lg: clamp(1rem, 0.95rem + 0.26vw, 1.125rem);
+  --text-xl: clamp(1.125rem, 1.07rem + 0.28vw, 1.25rem);
+  --text-2xl: clamp(1.25rem, 1.18rem + 0.37vw, 1.5rem);
+  --text-3xl: clamp(1.5rem, 1.4rem + 0.5vw, 1.875rem);
+  --text-4xl: clamp(1.875rem, 1.73rem + 0.72vw, 2.25rem);
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* ------------------------------------------------------------------ */
+  /* Espaçamentos                                                         */
+  /* ------------------------------------------------------------------ */
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* ------------------------------------------------------------------ */
+  /* Bordas e Raios                                                       */
+  /* ------------------------------------------------------------------ */
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+
+  --border-default: 1px solid var(--color-gray-200);
+  --border-strong: 1px solid var(--color-gray-300);
+
+  /* ------------------------------------------------------------------ */
+  /* Sombras                                                              */
+  /* ------------------------------------------------------------------ */
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ------------------------------------------------------------------ */
+  /* Layout                                                               */
+  /* ------------------------------------------------------------------ */
+
+  --sidebar-width: 240px;
+  --topbar-height: 64px;
+
+  /* ------------------------------------------------------------------ */
+  /* Breakpoints (referência — usar via media queries no CSS)             */
+  /* SDD § 5.1: xs=320, sm=480, md=768, lg=1024, xl=1280, 2xl=1536, tv=1920 */
+  /* ------------------------------------------------------------------ */
+
+  --bp-xs: 320px;
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+  --bp-tv: 1920px;
+
+  /* ------------------------------------------------------------------ */
+  /* Transições                                                           */
+  /* ------------------------------------------------------------------ */
+
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* ------------------------------------------------------------------ */
+  /* Z-index                                                              */
+  /* ------------------------------------------------------------------ */
+
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+}

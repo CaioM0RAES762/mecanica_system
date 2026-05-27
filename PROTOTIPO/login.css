@@ -1,0 +1,73 @@
+/* Login screen styles */
+.login-wrap {
+  display: grid; grid-template-columns: 5fr 6fr; min-height: 100vh;
+}
+.login-left {
+  background: var(--navy-900); color: white; padding: 48px 56px;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 32px;
+}
+.login-brand { display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; }
+.logo-mark-lg { width: 44px; height: 44px; font-size: 20px; border-radius: 10px; }
+.brand-name { font-weight: 700; font-size: 22px; letter-spacing: -0.02em; }
+.brand-tag { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px; letter-spacing: 0.04em; }
+
+.login-hero { position: relative; z-index: 2; margin-top: 56px; }
+.hero-eyebrow {
+  display: inline-block; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55); padding: 6px 12px; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px; margin-bottom: 24px;
+}
+.hero-title { font-size: 44px; line-height: 1.1; font-weight: 700; letter-spacing: -0.025em; margin: 0; }
+.hero-title .amber { color: var(--amber-500); }
+.hero-sub { font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.65); max-width: 420px; margin-top: 20px; }
+
+.login-stats {
+  display: flex; align-items: center; gap: 24px; position: relative; z-index: 2;
+  margin-top: auto; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+}
+.stat .stat-num { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+.stat .stat-num span { font-size: 16px; color: rgba(255,255,255,0.6); }
+.stat .stat-label { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+.stat-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.1); }
+
+.login-pattern { position: absolute; top: 0; right: 0; width: 60%; height: 100%; z-index: 1; opacity: 0.9; pointer-events: none; }
+
+.login-right {
+  background: white; padding: 48px 64px; display: flex; flex-direction: column;
+  position: relative;
+}
+.login-form-top { display: flex; align-items: center; justify-content: space-between; }
+.login-form {
+  max-width: 400px; width: 100%; margin: auto; display: flex; flex-direction: column; gap: 16px;
+}
+.form-head h1 { font-size: 28px; letter-spacing: -0.02em; margin: 0 0 6px; font-weight: 700; }
+.form-head p { margin: 0 0 8px; color: var(--gray-500); font-size: 14px; }
+
+.role-toggle {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px; background: var(--gray-100);
+  border-radius: 12px;
+}
+.role-opt {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 8px;
+  background: transparent; text-align: left; transition: background 0.15s, color 0.15s;
+  color: var(--gray-700);
+}
+.role-opt:hover { background: rgba(255,255,255,0.7); }
+.role-opt.active { background: white; box-shadow: var(--shadow-sm); color: var(--gray-900); }
+.role-opt.active .ti { color: var(--blue-500); }
+.role-opt .ti { font-size: 20px; color: var(--gray-500); flex-shrink: 0; }
+.role-opt .role-name { font-size: 13px; font-weight: 600; }
+.role-opt .role-sub { font-size: 11px; color: var(--gray-500); margin-top: 1px; }
+.role-opt.sm { padding: 10px; flex-direction: column; gap: 6px; text-align: center; align-items: center; }
+.role-opt.sm .role-name { font-size: 13px; }
+
+.role-tooltip {
+  font-size: 12px; line-height: 1.5; color: var(--gray-700); padding: 10px 12px;
+  background: var(--blue-50); border-radius: 8px; border-left: 3px solid var(--blue-500);
+}
+
+.login-footer {
+  position: absolute; bottom: 24px; left: 64px; right: 64px;
+  text-align: center; font-size: 11px; color: var(--gray-400);
+}

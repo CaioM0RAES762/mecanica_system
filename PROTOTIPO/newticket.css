@@ -1,0 +1,83 @@
+/* New Ticket screen */
+.newticket { max-width: 1200px; margin: 0 auto; }
+.newticket-grid {
+  display: grid; grid-template-columns: minmax(0, 720px) 320px; gap: 24px; align-items: start;
+}
+.newticket-form { display: flex; flex-direction: column; gap: 20px; }
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;
+}
+.form-grid .span-2 { grid-column: span 2; }
+
+.prio-seg {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+}
+.prio-opt {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 8px; border-radius: 8px; border: 1.5px solid var(--gray-200);
+  background: white; font-size: 12px; font-weight: 600; color: var(--gray-700);
+  transition: all 0.12s;
+}
+.prio-opt .dot { width: 8px; height: 8px; border-radius: 99px; }
+.prio-low .dot { background: var(--green-500); }
+.prio-medium .dot { background: var(--amber-500); }
+.prio-high .dot { background: var(--red-500); }
+.prio-critical .dot { background: var(--gray-900); }
+.prio-opt:hover { border-color: var(--gray-300); }
+.prio-opt.active.prio-low { background: var(--green-50); border-color: var(--green-500); color: var(--green-500); }
+.prio-opt.active.prio-medium { background: var(--amber-50); border-color: var(--amber-500); color: #b87b15; }
+.prio-opt.active.prio-high { background: var(--red-50); border-color: var(--red-500); color: var(--red-500); }
+.prio-opt.active.prio-critical { background: var(--gray-900); color: white; border-color: var(--gray-900); }
+.prio-opt.active.prio-critical .dot { background: white; }
+
+.duration-row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center; }
+.duration-row .segmented { padding: 3px; }
+.duration-row .segmented button { padding: 6px 10px; font-size: 12px; }
+
+.dropzone {
+  border: 1.5px dashed var(--gray-300); border-radius: 10px; padding: 24px;
+  display: flex; align-items: center; gap: 16px; background: var(--gray-50);
+  color: var(--gray-500); cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.dropzone:hover { border-color: var(--blue-500); background: var(--blue-50); }
+.dropzone .ti { color: var(--gray-400); }
+.dz-text strong { color: var(--gray-900); font-size: 14px; display: block; }
+.dz-text { font-size: 13px; }
+
+.newticket-actions {
+  display: flex; align-items: center; gap: 12px; padding-top: 8px;
+}
+
+/* Preview sidebar */
+.newticket-preview { position: sticky; top: 24px; }
+.preview-card {
+  background: white; border-radius: 14px; padding: 22px; border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow);
+}
+.preview-eyebrow {
+  display: flex; align-items: center; gap: 6px; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--blue-500); font-weight: 600; margin-bottom: 16px;
+}
+.preview-id {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+}
+.preview-id .mono { font-size: 13px; color: var(--gray-500); font-weight: 600; }
+.preview-title {
+  font-size: 18px; line-height: 1.35; margin: 0 0 12px; letter-spacing: -0.01em;
+  min-height: 48px;
+}
+.preview-title .placeholder { color: var(--gray-400); font-weight: 400; }
+.preview-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.preview-row .placeholder.tag { background: var(--gray-100); color: var(--gray-400); font-style: italic; }
+
+.preview-meta { display: flex; flex-direction: column; gap: 12px; }
+.meta-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.meta-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-500); }
+.meta-val { font-size: 13px; color: var(--gray-900); font-weight: 500; text-align: right; }
+.meta-val .placeholder { color: var(--gray-400); font-weight: 400; }
+
+.preview-footer {
+  display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--gray-500);
+  background: var(--gray-50); padding: 10px 12px; border-radius: 8px;
+}
+.preview-footer .ti { color: var(--blue-500); flex-shrink: 0; }

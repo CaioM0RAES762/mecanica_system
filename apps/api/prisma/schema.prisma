@@ -1,0 +1,129 @@
+// Metalsider — Prisma Schema
+// Provider: SQL Server 2022+ / Azure SQL (D-01)
+// Nomes de tabelas e colunas em português minúsculo (D-02)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model usuarios {
+  id                    String    @id @default(uuid()) @db.UniqueIdentifier
+  email                 String    @unique @db.NVarChar(256)
+  nome_completo         String    @db.NVarChar(200)
+  senha_hash            String?   @db.NVarChar(60)
+  perfil                String    @db.NVarChar(20)
+  verificado            Boolean   @default(false)
+  codigo_verificacao    String?   @db.NVarChar(60)
+  codigo_expira_em      DateTime? @db.DateTime2
+  ativo                 Boolean   @default(true)
+  criado_em             DateTime  @default(now()) @db.DateTime2
+  ultimo_acesso_em      DateTime? @db.DateTime2
+
+  os_supervisor         ordens_servico[]       @relation("supervisor")
+  os_mecanico           ordens_servico[]       @relation("mecanico")
+  fechamentos           registros_fechamento[]
+  anexos                anexos[]
+  logs                  logs_auditoria[]
+}
+
+model veiculos {
+  id           Int     @id @default(autoincrement())
+  placa        String  @unique @db.NVarChar(10)
+  marca        String  @db.NVarChar(100)
+  modelo       String  @db.NVarChar(100)
+  codigo_frota String? @db.NVarChar(20)
+  ativo        Boolean @default(true)
+
+  ordens ordens_servico[]
+}
+
+model categorias {
+  id    Int     @id @default(autoincrement())
+  nome  String  @unique @db.NVarChar(100)
+  cor   String? @db.NVarChar(7)
+  ativo Boolean @default(true)
+
+  ordens ordens_servico[]
+}
+
+model ordens_servico {
+  id                         Int       @id @default(autoincrement())
+  titulo                     String    @db.NVarChar(300)
+  categoria_id               Int
+  prioridade                 String    @db.NVarChar(20)
+  veiculo_id                 Int
+  supervisor_id              String    @db.UniqueIdentifier
+  mecanico_id                String?   @db.UniqueIdentifier  // D-13: nullable
+  status                     String    @default("aberto") @db.NVarChar(20)
+  descricao                  String?   @db.NVarChar(Max)
+  notas_internas             String?   @db.NVarChar(Max)
+  inicio_previsto            DateTime  @db.Date
+  prazo                      DateTime  @db.DateTime2
+  fechado_em                 DateTime? @db.DateTime2
+  alerta_proximo_enviado_em  DateTime? @db.DateTime2         // D-17: idempotência de alerta
+  criado_em                  DateTime  @default(now()) @db.DateTime2
+  atualizado_em              DateTime  @updatedAt @db.DateTime2
+
+  supervisor  usuarios              @relation("supervisor", fields: [supervisor_id], references: [id])
+  mecanico    usuarios?             @relation("mecanico", fields: [mecanico_id], references: [id])
+  categoria   categorias            @relation(fields: [categoria_id], references: [id])
+  veiculo     veiculos              @relation(fields: [veiculo_id], references: [id])
+  fechamento  registros_fechamento?
+  anexos      anexos[]
+  logs        logs_auditoria[]
+
+  // Índices de performance (SDD § 4.3)
+  @@index([status, mecanico_id])
+  @@index([status, prazo])
+  @@index([supervisor_id, criado_em(sort: Desc)])
+}
+
+model registros_fechamento {
+  id                Int      @id @default(autoincrement())
+  ordem_servico_id  Int      @unique
+  fechado_por_id    String   @db.UniqueIdentifier
+  resultado         String   @db.NVarChar(20)
+  nota_resolucao    String?  @db.NVarChar(280)
+  horas_trabalhadas Decimal? @db.Decimal(6, 2)
+  obs_adicionais    String?  @db.NVarChar(500)
+  fechado_em        DateTime @db.DateTime2
+
+  ordem_servico ordens_servico @relation(fields: [ordem_servico_id], references: [id])
+  fechado_por   usuarios       @relation(fields: [fechado_por_id], references: [id])
+}
+
+model anexos {
+  id               Int      @id @default(autoincrement())
+  ordem_servico_id Int
+  nome_arquivo     String   @db.NVarChar(255)
+  url              String   @db.NVarChar(500)
+  tipo             String?  @db.NVarChar(50)
+  tamanho_bytes    Int?
+  enviado_por_id   String   @db.UniqueIdentifier
+  criado_em        DateTime @default(now()) @db.DateTime2
+
+  ordem_servico ordens_servico @relation(fields: [ordem_servico_id], references: [id])
+  enviado_por   usuarios       @relation(fields: [enviado_por_id], references: [id])
+}
+
+// D-10: tabela de auditoria imutável — nunca implementar UPDATE/DELETE
+model logs_auditoria {
+  id                BigInt   @id @default(autoincrement())
+  ordem_servico_id  Int?
+  ator_id           String   @db.UniqueIdentifier
+  acao              String   @db.NVarChar(100)
+  valores_anteriores String? @db.NVarChar(Max)
+  novos_valores     String?  @db.NVarChar(Max)
+  ocorrido_em       DateTime @default(now()) @db.DateTime2
+
+  ordem_servico ordens_servico? @relation(fields: [ordem_servico_id], references: [id])
+  ator          usuarios        @relation(fields: [ator_id], references: [id])
+
+  // Índice de performance (SDD § 4.3)
+  @@index([ordem_servico_id, ocorrido_em(sort: Desc)])
+}
