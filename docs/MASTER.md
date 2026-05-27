@@ -188,58 +188,11 @@ Objetivo: construir a base visual responsiva do sistema autenticado.
 ---
 
 ## SPRINT 6 — ORDENS DE SERVIÇO: BACKEND CORE
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: módulo `ordens-servico` completo na API Fastify; 6 endpoints implementados (`GET /ordens-servico`, `GET /ordens-servico/:id`, `POST /ordens-servico`, `PATCH /ordens-servico/:id`, `POST /ordens-servico/:id/fechar`, `GET /ordens-servico/:id/auditoria`); paginação e filtros (status, prioridade, categoria_id, mecanico_id, de/ate, busca por ID/título); service de SLA com `calcularPrazo` (critica: +2h, alta: +8h, media: +2 dias úteis, baixa: +5 dias úteis); auditoria automática para criação, edição, reatribuição e fechamento; regra de fechamento por perfil (mecânico só fecha OS própria; supervisor/admin fecha qualquer); `notas_internas` ocultadas para mecânico na camada de service; 10 testes adicionais passando (23 total); typecheck e lint zerados. D-37 a D-39 registrados.
 
 Objetivo: implementar o núcleo de OSs na API.
-
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-05-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 6 — Ordens de Serviço: Backend Core:
-
-Backend:
-- Criar módulo `ordens-servico`.
-- Implementar endpoints:
-  - `GET /api/v1/ordens-servico`
-  - `GET /api/v1/ordens-servico/:id`
-  - `POST /api/v1/ordens-servico`
-  - `PATCH /api/v1/ordens-servico/:id`
-  - `POST /api/v1/ordens-servico/:id/fechar`
-  - `GET /api/v1/ordens-servico/:id/auditoria`
-- Implementar paginação `pagina`, `por_pagina`.
-- Implementar filtros: status, prioridade, categoria, mecanico_id, período `de/ate`, busca por ID/título.
-- Validar todos os payloads com Zod.
-- Criar service de cálculo de prazo/SLA por prioridade:
-  - baixa: 5 dias úteis;
-  - media: 2 dias úteis;
-  - alta: 8 horas;
-  - critica: 2 horas.
-- Criar auditoria automática para criação, edição, fechamento e reatribuição.
-- Garantir regra: mecânico só fecha OS atribuída a ele; supervisor/admin pode fechar qualquer OS.
-- Garantir que `notas_internas` não retorna para mecânico.
-
-Testes:
-- Criar OS como supervisor.
-- Bloquear criação por mecânico.
-- Listar OSs por perfil.
-- Filtrar por status/prioridade.
-- Fechar OS atribuída ao mecânico.
-- Bloquear fechamento por mecânico não atribuído.
-- Supervisor fecha OS em emergência.
-- Auditoria é gerada.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 6 como CONCLUÍDA.
-- Gere `docs/SPRINT-06-HANDOFF.md`.
-```
 
 ---
 
@@ -768,7 +721,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 3 | Banco de dados, Prisma e seed | CONCLUÍDA |
 | 4 | Autenticação, ativação de conta e RBAC | CONCLUÍDA |
 | 5 | Shell do frontend, layout responsivo e design system | CONCLUÍDA |
-| 6 | Ordens de serviço: backend core | PENDENTE |
+| 6 | Ordens de serviço: backend core | CONCLUÍDA |
 | 7 | Chamados abertos, novo chamado e fechamento no frontend | PENDENTE |
 | 8 | Anexos, histórico e auditoria visual | PENDENTE |
 | 9 | Dashboard analítico e endpoints de analytics | PENDENTE |

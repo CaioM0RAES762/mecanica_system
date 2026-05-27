@@ -188,3 +188,21 @@ O `tsconfig.base.json` tem `declaration: true` para suportar os pacotes shared/a
 ## D-31 — Módulo `@metalsider/shared` mapeado via `moduleNameMapper` no Jest da API
 
 O Jest (ts-jest) não segue symlinks do pnpm da mesma forma que o Node.js nativo. Adicionar `'^@metalsider/shared$': '<rootDir>/../../packages/shared/src/index.ts'` no `moduleNameMapper` do `jest.config.cjs` da API resolve o problema de módulo não encontrado em testes. A API continua importando do `dist/` compilado em runtime; o Jest aponta para o `src/` direto. Decidido na Sprint 4.
+
+---
+
+## D-37 — `calcularPrazo` usa dias úteis (seg–sex) para baixa/média e horas calendário para alta/crítica
+
+O SDD especifica "dias úteis" para baixa (5 dias) e média (2 dias) e "horas" para alta (8h) e crítica (2h). Implementado via `addBusinessDays` que itera dias incrementando e pula sábado (0) e domingo (6). Horas calendário simplesmente adicionam milissegundos. Decidido na Sprint 6.
+
+---
+
+## D-38 — `notas_internas` removidas via `delete` no service, não via select condicional no repositório
+
+O repositório sempre busca `notas_internas` do banco. O service chama `normalizarOS(os, perfil)` que deleta a propriedade antes de retornar para mecânicos. Vantagem: uma única query; desvantagem: dado trafega internamente. Aceitável para v1 dado que o sistema é intranet. Decidido na Sprint 6.
+
+---
+
+## D-39 — `fechar` usa duas chamadas Prisma sequenciais (sem transaction) na v1
+
+`updateOSStatus` e `createFechamento` são chamadas separadas para simplificar o mock nos testes. Risco: em caso de falha entre as duas, a OS fica `fechado` sem `registros_fechamento`. Mitigação: `logs_auditoria` registra o fechamento antes; inconsistência detectável por query. Transaction a ser adicionada na Sprint 8 junto com o fluxo de upload. Decidido na Sprint 6.
