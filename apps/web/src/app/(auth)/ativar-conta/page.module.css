@@ -135,3 +135,14 @@
   font-weight: var(--font-medium);
   text-decoration: underline;
 }
+
+.toast {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-red-500);
+  background-color: var(--color-red-50);
+  color: #991b1b;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+  line-height: var(--leading-relaxed);
+}

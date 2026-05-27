@@ -27,6 +27,10 @@ export const AtivarContaSchema = z.object({
   path: ['confirmar_senha'],
 })
 
+export const ReenviarCodigoSchema = z.object({
+  email: emailCorporativo,
+})
+
 // ---- Usuários ----
 
 export const CriarUsuarioSchema = z.object({
@@ -117,6 +121,7 @@ export const FiltroOSSchema = PaginacaoSchema.extend({
 
 export type LoginDTO = z.infer<typeof LoginSchema>
 export type AtivarContaDTO = z.infer<typeof AtivarContaSchema>
+export type ReenviarCodigoDTO = z.infer<typeof ReenviarCodigoSchema>
 export type CriarUsuarioDTO = z.infer<typeof CriarUsuarioSchema>
 export type AlterarPerfilDTO = z.infer<typeof AlterarPerfilSchema>
 export type CriarOSDTO = z.infer<typeof CriarOSSchema>

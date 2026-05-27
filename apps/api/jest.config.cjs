@@ -5,6 +5,7 @@ module.exports = {
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@metalsider/shared$': '<rootDir>/../../packages/shared/src/index.ts',
   },
   transform: {
     '^.+\\.tsx?$': [

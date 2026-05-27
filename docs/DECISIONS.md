@@ -158,3 +158,33 @@ O tipo de retorno de `buildLogger()` inclui a propriedade `transport` do pino-pr
 ## D-26 — `onUpdate: NoAction, onDelete: NoAction` em todas as FKs do schema Prisma
 
 SQL Server não permite múltiplos caminhos de CASCADE em FKs do mesmo modelo (erro "multiple cascade paths"). Como o modelo `usuarios` tem duas relações com `ordens_servico` (supervisor e mecanico) e relações indiretas via `registros_fechamento`, `anexos` e `logs_auditoria`, o Prisma `validate` falha sem referential actions explícitas. Solução: `onUpdate: NoAction, onDelete: NoAction` em todas as relações. A integridade referencial é garantida pela lógica de soft-delete (campo `ativo`) na camada de aplicação — nenhum registro é deletado fisicamente. Decidido na Sprint 3.
+
+---
+
+## D-27 — API gera JWT próprio; NextAuth armazena como `accessToken` na sessão
+
+D-04 define dois JWTs: o da sessão NextAuth e o da API Fastify. Na Sprint 4 ficou definido que o endpoint `POST /auth/login` da API gera e retorna o JWT com `JWT_SECRET` (payload: `sub`, `email`, `perfil`, `nome_completo`, expiração 8h). NextAuth Credentials.authorize() recebe esse token e o armazena em `session.accessToken`. O frontend passa este token como `Authorization: Bearer` nas chamadas à API. Isso mantém a API completamente autônoma para verificar autenticação sem depender do NextAuth. Decidido na Sprint 4.
+
+---
+
+## D-28 — Email service via fetch nativo com adapter mockável (sem `@microsoft/microsoft-graph-client`)
+
+O SDD cita `@microsoft/microsoft-graph-client` como dependência. Na Sprint 4 optou-se por implementar o serviço de e-mail com `fetch` nativo (Node.js 20 LTS built-in) para chamar diretamente as APIs REST do Microsoft Graph (`/oauth2/v2.0/token` + `/users/{sender}/sendMail`). Isso elimina duas dependências pesadas (`@microsoft/microsoft-graph-client` e `@azure/identity`) sem perda funcional. A interface `IEmailService` permite trocar o adapter sem alterar o código consumidor. Decidido na Sprint 4.
+
+---
+
+## D-29 — `@fastify/jwt@^8.x` (Fastify 4.x); v9.x é apenas para Fastify 5.x
+
+A versão 9 do `@fastify/jwt` requer Fastify 5.x. O projeto usa Fastify 4.x, portanto `@fastify/jwt@^8.0.0` é a versão correta. Registrar para evitar upgrade acidental. Decidido na Sprint 4.
+
+---
+
+## D-30 — `declaration: false` no tsconfig da app web
+
+O `tsconfig.base.json` tem `declaration: true` para suportar os pacotes shared/api. O Next.js app não é uma biblioteca e não precisa emitir arquivos `.d.ts`. Com `declaration: true`, o TypeScript 5.x reporta TS2742 ("cannot be named") em exports de NextAuth v5 beta que referenciam tipos internos não exportados. Desabilitar `declaration` no tsconfig da web elimina o erro sem impactar funcionalidade. Decidido na Sprint 4.
+
+---
+
+## D-31 — Módulo `@metalsider/shared` mapeado via `moduleNameMapper` no Jest da API
+
+O Jest (ts-jest) não segue symlinks do pnpm da mesma forma que o Node.js nativo. Adicionar `'^@metalsider/shared$': '<rootDir>/../../packages/shared/src/index.ts'` no `moduleNameMapper` do `jest.config.cjs` da API resolve o problema de módulo não encontrado em testes. A API continua importando do `dist/` compilado em runtime; o Jest aponta para o `src/` direto. Decidido na Sprint 4.

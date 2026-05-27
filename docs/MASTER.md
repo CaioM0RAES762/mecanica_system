@@ -170,7 +170,9 @@ Objetivo: implementar o modelo de dados completo do SDD no Prisma/SQL Server.
 ---
 
 ## SPRINT 4 — AUTENTICAÇÃO, ATIVAÇÃO DE CONTA E RBAC
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: módulo auth completo na API Fastify (`POST /auth/login`, `/auth/ativar-conta`, `/auth/reenviar-codigo`); utilitário de código com `crypto.randomInt` + bcrypt; serviço de e-mail com `MockEmailService` (dev) e `GraphEmailService` (prod via fetch nativo); middleware JWT (`authenticate`) e guard de role (`roleGuard`); NextAuth v5 configurado com Credentials Provider, JWT callback e `session.accessToken`; middleware Next.js com proteção de rotas; telas de login e ativar-conta funcionais com estados loading, erro de credenciais, conta não verificada; 13 testes passando (7 de login/ativação, 3 de reenvio/guard, 1 health); typecheck e lint zerados nos três pacotes. D-27 a D-31 registrados.
 
 Objetivo: implementar login, ativação por código, sessão JWT e guards de autorização.
 
@@ -872,7 +874,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 1 | Auditoria do SDD e planejamento final | CONCLUÍDA |
 | 2 | Setup do monorepo | CONCLUÍDA |
 | 3 | Banco de dados, Prisma e seed | CONCLUÍDA |
-| 4 | Autenticação, ativação de conta e RBAC | PENDENTE |
+| 4 | Autenticação, ativação de conta e RBAC | CONCLUÍDA |
 | 5 | Shell do frontend, layout responsivo e design system | PENDENTE |
 | 6 | Ordens de serviço: backend core | PENDENTE |
 | 7 | Chamados abertos, novo chamado e fechamento no frontend | PENDENTE |

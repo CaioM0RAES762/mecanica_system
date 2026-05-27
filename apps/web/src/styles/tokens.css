@@ -44,6 +44,13 @@
   --color-error: #e24b4a;
   --color-info: #3b82f6;
 
+  /* Red (toasts de erro) */
+  --color-red-500: #e24b4a;
+  --color-red-50: #fef2f2;
+
+  /* Amber (toasts de aviso) */
+  --color-amber-50: #fffbeb;
+
   /* ------------------------------------------------------------------ */
   /* Tipografia                                                           */
   /* ------------------------------------------------------------------ */
