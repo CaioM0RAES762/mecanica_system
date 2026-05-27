@@ -1,0 +1,131 @@
+/* Drawer component */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 27, 45, 0.35);
+  z-index: var(--z-overlay);
+  animation: fadeIn var(--transition-fast);
+}
+
+.drawer {
+  position: fixed;
+  background: var(--color-white);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Sides */
+.right {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(460px, 92vw);
+  animation: slideInRight var(--transition-base) ease-out;
+}
+
+.left {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(460px, 92vw);
+  animation: slideInLeft var(--transition-base) ease-out;
+}
+
+.bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 90dvh;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  animation: slideInBottom var(--transition-base) ease-out;
+}
+
+/* Mobile: bottom drawer para side=right */
+@media (max-width: 767px) {
+  .right, .left {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 90dvh;
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    animation: slideInBottom var(--transition-base) ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slideInBottom {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--color-gray-100);
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-gray-900);
+  letter-spacing: -0.01em;
+  line-height: var(--leading-tight);
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.closeBtn:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-900);
+}
+
+.body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--color-gray-100);
+  background: var(--color-gray-50);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}

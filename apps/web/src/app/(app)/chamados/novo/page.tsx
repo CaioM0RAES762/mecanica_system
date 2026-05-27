@@ -2,14 +2,14 @@ import type { Metadata } from 'next'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { EmptyState } from '@/components/ui'
-import { IconLayoutDashboard } from '@tabler/icons-react'
+import { IconPlus } from '@tabler/icons-react'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
-  title: 'Dashboard',
+  title: 'Novo Chamado',
 }
 
-export default async function DashboardPage() {
+export default async function NovoChamadoPage() {
   const session = await auth()
   const perfil = session?.user?.perfil
 
@@ -20,9 +20,9 @@ export default async function DashboardPage() {
   return (
     <div className={styles.page}>
       <EmptyState
-        icon={<IconLayoutDashboard size={40} />}
-        title="Dashboard Analítico"
-        description="KPIs, gráficos de tendência, heatmap e ranking de mecânicos serão implementados na Sprint 9."
+        icon={<IconPlus size={40} />}
+        title="Novo Chamado"
+        description="Formulário de abertura de chamado com preview sticky em desktop será implementado na Sprint 7."
       />
     </div>
   )

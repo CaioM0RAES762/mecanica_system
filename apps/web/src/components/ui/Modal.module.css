@@ -1,0 +1,122 @@
+/* Modal component — usa <dialog> nativo para acessibilidade */
+
+.dialog {
+  border: none;
+  border-radius: var(--radius-2xl);
+  padding: 0;
+  background: transparent;
+  max-height: 92vh;
+  overflow: visible;
+}
+
+/* Backdrop via ::backdrop */
+.dialog::backdrop {
+  background: rgba(15, 27, 45, 0.45);
+  backdrop-filter: blur(2px);
+  animation: fadeIn var(--transition-fast);
+}
+
+/* Sizes */
+.sm  { width: min(420px, 92vw); }
+.md  { width: min(560px, 92vw); }
+.lg  { width: min(720px, 92vw); }
+
+.modal {
+  background: var(--color-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  animation: popIn var(--transition-base) ease-out;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.97) translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Mobile: ocupa tela inteira em telas muito pequenas */
+@media (max-width: 479px) {
+  .sm, .md, .lg {
+    width: 100vw;
+    border-radius: 0;
+    max-height: 100dvh;
+  }
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--color-gray-100);
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-gray-900);
+  letter-spacing: -0.01em;
+  line-height: var(--leading-tight);
+}
+
+.description {
+  margin: 6px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-gray-500);
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.closeBtn:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-900);
+}
+
+.body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-gray-100);
+  background: var(--color-gray-50);
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+  flex-shrink: 0;
+}
+
+@media (max-width: 479px) {
+  .footer {
+    border-radius: 0;
+  }
+}

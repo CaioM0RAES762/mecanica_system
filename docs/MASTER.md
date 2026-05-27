@@ -176,122 +176,14 @@ Resumo: módulo auth completo na API Fastify (`POST /auth/login`, `/auth/ativar-
 
 Objetivo: implementar login, ativação por código, sessão JWT e guards de autorização.
 
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-03-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 4 — Autenticação, Ativação de Conta e RBAC:
-
-Backend:
-- Criar módulo `auth` na API Fastify.
-- Implementar `POST /api/v1/auth/login`.
-- Implementar `POST /api/v1/auth/ativar-conta`.
-- Implementar `POST /api/v1/auth/reenviar-codigo` restrito a admin.
-- Criar utilitário de geração de código com `crypto.randomInt(100000, 999999)`.
-- Hash de senha e código com bcrypt salt rounds 12.
-- Validar domínio `@metalsider.com.br`.
-- Bloquear login de usuário não verificado.
-- Gerar JWT com claims mínimos: `sub`, `email`, `perfil`, `nome_completo`.
-- Criar middleware de autenticação JWT.
-- Criar guard de role.
-- Criar decorators/helpers para usuário atual e roles, se aplicável.
-- Integrar Microsoft Graph API em serviço de e-mail com adapter mockável.
-
-Frontend:
-- Configurar NextAuth v5 Credentials Provider.
-- Implementar tela `/login`.
-- Implementar tela `/ativar-conta`.
-- Exibir estados de loading, erro de credenciais, conta não verificada e domínio inválido.
-- Middleware ou proteção de rota para páginas autenticadas.
-
-Testes:
-- Login válido.
-- Login com senha inválida.
-- Login com conta não verificada.
-- Ativação com código válido.
-- Ativação com código expirado.
-- Ativação com código inválido.
-- Reenvio de código apenas por admin.
-- Guard retorna 401 sem token e 403 sem role.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 4 como CONCLUÍDA.
-- Gere `docs/SPRINT-04-HANDOFF.md`.
-```
-
 ---
 
 ## SPRINT 5 — SHELL DO FRONTEND, LAYOUT RESPONSIVO E DESIGN SYSTEM
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: design tokens CSS atualizados para alinhar com o protótipo (navy #0F1B2D, blue-500, green-500); `AppShellClient` com estado de drawer mobile; `Sidebar` responsiva (fixa >= lg, overlay < lg) com navegação por perfil (dashboard/novo chamado ocultos para mecânico); `Topbar` responsiva (mobile: logo + hamburger + avatar; desktop: breadcrumb + título); 11 componentes UI primitivos (Button, Input, Select, Badge, Card, Modal, Drawer, Avatar, Toast, Skeleton, EmptyState); 5 rotas autenticadas placeholder (dashboard, chamados, chamados/novo, historico, configuracoes); 21 testes passando (13 Sidebar por role + 8 middleware); lint e typecheck zerados.
 
 Objetivo: construir a base visual responsiva do sistema autenticado.
-
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-04-HANDOFF.md`
-5. `PROTOTIPO/ * .css`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 5 — Shell do Frontend, Layout Responsivo e Design System:
-
-Frontend:
-- Criar design tokens em CSS para cores, tipografia, espaçamentos, sombras e breakpoints.
-- Implementar `AppShell` autenticado com Sidebar e Topbar.
-- Sidebar:
-  - fixa em desktop `>= lg`;
-  - drawer overlay em mobile/tablet `< lg`;
-  - links por perfil: dashboard apenas supervisor/admin, novo chamado apenas supervisor/admin.
-- Topbar:
-  - mobile com logo, menu hamburguer e avatar;
-  - desktop com breadcrumb, título e ações contextuais.
-- Criar componentes UI base:
-  - Button;
-  - Input;
-  - Select;
-  - Badge;
-  - Card;
-  - Modal/Dialog;
-  - Drawer;
-  - Avatar;
-  - Toast;
-  - Loading/Skeleton;
-  - EmptyState.
-- Criar rotas autenticadas placeholder:
-  - `/dashboard`;
-  - `/chamados`;
-  - `/chamados/novo`;
-  - `/historico`;
-  - `/configuracoes`.
-
-Requisitos responsivos:
-- Suportar 320 px até TV/4K.
-- Mobile-first.
-- Usar CSS Modules e media queries.
-- Usar `clamp()` para fonte/espaçamento onde fizer sentido.
-
-Testes:
-- Renderização da Sidebar por role.
-- Drawer abre/fecha em mobile.
-- Links indisponíveis para mecânico não aparecem.
-- Rotas protegidas redirecionam sem sessão.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 5 como CONCLUÍDA.
-- Gere `docs/SPRINT-05-HANDOFF.md`.
-```
 
 ---
 
@@ -875,7 +767,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 2 | Setup do monorepo | CONCLUÍDA |
 | 3 | Banco de dados, Prisma e seed | CONCLUÍDA |
 | 4 | Autenticação, ativação de conta e RBAC | CONCLUÍDA |
-| 5 | Shell do frontend, layout responsivo e design system | PENDENTE |
+| 5 | Shell do frontend, layout responsivo e design system | CONCLUÍDA |
 | 6 | Ordens de serviço: backend core | PENDENTE |
 | 7 | Chamados abertos, novo chamado e fechamento no frontend | PENDENTE |
 | 8 | Anexos, histórico e auditoria visual | PENDENTE |

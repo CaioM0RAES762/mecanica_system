@@ -1,0 +1,27 @@
+/* AppShellClient — Wrapper do shell autenticado */
+
+.app {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-gray-50);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding: var(--content-py) var(--content-px);
+  min-width: 0;
+}
+
+/* TV/large screens: cap o content max-width para legibilidade */
+@media (min-width: 1920px) {
+  .content {
+    padding: clamp(2rem, 2.5vw, 3rem) clamp(2rem, 3vw, 4rem);
+  }
+}

@@ -1,0 +1,84 @@
+/* Badge component */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* Sizes */
+.sm {
+  padding: 2px 7px;
+  font-size: 10px;
+}
+
+.md {
+  padding: 3px 9px;
+  font-size: 11px;
+}
+
+/* Dot */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Variants */
+.default {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
+
+.blue {
+  background: var(--color-blue-50);
+  color: var(--color-blue-500);
+}
+
+.green {
+  background: var(--color-green-50);
+  color: var(--color-green-500);
+}
+
+.amber {
+  background: var(--color-amber-50);
+  color: #b87b15;
+}
+
+.red {
+  background: var(--color-red-50);
+  color: var(--color-red-500);
+}
+
+.gray {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
+
+/* Prioridade */
+.low {
+  background: var(--color-green-50);
+  color: var(--color-green-500);
+}
+
+.medium {
+  background: var(--color-amber-50);
+  color: #b87b15;
+}
+
+.high {
+  background: var(--color-red-50);
+  color: var(--color-red-500);
+}
+
+.critical {
+  background: var(--color-gray-900);
+  color: white;
+}

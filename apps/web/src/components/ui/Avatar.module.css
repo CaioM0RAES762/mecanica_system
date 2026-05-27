@@ -1,0 +1,47 @@
+/* Avatar component */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-semibold);
+  color: white;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Sizes */
+.xs { width: 20px; height: 20px; font-size: 9px; }
+.sm { width: 24px; height: 24px; font-size: 10px; }
+.md { width: 32px; height: 32px; font-size: 12px; }
+.lg { width: 40px; height: 40px; font-size: 14px; }
+.xl { width: 48px; height: 48px; font-size: 16px; }
+
+/* Variants */
+.blue   { background: var(--color-blue-500); }
+.green  { background: var(--color-green-500); }
+.amber  { background: var(--color-amber-500); }
+.red    { background: var(--color-red-500); }
+.gray   { background: var(--color-gray-500); }
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Row */
+.row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rowLabel {
+  font-size: var(--text-sm);
+  color: var(--color-gray-900);
+  font-weight: var(--font-medium);
+}
