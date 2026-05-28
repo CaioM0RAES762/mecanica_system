@@ -1,19 +1,27 @@
 import type { Metadata } from 'next'
-import { EmptyState } from '@/components/ui'
-import { IconArchive } from '@tabler/icons-react'
+import { auth } from '@/lib/auth'
+import { listarCategorias } from '@/lib/api/recursos'
+import { HistoricoClient } from '@/components/historico/HistoricoClient'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
-  title: 'Histórico',
+  title: 'Histórico de Chamados',
 }
 
-export default function HistoricoPage() {
+export default async function HistoricoPage() {
+  const session    = await auth()
+  const token      = session?.accessToken ?? ''
+  const categorias = await listarCategorias(token)
+
   return (
     <div className={styles.page}>
-      <EmptyState
-        icon={<IconArchive size={40} />}
-        title="Histórico de Chamados"
-        description="Tabela com filtros, paginação, exportação CSV/PDF e drawer de detalhes serão implementados na Sprint 8."
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Histórico de Chamados</h1>
+      </div>
+      <HistoricoClient
+        token={token}
+        perfil={session?.user?.perfil ?? 'mecanico'}
+        categorias={categorias}
       />
     </div>
   )

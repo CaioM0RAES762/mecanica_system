@@ -3,6 +3,7 @@ import helmet from '@fastify/helmet'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
+import multipart from '@fastify/multipart'
 import { healthRoutes } from './routes/health.js'
 import { authRoutes } from './routes/auth.js'
 import { ordensServicoRoutes } from './routes/ordens-servico.js'
@@ -41,6 +42,11 @@ export async function buildApp() {
     global: false,
     max: 100,
     timeWindow: '1 minute',
+  })
+
+  // Multipart para upload de arquivos — limite 10 MB por arquivo (CLAUDE.md)
+  await app.register(multipart, {
+    limits: { fileSize: 10 * 1024 * 1024, files: 1 },
   })
 
   app.setErrorHandler(zodErrorHandler)

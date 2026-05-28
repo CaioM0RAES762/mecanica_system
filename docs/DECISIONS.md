@@ -224,3 +224,15 @@ O segmented control "Atribuídos a mim / Todos" precisa filtrar por `supervisor_
 ## D-42 — LoginPage refatorada para envolver useSearchParams em Suspense
 
 Next.js 15 exige Suspense boundary em torno de `useSearchParams()` durante build estático. A solução foi extrair o formulário para um componente interno `LoginForm` e envolvê-lo com `<Suspense>` na página. Correção aplicada na Sprint 7 (bug pré-existente da Sprint 4). Decidido na Sprint 7.
+
+---
+
+## D-43 — @fastify/multipart v8 instalado (compatível com Fastify 4.x)
+
+O pnpm instalou inicialmente `@fastify/multipart` v9 que só funciona com Fastify 5.x. Foi necessário fixar a versão para v8 (`@fastify/multipart@8`) que é compatível com o Fastify 4.x instalado no projeto. Limites: `fileSize: 10 MB, files: 1` registrados via plugin `@fastify/multipart`. Decidido na Sprint 8.
+
+---
+
+## D-44 — Storage adapter com factory e injeção para testes
+
+O módulo `src/lib/storage.ts` expõe `getStorageAdapter()` (factory baseada em `NODE_ENV`) e `setStorageAdapter()` para substituição em testes. Em desenvolvimento usa `LocalStorageAdapter` (escrita em `apps/api/uploads/`). Em produção usa `AzureBlobStorageAdapter` com importação dinâmica de `@azure/storage-blob` (não instalado em dev). `publicUrl` para Azure retorna URL direta do blob (SAS token completo a ser implementado em Sprint 12). Decidido na Sprint 8.

@@ -206,55 +206,11 @@ Objetivo: implementar as telas operacionais principais de OS.
 ---
 
 ## SPRINT 8 — ANEXOS, HISTÓRICO E AUDITORIA VISUAL
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: storage adapter com LocalStorageAdapter (dev) e AzureBlobStorageAdapter (prod); endpoints `POST /ordens-servico/:id/anexos` (multipart, limite 10 MB) e `DELETE .../anexos/:anexo_id` (supervisor/admin); auditoria para upload e remoção; `UploadAnexos` integrado no `NovoChamadoForm`; `/historico` completo com filtros laterais (desktop), bottom sheet de filtros (mobile), tabela com scroll horizontal, drawer de detalhes (desktop) / tela cheia (mobile), timeline de auditoria, exportação CSV e PDF; 30 testes no backend (7 novos) e 96 no frontend (19 novos); lint, typecheck e build zerados. D-43, D-44 registrados.
 
 Objetivo: implementar upload de anexos e tela de histórico com detalhes/auditoria.
-
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-07-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 8 — Anexos, Histórico e Auditoria Visual:
-
-Backend:
-- Implementar `POST /api/v1/ordens-servico/:id/anexos` com multipart/form-data e limite 10 MB.
-- Implementar `DELETE /api/v1/ordens-servico/:id/anexos/:anexo_id` restrito a supervisor/admin.
-- Criar adapter de storage:
-  - Azure Blob Storage em produção;
-  - storage local compatível em desenvolvimento.
-- Registrar auditoria para upload e remoção de anexo.
-- Garantir SAS token ou URL segura conforme ambiente.
-
-Frontend:
-- Adicionar upload de anexos no novo chamado e detalhe do chamado.
-- Implementar `/historico`:
-  - filtros laterais em desktop;
-  - bottom sheet de filtros em mobile;
-  - tabela com scroll horizontal em mobile;
-  - drawer de detalhes em desktop;
-  - detalhes em tela cheia no mobile;
-  - timeline de auditoria da OS;
-  - exportação CSV e PDF respeitando filtros ativos.
-
-Testes:
-- Upload válido.
-- Bloqueio de arquivo acima de 10 MB.
-- Remoção de anexo por supervisor.
-- Mecânico não remove anexo.
-- Histórico lista OSs fechadas/atrasadas conforme filtros.
-- Timeline de auditoria renderiza eventos.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 8 como CONCLUÍDA.
-- Gere `docs/SPRINT-08-HANDOFF.md`.
-```
 
 ---
 
@@ -674,7 +630,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 5 | Shell do frontend, layout responsivo e design system | CONCLUÍDA |
 | 6 | Ordens de serviço: backend core | CONCLUÍDA |
 | 7 | Chamados abertos, novo chamado e fechamento no frontend | CONCLUÍDA |
-| 8 | Anexos, histórico e auditoria visual | PENDENTE |
+| 8 | Anexos, histórico e auditoria visual | CONCLUÍDA |
 | 9 | Dashboard analítico e endpoints de analytics | PENDENTE |
 | 10 | Administração: usuários, veículos, categorias e SLA | PENDENTE |
 | 11 | Notificações, jobs e regras automáticas | PENDENTE |

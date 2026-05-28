@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useReducer, useState } from 'react'
+import { useMemo, useReducer, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { z } from 'zod'
 import { CriarOSSchema, PRIORIDADE_LABEL, PrioridadeOS } from '@metalsider/shared'
@@ -14,6 +14,8 @@ import {
 } from '@tabler/icons-react'
 import { Button, Input, Select } from '@/components/ui'
 import { criarOS } from '@/lib/api/ordens-servico'
+import { uploadAnexo } from '@/lib/api/anexos'
+import { UploadAnexos } from './UploadAnexos'
 import styles from './NovoChamadoForm.module.css'
 
 // ---- SLA preview (espelha calcularPrazo do backend) ----
@@ -98,6 +100,7 @@ export function NovoChamadoForm({
   const [erros, setErros] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [globalErro, setGlobalErro] = useState<string | null>(null)
+  const pendingFilesRef = useRef<File[]>([])
 
   function set(field: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -149,9 +152,13 @@ export function NovoChamadoForm({
     setLoading(true)
     try {
       const criado = await criarOS(parsed.data, accessToken)
+      // Upload dos anexos pendentes após criação da OS
+      const files = pendingFilesRef.current
+      if (files.length > 0) {
+        await Promise.allSettled(files.map((f) => uploadAnexo(criado.id, f, accessToken)))
+      }
       router.push(`/chamados`)
       router.refresh()
-      void criado
     } catch (err) {
       setGlobalErro(err instanceof Error ? err.message : 'Erro ao criar chamado')
     } finally {
@@ -317,12 +324,13 @@ export function NovoChamadoForm({
           </div>
         </section>
 
-        {/* Seção 4: Anexos (Sprint 8) */}
+        {/* Seção 4: Anexos */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Anexos</h2>
-          <div className={styles.uploadPlaceholder} aria-label="Área de upload (Sprint 8)">
-            Upload de arquivos disponível na próxima versão.
-          </div>
+          <UploadAnexos
+            token={accessToken}
+            onAnexosChange={(files) => { pendingFilesRef.current = files }}
+          />
         </section>
 
         {/* Ações */}

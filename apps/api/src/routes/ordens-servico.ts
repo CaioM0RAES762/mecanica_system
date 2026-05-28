@@ -16,6 +16,10 @@ import {
   fecharOSController,
   buscarAuditoriaController,
 } from '../controllers/ordens-servico.controller.js'
+import {
+  uploadAnexoController,
+  removerAnexoController,
+} from '../controllers/anexos.controller.js'
 
 const AUTH = [authenticate]
 const SUPERVISOR_ADMIN = [
@@ -90,5 +94,21 @@ export async function ordensServicoRoutes(fastify: FastifyInstance) {
         request as Parameters<typeof buscarAuditoriaController>[0],
         reply,
       ),
+  )
+
+  // POST /ordens-servico/:id/anexos — todos os perfis autenticados, multipart/form-data
+  fastify.post(
+    '/ordens-servico/:id/anexos',
+    { preHandler: AUTH },
+    async (request, reply) =>
+      uploadAnexoController(request as Parameters<typeof uploadAnexoController>[0], reply),
+  )
+
+  // DELETE /ordens-servico/:id/anexos/:anexo_id — apenas supervisor e admin
+  fastify.delete(
+    '/ordens-servico/:id/anexos/:anexo_id',
+    { preHandler: SUPERVISOR_ADMIN },
+    async (request, reply) =>
+      removerAnexoController(request as Parameters<typeof removerAnexoController>[0], reply),
   )
 }

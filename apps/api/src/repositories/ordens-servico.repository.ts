@@ -91,6 +91,18 @@ function osSelect() {
         fechado_por: { select: { id: true, nome_completo: true } },
       },
     },
+    anexos: {
+      select: {
+        id: true,
+        nome_arquivo: true,
+        url: true,
+        tipo: true,
+        tamanho_bytes: true,
+        criado_em: true,
+        enviado_por: { select: { id: true, nome_completo: true } },
+      },
+      orderBy: { criado_em: 'asc' },
+    },
     _count: { select: { anexos: true } },
   } as const
 }

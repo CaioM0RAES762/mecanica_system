@@ -2,6 +2,7 @@ import type {
   RespostaPaginada,
   OrdemServicoResumo,
   OrdemServicoDetalhe,
+  LogAuditoriaDTO,
 } from '@metalsider/shared'
 import type { CriarOSDTO, FecharOSDTO, FiltroOSDTO } from '@metalsider/shared'
 
@@ -55,4 +56,25 @@ export async function criarOS(data: CriarOSDTO, token: string): Promise<OrdemSer
     throw new Error(err.detail ?? 'Falha ao criar chamado')
   }
   return res.json() as Promise<OrdemServicoDetalhe>
+}
+
+export async function buscarOS(id: number, token: string): Promise<OrdemServicoDetalhe> {
+  const res = await fetch(`${API_URL}/ordens-servico/${id}`, {
+    headers: authHeaders(token),
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`Falha ao buscar OS #${id}`)
+  return res.json() as Promise<OrdemServicoDetalhe>
+}
+
+export async function buscarAuditoria(
+  id: number,
+  token: string,
+): Promise<LogAuditoriaDTO[]> {
+  const res = await fetch(`${API_URL}/ordens-servico/${id}/auditoria`, {
+    headers: authHeaders(token),
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`Falha ao buscar auditoria da OS #${id}`)
+  return res.json() as Promise<LogAuditoriaDTO[]>
 }
