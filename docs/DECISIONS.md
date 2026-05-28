@@ -260,3 +260,21 @@ Para heatmap (dia-semana × semana) e TMR, a agregação ocorre em JavaScript ap
 ## D-48 — Recharts para gráficos do dashboard (SDD § 5.5)
 
 O SDD lista Recharts como exceção permitida para gráficos. Instalado em `@metalsider/web`. Versão compatível com React 19 usada. Heatmap implementado como grade CSS customizada (não usa biblioteca de heatmap externa). Decidido na Sprint 9.
+
+---
+
+## D-49 — Rota GET /usuarios/:id compartilhada com supervisor/admin
+
+Supervisores precisam consultar detalhes de usuários para atribuição de OSs. A rota GET /usuarios/:id usa roleGuard(['supervisor', 'admin']). Apenas POST/PATCH/DELETE são restritos a admin. Decidido na Sprint 10.
+
+---
+
+## D-50 — Admin não pode se auto-desativar
+
+DELETE /usuarios/:id retorna 400 quando o ator_id (extraído do JWT) coincide com o :id alvo. Evita cenário de lock-out do sistema sem outro admin ativo. Verificação ocorre antes do soft-delete. Decidido na Sprint 10.
+
+---
+
+## D-51 — ConfiguracoesClient carrega dados no server component e repassa como initialState
+
+A página /configuracoes faz fetch inicial de usuários, veículos e categorias no server component via Promise.all com .catch(() => ({ dados: [] })). Erros de fetch não quebram a página; o tab afetado mostra lista vazia. Re-fetches ocorrem no cliente após mutações. Decidido na Sprint 10.

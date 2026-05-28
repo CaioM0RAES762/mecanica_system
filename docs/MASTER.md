@@ -223,66 +223,12 @@ Resumo: módulo `analytics` completo na API Fastify com 8 endpoints restritos a 
 ---
 
 ## SPRINT 10 — ADMINISTRAÇÃO: USUÁRIOS, VEÍCULOS, CATEGORIAS E SLA
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: módulo admin completo na API Fastify; 6 endpoints de usuários (`GET /usuarios/eu`, `GET /usuarios`, `POST /usuarios`, `GET /usuarios/:id`, `PATCH /usuarios/:id/perfil`, `DELETE /usuarios/:id`); CRUD de veículos (`POST`, `PATCH`, `DELETE /veiculos/:id`) e categorias (`POST`, `PATCH`, `DELETE /categorias/:id`); criação de usuário valida domínio `@metalsider.com.br`, gera código bcrypt e dispara e-mail via Graph API; soft-delete registra auditoria; 30 novos testes (72 total na API); `ConfiguracoesClient` com tabs Usuários/Veículos/Categorias; modals de criação, edição e desativação; 106 testes frontend, lint, typecheck e build zerados. D-49 a D-51 registrados.
 
 Objetivo: implementar painéis administrativos essenciais.
 
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-09-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 10 — Administração: Usuários, Veículos, Categorias e SLA:
-
-Backend:
-- Implementar endpoints:
-  - `GET /api/v1/usuarios/eu`
-  - `GET /api/v1/usuarios`
-  - `POST /api/v1/usuarios`
-  - `GET /api/v1/usuarios/:id`
-  - `PATCH /api/v1/usuarios/:id/perfil`
-  - `DELETE /api/v1/usuarios/:id`
-  - `GET /api/v1/veiculos`
-  - `POST /api/v1/veiculos`
-  - `PATCH /api/v1/veiculos/:id`
-  - endpoints CRUD para categorias, se ainda não existirem.
-- `POST /usuarios` deve:
-  - exigir admin;
-  - validar domínio `@metalsider.com.br`;
-  - gerar código de verificação;
-  - armazenar hash do código;
-  - enviar e-mail via Graph API.
-- `DELETE /usuarios/:id` deve ser soft-delete (`ativo=false`).
-- Registrar auditoria para ações administrativas.
-
-Frontend:
-- Implementar área `/configuracoes` ou `/admin` conforme estrutura atual:
-  - listagem de usuários;
-  - criação de usuário;
-  - alteração de perfil;
-  - desativação;
-  - listagem/cadastro/edição de veículos;
-  - listagem/cadastro/edição de categorias;
-  - tela de configurações básicas de SLA, caso modelada.
-
-Testes:
-- Admin cria usuário e dispara código.
-- Supervisor não cria usuário admin.
-- Domínio inválido retorna erro.
-- Soft-delete impede login.
-- Mecânico não acessa rotas administrativas.
-- CRUD de veículos e categorias.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 10 como CONCLUÍDA.
-- Gere `docs/SPRINT-10-HANDOFF.md`.
-```
 
 ---
 
@@ -582,7 +528,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 7 | Chamados abertos, novo chamado e fechamento no frontend | CONCLUÍDA |
 | 8 | Anexos, histórico e auditoria visual | CONCLUÍDA |
 | 9 | Dashboard analítico e endpoints de analytics | CONCLUÍDA |
-| 10 | Administração: usuários, veículos, categorias e SLA | PENDENTE |
+| 10 | Administração: usuários, veículos, categorias e SLA | CONCLUÍDA |
 | 11 | Notificações, jobs e regras automáticas | PENDENTE |
 | 12 | Testes E2E, segurança, performance e deploy | PENDENTE |
 
