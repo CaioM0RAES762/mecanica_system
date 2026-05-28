@@ -12,6 +12,27 @@ import {
   type AtualizarOSData,
 } from '../repositories/ordens-servico.repository.js'
 import type { JwtPayload } from '../middlewares/authenticate.js'
+import { emailService, type OSEmailData } from '../lib/email.js'
+
+function buildOSEmailData(os: {
+  id: number
+  titulo: string
+  prioridade: string
+  prazo: Date
+  veiculo: { placa: string; marca: string; modelo: string } | null
+  categoria: { nome: string } | null
+}): OSEmailData {
+  return {
+    os_id: os.id,
+    titulo: os.titulo,
+    prioridade: os.prioridade,
+    prazo: os.prazo.toISOString(),
+    veiculo: os.veiculo
+      ? `${os.veiculo.marca} ${os.veiculo.modelo} (${os.veiculo.placa})`
+      : '',
+    categoria: os.categoria?.nome ?? '',
+  }
+}
 
 // ---- Cálculo de SLA ----
 
@@ -158,6 +179,19 @@ export async function criarOSService(dto: CriarOSDTO, atorId: string) {
     novos_valores:    JSON.stringify({ titulo: os.titulo, prioridade: os.prioridade, status: os.status }),
   })
 
+  // Notificar mecânico atribuído (falha silenciosa — D-60)
+  if (os.mecanico) {
+    try {
+      await emailService.enviarOSAtribuida(
+        os.mecanico.email,
+        os.mecanico.nome_completo,
+        buildOSEmailData(os),
+      )
+    } catch (err) {
+      console.error(`[email] Falha ao enviar OS #${os.id} atribuída:`, err)
+    }
+  }
+
   return normalizarOS(os, PerfilUsuario.SUPERVISOR)
 }
 
@@ -223,6 +257,19 @@ export async function atualizarOSService(
     ),
   )
 
+  // Notificar novo mecânico ao reatribuir (falha silenciosa — D-60)
+  if (houveMudancaMecanico && dto.mecanico_id && osAtualizada.mecanico) {
+    try {
+      await emailService.enviarOSAtribuida(
+        osAtualizada.mecanico.email,
+        osAtualizada.mecanico.nome_completo,
+        buildOSEmailData(osAtualizada),
+      )
+    } catch (err) {
+      console.error(`[email] Falha ao enviar reatribuição OS #${id}:`, err)
+    }
+  }
+
   return normalizarOS(osAtualizada, ator.perfil)
 }
 
@@ -268,6 +315,20 @@ export async function fecharOSService(
 
   // Retornar OS com estado atualizado
   const osAtualizada = await findOSById(id)
+
+  // Notificar supervisor sobre o fechamento (falha silenciosa — D-60)
+  if (os.supervisor) {
+    try {
+      await emailService.enviarOSFechada(
+        os.supervisor.email,
+        os.supervisor.nome_completo,
+        buildOSEmailData(osAtualizada ?? os),
+      )
+    } catch (err) {
+      console.error(`[email] Falha ao enviar fechamento OS #${id}:`, err)
+    }
+  }
+
   return normalizarOS(osAtualizada!, ator.perfil)
 }
 

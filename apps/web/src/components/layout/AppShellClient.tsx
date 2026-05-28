@@ -1,9 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { Sidebar, type UserPerfil } from './Sidebar'
 import { Topbar } from './Topbar'
 import styles from './AppShellClient.module.css'
+
+const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1'
+const POLL_INTERVAL = 60_000 // 60 segundos
 
 interface AppShellClientProps {
   userPerfil: UserPerfil
@@ -13,6 +17,31 @@ interface AppShellClientProps {
 
 export function AppShellClient({ userPerfil, userName, children }: AppShellClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [chamadosAbertos, setChamadosAbertos] = useState(0)
+  const { data: session } = useSession()
+
+  useEffect(() => {
+    const token = session?.accessToken
+    if (!token) return
+
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/ordens-servico?status=aberto&por_pagina=1`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        if (!res.ok) return
+        const data = (await res.json()) as { paginacao?: { total: number } }
+        setChamadosAbertos(data.paginacao?.total ?? 0)
+      } catch {
+        // Redis / network transiente — ignorar silenciosamente
+      }
+    }
+
+    void fetchCount()
+    const interval = setInterval(() => void fetchCount(), POLL_INTERVAL)
+    return () => clearInterval(interval)
+  }, [session?.accessToken])
 
   return (
     <div className={styles.app}>
@@ -21,12 +50,14 @@ export function AppShellClient({ userPerfil, userName, children }: AppShellClien
         userName={userName}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        chamadosAbertos={chamadosAbertos}
       />
       <div className={styles.main}>
         <Topbar
           userName={userName}
           userPerfil={userPerfil}
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
+          chamadosAbertos={chamadosAbertos}
         />
         <main className={styles.content} id="main-content" tabIndex={-1}>
           {children}

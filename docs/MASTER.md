@@ -240,7 +240,9 @@ Resumo: fluxo de cadastro público em 3 etapas implementado (`POST /auth/registr
 ---
 
 ## SPRINT 11 — NOTIFICAÇÕES, JOBS E REGRAS AUTOMÁTICAS
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: job `jobMarcaAtrasadas` (a cada 15min) atualiza OS de `aberto` para `atrasado` quando `prazo < now()`, cria auditoria `OS_MARCADA_ATRASADA` e envia e-mail ao mecânico; job `jobAlertaPrazo` envia alerta 2h antes do prazo com idempotência via `alerta_proximo_enviado_em` (D-59); `IEmailService` estendida com `enviarOSAtribuida`, `enviarOSAtrasada`, `enviarOSProximaPrazo`, `enviarOSFechada` — implementadas em `NodemailerEmailService` e `MockEmailService`; templates HTML responsivos para todos os eventos em `email-templates.ts`; `criarOSService` e `fecharOSService` disparam e-mails com falha silenciosa (D-60); frontend: badge de chamados abertos com polling de 60s via `useSession` em `AppShellClient`, exibido na Sidebar (item "Chamados Abertos") e no ícone de sino da Topbar; `SYSTEM_USER_ID` adicionado ao `.env.example` (D-58); 15 novos testes (110 total na API); lint, typecheck e build zerados. D-57 a D-61 registrados.
 
 Objetivo: implementar notificações por e-mail, jobs de SLA e alertas operacionais.
 
@@ -252,6 +254,7 @@ Leia integralmente:
 2. `CLAUDE.md`
 3. `docs/MASTER.md`
 4. `docs/SPRINT-10-HANDOFF.md`
+5. `docs/SPRINT-AUTH-CADASTRO-RECUPERACAO-HANDOFF.md`
 
 Confirme em 3 linhas o estado atual do projeto antes de escrever código.
 
@@ -536,7 +539,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 8 | Anexos, histórico e auditoria visual | CONCLUÍDA |
 | 9 | Dashboard analítico e endpoints de analytics | CONCLUÍDA |
 | 10 | Administração: usuários, veículos, categorias e SLA | CONCLUÍDA |
-| 11 | Notificações, jobs e regras automáticas | PENDENTE |
+| 11 | Notificações, jobs e regras automáticas | CONCLUÍDA |
 | 12 | Testes E2E, segurança, performance e deploy | PENDENTE |
 
 ---

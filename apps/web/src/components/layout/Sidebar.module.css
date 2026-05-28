@@ -221,6 +221,23 @@
   text-overflow: ellipsis;
 }
 
+.navBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-amber-500);
+  color: #0F1B2D;
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  letter-spacing: 0;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 /* User footer */
 .user {
   padding: 14px;

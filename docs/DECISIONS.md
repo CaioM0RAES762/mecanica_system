@@ -308,3 +308,33 @@ O SDD citava Microsoft Graph API para envio de e-mail. Esta decisão migra para 
 ## D-56 — Campo `cargo` adicionado à tabela `usuarios`
 
 Tipo: `NVARCHAR(120) NULL`. Coletado no fluxo de auto-cadastro público (Etapa 1). Campo opcional no fluxo admin (compatibilidade retroativa). Migration `add_cargo_usuarios` criada sem editar a migration existente `20260527181356_init`. Decidido na CORREÇÃO PÓS-SPRINT-10.
+
+---
+
+## D-57 — Jobs SLA e alertas como setInterval no processo da API
+
+Não foram adotados workers separados, cron externo ou BullMQ. Os jobs `jobMarcaAtrasadas` e `jobAlertaPrazo` rodam via `setInterval(15min)` no processo do servidor Fastify, iniciados em `index.ts` após o `app.listen`. Motivo: elimina dependência de infraestrutura adicional para v1. Limitação: cada réplica horizontal executa os jobs; a atomicidade do `updateMany` com guard `status='aberto'` garante idempotência mesmo com múltiplas réplicas. Decidido na Sprint 11.
+
+---
+
+## D-58 — Ator de auditoria dos jobs automáticos via SYSTEM_USER_ID
+
+`logs_auditoria.ator_id` é NOT NULL e FK de `usuarios`. Para jobs que não têm ator humano, o sistema usa o UUID configurado em `SYSTEM_USER_ID`. Se a variável não estiver definida, o startup do job consulta o primeiro admin ativo e armazena em cache de memória. Se nenhum admin for encontrado, o job loga o erro e retorna sem criar auditoria. Decidido na Sprint 11.
+
+---
+
+## D-59 — Idempotência do alerta de prazo via `alerta_proximo_enviado_em`
+
+O campo `alerta_proximo_enviado_em DateTime? @db.DateTime2` já existia no schema (D-17). O job `jobAlertaPrazo` usa `updateMany` com `where: { alerta_proximo_enviado_em: null }` antes de enviar o e-mail. O campo é preenchido atomicamente na primeira execução. Mesmo se o e-mail falhar, o campo é preenchido e o alerta não será reenviado automaticamente. Decidido na Sprint 11.
+
+---
+
+## D-60 — Falha no envio de e-mail é silenciosa para operações de OS
+
+Chamadas a `emailService.*` em `criarOSService`, `atualizarOSService` e `fecharOSService` são envolvidas em `try/catch`. Erros são logados via `console.error` mas nunca propagados. Garantia: criação, edição e fechamento de OS nunca falham por causa do serviço de e-mail. Mesmo padrão do Redis como cache (D-12). Decidido na Sprint 11.
+
+---
+
+## D-61 — Badge de chamados abertos na sidebar usa polling de 60s via useSession
+
+O `AppShellClient` usa `useSession()` (next-auth/react) para obter `accessToken` e faz polling a cada 60 segundos em `GET /ordens-servico?status=aberto&por_pagina=1`. A contagem retornada em `paginacao.total` é passada para `Sidebar` (badge no item "Chamados Abertos") e `Topbar` (badge no ícone de sino). Sem SSE, WebSocket ou Server Actions nessa versão. Decidido na Sprint 11.

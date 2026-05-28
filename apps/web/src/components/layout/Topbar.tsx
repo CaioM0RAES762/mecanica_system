@@ -9,6 +9,7 @@ interface TopbarProps {
   userName: string
   userPerfil: UserPerfil
   onMenuToggle: () => void
+  chamadosAbertos?: number
 }
 
 function getInitials(name: string): string {
@@ -28,7 +29,20 @@ const ROUTE_LABELS: Record<string, { section: string; title: string }> = {
   '/configuracoes': { section: 'Sistema', title: 'Configurações' },
 }
 
-export function Topbar({ userName, userPerfil, onMenuToggle }: TopbarProps) {
+function BellWithBadge({ count }: { count: number }) {
+  return (
+    <div className={styles.bellWrapper}>
+      <IconBell size={18} />
+      {count > 0 && (
+        <span className={styles.bellBadge} aria-label={`${count} chamados abertos`}>
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </div>
+  )
+}
+
+export function Topbar({ userName, userPerfil, onMenuToggle, chamadosAbertos = 0 }: TopbarProps) {
   const pathname = usePathname()
   const routeInfo = ROUTE_LABELS[pathname] ?? { section: 'Metalsider', title: 'Painel' }
   const initials = getInitials(userName)
@@ -56,7 +70,7 @@ export function Topbar({ userName, userPerfil, onMenuToggle }: TopbarProps) {
 
         <div className={styles.mobileActions}>
           <button className={styles.iconBtn} aria-label="Notificações">
-            <IconBell size={18} />
+            <BellWithBadge count={chamadosAbertos} />
           </button>
           <div
             className={`${styles.avatarSmall} ${styles[`avatar${userPerfil.charAt(0).toUpperCase() + userPerfil.slice(1)}`]}`}
@@ -85,7 +99,7 @@ export function Topbar({ userName, userPerfil, onMenuToggle }: TopbarProps) {
             <IconHelp size={18} />
           </button>
           <button className={styles.iconBtn} aria-label="Notificações">
-            <IconBell size={18} />
+            <BellWithBadge count={chamadosAbertos} />
           </button>
           <div className={styles.divider} aria-hidden="true" />
           <div

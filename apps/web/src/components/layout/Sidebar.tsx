@@ -62,6 +62,7 @@ interface SidebarProps {
   userName: string
   isOpen: boolean
   onClose: () => void
+  chamadosAbertos?: number
 }
 
 function getInitials(name: string): string {
@@ -79,7 +80,16 @@ function getRoleLabel(perfil: UserPerfil): string {
   return 'Mecânico'
 }
 
-export function Sidebar({ userPerfil, userName, isOpen, onClose }: SidebarProps) {
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null
+  return (
+    <span className={styles.navBadge} aria-label={`${count} chamados abertos`}>
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+}
+
+export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos = 0 }: SidebarProps) {
   const pathname = usePathname()
 
   const visibleItems = NAV_ITEMS.filter((item) =>
@@ -111,6 +121,7 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose }: SidebarProps)
         <li className={styles.navSection}>Principal</li>
         {visibleItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          const badgeCount = item.badgeKey === 'chamados' ? chamadosAbertos : 0
           return (
             <li key={item.href}>
               <Link
@@ -123,6 +134,7 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose }: SidebarProps)
                   {item.icon}
                 </span>
                 <span className={styles.navLabel}>{item.label}</span>
+                <NavBadge count={badgeCount} />
               </Link>
             </li>
           )

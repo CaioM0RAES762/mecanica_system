@@ -2,21 +2,53 @@ import nodemailer from 'nodemailer'
 import {
   templateRecuperacaoSenha,
   templateVerificacaoCadastro,
+  templateOSAtribuida,
+  templateOSAtrasada,
+  templateOSProximaPrazo,
+  templateOSFechada,
 } from './email-templates.js'
+
+export interface OSEmailData {
+  os_id: number
+  titulo: string
+  prioridade: string
+  prazo: string
+  veiculo: string
+  categoria: string
+}
 
 export interface IEmailService {
   enviarCodigoVerificacao(destinatario: string, nome: string, codigo: string): Promise<void>
   enviarCodigoRecuperacaoSenha(destinatario: string, codigo: string): Promise<void>
+  enviarOSAtribuida(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void>
+  enviarOSAtrasada(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void>
+  enviarOSProximaPrazo(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void>
+  enviarOSFechada(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void>
 }
 
 class MockEmailService implements IEmailService {
   async enviarCodigoVerificacao(destinatario: string, _nome: string, _codigo: string): Promise<void> {
-    // Loga apenas assunto e destinatário, nunca o código (segurança)
     console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: Código de verificação — Metalsider`)
   }
 
   async enviarCodigoRecuperacaoSenha(destinatario: string, _codigo: string): Promise<void> {
     console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: Recuperação de senha — Metalsider`)
+  }
+
+  async enviarOSAtribuida(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
+    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} atribuída — Metalsider`)
+  }
+
+  async enviarOSAtrasada(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
+    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} ATRASADA — Metalsider`)
+  }
+
+  async enviarOSProximaPrazo(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
+    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} prazo em 2h — Metalsider`)
+  }
+
+  async enviarOSFechada(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
+    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} fechada — Metalsider`)
   }
 }
 
@@ -51,6 +83,26 @@ class NodemailerEmailService implements IEmailService {
 
   async enviarCodigoRecuperacaoSenha(destinatario: string, codigo: string): Promise<void> {
     const { subject, html } = templateRecuperacaoSenha({ codigo })
+    await this.send(destinatario, subject, html)
+  }
+
+  async enviarOSAtribuida(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void> {
+    const { subject, html } = templateOSAtribuida({ destinatario_nome: nomeDestinatario, ...os })
+    await this.send(destinatario, subject, html)
+  }
+
+  async enviarOSAtrasada(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void> {
+    const { subject, html } = templateOSAtrasada({ destinatario_nome: nomeDestinatario, ...os })
+    await this.send(destinatario, subject, html)
+  }
+
+  async enviarOSProximaPrazo(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void> {
+    const { subject, html } = templateOSProximaPrazo({ destinatario_nome: nomeDestinatario, ...os })
+    await this.send(destinatario, subject, html)
+  }
+
+  async enviarOSFechada(destinatario: string, nomeDestinatario: string, os: OSEmailData): Promise<void> {
+    const { subject, html } = templateOSFechada({ destinatario_nome: nomeDestinatario, ...os })
     await this.send(destinatario, subject, html)
   }
 }
