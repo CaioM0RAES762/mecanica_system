@@ -1,0 +1,77 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fixedGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-gray-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.btn:hover {
+  border-color: var(--color-blue-500);
+  color: var(--color-blue-500);
+}
+
+.btn.active {
+  background: var(--color-blue-500);
+  border-color: var(--color-blue-500);
+  color: var(--color-white);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.customGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+  font-weight: 500;
+}
+
+.input {
+  padding: 6px 10px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--color-navy-900);
+  background: var(--color-white);
+  min-width: 130px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-blue-500);
+}
+
+.apply {
+  background: var(--color-blue-500);
+  border-color: var(--color-blue-500);
+  color: var(--color-white);
+  align-self: flex-end;
+}

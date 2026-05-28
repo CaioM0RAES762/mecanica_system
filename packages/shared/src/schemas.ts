@@ -118,6 +118,21 @@ export const FiltroOSSchema = PaginacaoSchema.extend({
   busca: z.string().max(100).optional(),
 })
 
+// ---- Analytics ----
+
+export const AnalyticsPeriodoSchema = z
+  .object({
+    periodo: z.enum(['7d', '30d', '90d', 'personalizado']).default('30d'),
+    de: z.string().datetime({ offset: true }).optional(),
+    ate: z.string().datetime({ offset: true }).optional(),
+  })
+  .refine((d) => d.periodo !== 'personalizado' || (!!d.de && !!d.ate), {
+    message: 'Período personalizado requer "de" e "ate"',
+    path: ['de'],
+  })
+
+export type AnalyticsPeriodoDTO = z.infer<typeof AnalyticsPeriodoSchema>
+
 // ---- Tipos inferidos ----
 
 export type LoginDTO = z.infer<typeof LoginSchema>

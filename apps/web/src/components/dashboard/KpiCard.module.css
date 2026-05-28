@@ -1,0 +1,56 @@
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  color: var(--color-gray-400);
+}
+
+.value {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--color-navy-900);
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+}
+
+/* variants */
+.success .icon { color: var(--color-green-500); }
+.success .value { color: var(--color-green-500); }
+
+.warning .icon { color: var(--color-amber-500); }
+.warning .value { color: var(--color-amber-500); }
+
+.danger .icon { color: var(--color-red-500); }
+.danger .value { color: var(--color-red-500); }

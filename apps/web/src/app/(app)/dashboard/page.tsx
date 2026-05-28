@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { EmptyState } from '@/components/ui'
-import { IconLayoutDashboard } from '@tabler/icons-react'
+import { DashboardClient } from '@/components/dashboard/DashboardClient'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
@@ -17,13 +16,11 @@ export default async function DashboardPage() {
     redirect('/chamados')
   }
 
+  const token = session?.accessToken ?? ''
+
   return (
     <div className={styles.page}>
-      <EmptyState
-        icon={<IconLayoutDashboard size={40} />}
-        title="Dashboard Analítico"
-        description="KPIs, gráficos de tendência, heatmap e ranking de mecânicos serão implementados na Sprint 9."
-      />
+      <DashboardClient token={token} />
     </div>
   )
 }

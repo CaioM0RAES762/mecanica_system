@@ -133,6 +133,76 @@ export interface LogAuditoriaDTO {
   ocorrido_em: string
 }
 
+// ---- Analytics DTOs ----
+
+export interface KpiDTO {
+  total_aberto: number
+  total_fechado: number
+  total_atrasado: number
+  tmr_horas: number | null
+  sla_percent: number
+}
+
+export interface CategoriaVolumeDTO {
+  categoria_id: number
+  categoria_nome: string
+  cor: string | null
+  total: number
+  fechado: number
+  atrasado: number
+}
+
+export interface TendenciaDTO {
+  data: string
+  aberto: number
+  fechado: number
+}
+
+export interface PrioridadeVolumeDTO {
+  prioridade: PrioridadeOS
+  total: number
+  fechado: number
+  atrasado: number
+}
+
+export interface RankingMecanicoDTO {
+  mecanico_id: string
+  mecanico_nome: string
+  total_fechado: number
+  dentro_sla: number
+  fora_sla: number
+  sla_percent: number
+  tmr_horas: number | null
+}
+
+export interface HeatmapDTO {
+  dia_semana: number
+  semana: number
+  ano: number
+  total: number
+}
+
+export interface OSMaisLongaDTO {
+  id: number
+  titulo: string
+  prioridade: PrioridadeOS
+  categoria_nome: string
+  mecanico_nome: string | null
+  criado_em: string
+  fechado_em: string
+  duracao_horas: number
+  dentro_sla: boolean
+}
+
+export interface AtrasadosPorCategoriaDTO {
+  categoria_id: number
+  categoria_nome: string
+  cor: string | null
+  total_atrasado: number
+  total_geral: number
+  percent_atrasado: number
+}
+
 // ---- Parâmetros de query comuns ----
 
 export interface QueryPaginacao {

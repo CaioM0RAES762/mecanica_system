@@ -215,60 +215,10 @@ Objetivo: implementar upload de anexos e tela de histórico com detalhes/auditor
 ---
 
 ## SPRINT 9 — DASHBOARD ANALÍTICO E ENDPOINTS DE ANALYTICS
-Status: PENDENTE
+Status: CONCLUÍDA
 
-Objetivo: implementar KPIs, gráficos e endpoints analíticos para supervisores/admins.
+Resumo: módulo `analytics` completo na API Fastify com 8 endpoints restritos a supervisor/admin (`GET /analytics/kpis`, `por-categoria`, `tendencia`, `por-prioridade`, `mecanicos`, `heatmap`, `mais-longos`, `atrasados-por-categoria`); cache Redis com TTL 5min (fixo) / 2min (personalizado) com fallback silencioso quando Redis indisponível (D-12); seletor de período 7d/30d/90d/personalizado via Zod em `@metalsider/shared`; dashboard frontend com KpiCard, PeriodSelector, gráficos Recharts (LineChart, BarChart, PieChart), heatmap custom, ranking de mecânicos, top 5 mais longas; responsividade mobile→TV; 42 testes backend (5 suites, 12 novos analytics) e 106 frontend (11 suites, 10 novos dashboard); lint, typecheck e build zerados. D-45 a D-48 registrados.
 
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-08-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 9 — Dashboard Analítico e Endpoints de Analytics:
-
-Backend:
-- Criar módulo `analytics`.
-- Implementar endpoints restritos a supervisor/admin:
-  - `GET /api/v1/analytics/kpis`
-  - `GET /api/v1/analytics/por-categoria`
-  - `GET /api/v1/analytics/tendencia`
-  - `GET /api/v1/analytics/por-prioridade`
-  - `GET /api/v1/analytics/mecanicos`
-  - `GET /api/v1/analytics/heatmap`
-  - `GET /api/v1/analytics/mais-longos`
-  - `GET /api/v1/analytics/atrasados-por-categoria`
-- Suportar período: 7 dias, 30 dias, 90 dias e personalizado.
-- Usar cache Redis para consultas frequentes, com invalidação ou TTL seguro.
-
-Frontend:
-- Implementar `/dashboard`:
-  - seletor de período;
-  - 4 KPI cards;
-  - gráficos de abertura vs fechamento;
-  - distribuição por categoria;
-  - distribuição por prioridade;
-  - ranking de mecânicos;
-  - heatmap dia da semana x semana;
-  - top OSs com maior tempo de resolução;
-  - responsividade mobile/desktop/TV.
-
-Testes:
-- Endpoints bloqueiam mecânico.
-- KPIs batem com dados seedados.
-- Período personalizado funciona.
-- Dashboard renderiza loading, vazio e erro.
-- Cache Redis não quebra quando indisponível.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 9 como CONCLUÍDA.
-- Gere `docs/SPRINT-09-HANDOFF.md`.
-```
 
 ---
 
@@ -631,7 +581,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 6 | Ordens de serviço: backend core | CONCLUÍDA |
 | 7 | Chamados abertos, novo chamado e fechamento no frontend | CONCLUÍDA |
 | 8 | Anexos, histórico e auditoria visual | CONCLUÍDA |
-| 9 | Dashboard analítico e endpoints de analytics | PENDENTE |
+| 9 | Dashboard analítico e endpoints de analytics | CONCLUÍDA |
 | 10 | Administração: usuários, veículos, categorias e SLA | PENDENTE |
 | 11 | Notificações, jobs e regras automáticas | PENDENTE |
 | 12 | Testes E2E, segurança, performance e deploy | PENDENTE |

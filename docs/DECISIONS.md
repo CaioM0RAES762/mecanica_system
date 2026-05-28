@@ -236,3 +236,27 @@ O pnpm instalou inicialmente `@fastify/multipart` v9 que só funciona com Fastif
 ## D-44 — Storage adapter com factory e injeção para testes
 
 O módulo `src/lib/storage.ts` expõe `getStorageAdapter()` (factory baseada em `NODE_ENV`) e `setStorageAdapter()` para substituição em testes. Em desenvolvimento usa `LocalStorageAdapter` (escrita em `apps/api/uploads/`). Em produção usa `AzureBlobStorageAdapter` com importação dinâmica de `@azure/storage-blob` (não instalado em dev). `publicUrl` para Azure retorna URL direta do blob (SAS token completo a ser implementado em Sprint 12). Decidido na Sprint 8.
+
+---
+
+## D-45 — Analytics restrito a supervisor/admin (roleGuard)
+
+Todos os 8 endpoints `/analytics/*` usam `roleGuard(['supervisor', 'admin'])`. Mecânicos recebem 403 conforme SDD § 2.3. Decidido na Sprint 9.
+
+---
+
+## D-46 — Cache Redis para analytics com TTL 5min (fixo) / 2min (personalizado)
+
+Consultas de analytics têm TTL de 300s para períodos fixos (7d, 30d, 90d) e 120s para período personalizado. Fallback silencioso ao banco quando Redis indisponível (D-12). Cache key: `analytics:{endpoint}:{periodo}:{de}:{ate}`. Decidido na Sprint 9.
+
+---
+
+## D-47 — Aggregations analytics em JavaScript (não SQL puro)
+
+Para heatmap (dia-semana × semana) e TMR, a agregação ocorre em JavaScript após fetch dos registros do Prisma, evitando dependência de funções SQL Server específicas (DATEPART) em queries cruas. Aceitável para os volumes esperados; pode ser otimizado para `$queryRaw` em Sprint 12 se necessário. Decidido na Sprint 9.
+
+---
+
+## D-48 — Recharts para gráficos do dashboard (SDD § 5.5)
+
+O SDD lista Recharts como exceção permitida para gráficos. Instalado em `@metalsider/web`. Versão compatível com React 19 usada. Heatmap implementado como grade CSS customizada (não usa biblioteca de heatmap externa). Decidido na Sprint 9.

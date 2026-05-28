@@ -1,0 +1,297 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---- Período ---- */
+.periodRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* ---- KPIs ---- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .kpiGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ---- Gráficos ---- */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .chartsRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.chartCard {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 12px;
+  padding: 20px 24px;
+  overflow: hidden;
+}
+
+.chartWide {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .chartWide {
+    grid-column: 1 / 2;
+  }
+}
+
+.chartTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-navy-900);
+  margin: 0 0 16px;
+}
+
+.emptyChart {
+  font-size: 0.875rem;
+  color: var(--color-gray-400);
+  text-align: center;
+  padding: 40px 0;
+  margin: 0;
+}
+
+/* ---- Loading skeletons ---- */
+.skeletonHeader {
+  height: 44px;
+  border-radius: 8px;
+}
+
+.skeletonKpi {
+  height: 104px;
+  border-radius: 12px;
+}
+
+.skeletonChart {
+  height: 280px;
+  border-radius: 12px;
+}
+
+/* ---- Error ---- */
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--color-gray-500);
+  text-align: center;
+}
+
+.retryBtn {
+  padding: 8px 20px;
+  background: var(--color-blue-500);
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ---- Empty ---- */
+.emptyBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--color-gray-400);
+  text-align: center;
+}
+
+/* ---- Ranking ---- */
+.rankingTable {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rankingHeader {
+  display: grid;
+  grid-template-columns: 24px 1fr 48px 48px 56px;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+}
+
+.rankingRow {
+  display: grid;
+  grid-template-columns: 24px 1fr 48px 48px 56px;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: var(--color-navy-900);
+  align-items: center;
+}
+
+.rankingRow:hover {
+  background: var(--color-gray-50);
+}
+
+.rankingPos {
+  font-weight: 700;
+  color: var(--color-gray-400);
+  font-size: 0.75rem;
+}
+
+.rankingNome {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Heatmap ---- */
+.heatmapWrap {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.heatmapDias {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 0;
+  flex-shrink: 0;
+}
+
+.heatmapDiaLabel {
+  font-size: 0.6875rem;
+  color: var(--color-gray-400);
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.heatmapGrid {
+  display: flex;
+  gap: 4px;
+}
+
+.heatmapCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heatmapCell {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  transition: transform 0.1s;
+}
+
+.heatmapCell:hover {
+  transform: scale(1.3);
+}
+
+/* ---- Mais longas ---- */
+.maisLongosTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.maisLongosRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-gray-100);
+  gap: 8px;
+}
+
+.maisLongosLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.maisLongosId {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-blue-500);
+}
+
+.maisLongosTitulo {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-navy-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.maisLongosMeta {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+}
+
+.maisLongosRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.maisLongosDuracao {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-navy-900);
+}
+
+/* ---- Estado SLA ---- */
+.good  { color: var(--color-green-500); font-weight: 600; font-size: 0.75rem; }
+.warn  { color: var(--color-amber-500); font-weight: 600; font-size: 0.75rem; }
+.bad   { color: var(--color-red-500);   font-weight: 600; font-size: 0.75rem; }
+
+/* ---- TV (>= 1920px) ---- */
+@media (min-width: 1920px) {
+  .kpiGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+
+  .chartsRow {
+    gap: 24px;
+  }
+
+  .chartCard {
+    padding: 28px 32px;
+  }
+
+  .chartTitle {
+    font-size: clamp(1rem, 1.2vw, 1.25rem);
+  }
+}
