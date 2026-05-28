@@ -143,6 +143,18 @@
   cursor: not-allowed;
 }
 
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forgotLink {
+  font-size: var(--text-xs);
+  color: var(--color-navy-700);
+  text-decoration: underline;
+}
+
 .activateLink {
   margin-top: var(--space-6);
   text-align: center;

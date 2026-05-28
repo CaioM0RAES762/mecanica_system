@@ -278,3 +278,33 @@ DELETE /usuarios/:id retorna 400 quando o ator_id (extraído do JWT) coincide co
 ## D-51 — ConfiguracoesClient carrega dados no server component e repassa como initialState
 
 A página /configuracoes faz fetch inicial de usuários, veículos e categorias no server component via Promise.all com .catch(() => ({ dados: [] })). Erros de fetch não quebram a página; o tab afetado mostra lista vazia. Re-fetches ocorrem no cliente após mutações. Decidido na Sprint 10.
+
+---
+
+## D-52 — Cadastro público por e-mail corporativo substitui criação exclusiva pelo admin (para supervisor/mecanico)
+
+O SDD original definia que usuários eram criados apenas pelo admin. Esta decisão revoga essa regra para os perfis `supervisor` e `mecanico`. O fluxo público permite auto-cadastro, porém o usuário fica com `verificado=false` e `ativo=true` até confirmar o código recebido por e-mail. O perfil `admin` nunca pode ser criado pelo fluxo público — somente via seed ou diretamente no banco por um DBA. `CLAUDE.md` e `docs/MASTER.md` foram atualizados para remover afirmações de que cadastro público não existe. Decidido na CORREÇÃO PÓS-SPRINT-10.
+
+---
+
+## D-53 — Fluxo de cadastro em 3 etapas sequenciais
+
+Etapa 1: dados pessoais (nome, cargo, perfil, e-mail). Etapa 2: código de verificação. Etapa 3: definição de senha. A senha nunca é solicitada antes da validação do código. Endpoints: `POST /auth/registrar`, `POST /auth/verificar-codigo-cadastro`, `POST /auth/finalizar-cadastro`. Decidido na CORREÇÃO PÓS-SPRINT-10.
+
+---
+
+## D-54 — Fluxo de recuperação de senha em 3 etapas com resposta genérica na Etapa 1
+
+Etapa 1: e-mail. Etapa 2: código. Etapa 3: nova senha. Por segurança, a resposta da Etapa 1 é sempre genérica independente de o e-mail existir ou não no banco, para evitar enumeração de usuários. Endpoints: `POST /auth/solicitar-recuperacao-senha`, `POST /auth/redefinir-senha`. Decidido na CORREÇÃO PÓS-SPRINT-10.
+
+---
+
+## D-55 — Serviço de e-mail migrado para Nodemailer com SMTP Gmail
+
+O SDD citava Microsoft Graph API para envio de e-mail. Esta decisão migra para Nodemailer com SMTP Gmail (EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE, EMAIL_USER, EMAIL_PASSWORD, EMAIL_FROM). A interface `IEmailService` permanece inalterada para o código consumidor. `MockEmailService` continua ativo quando `NODE_ENV !== 'production'` ou `EMAIL_USER` não estiver definido. Variáveis GRAPH_* permanecem no `.env.example` como legado mas não são usadas pelo email service. Decidido na CORREÇÃO PÓS-SPRINT-10.
+
+---
+
+## D-56 — Campo `cargo` adicionado à tabela `usuarios`
+
+Tipo: `NVARCHAR(120) NULL`. Coletado no fluxo de auto-cadastro público (Etapa 1). Campo opcional no fluxo admin (compatibilidade retroativa). Migration `add_cargo_usuarios` criada sem editar a migration existente `20260527181356_init`. Decidido na CORREÇÃO PÓS-SPRINT-10.

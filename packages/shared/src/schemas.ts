@@ -31,6 +31,50 @@ export const ReenviarCodigoSchema = z.object({
   email: emailCorporativo,
 })
 
+// ---- Cadastro público (D-52, D-53) ----
+
+export const RegistrarSchema = z.object({
+  nome_completo: z.string().min(3).max(200),
+  cargo: z.string().min(2).max(120),
+  perfil: z.enum([PerfilUsuario.SUPERVISOR, PerfilUsuario.MECANICO]),
+  email: emailCorporativo,
+})
+
+export const VerificarCodigoCadastroSchema = z.object({
+  email: emailCorporativo,
+  codigo: z.string().length(6).regex(/^\d{6}$/),
+})
+
+export const FinalizarCadastroSchema = z
+  .object({
+    email: emailCorporativo,
+    codigo: z.string().length(6).regex(/^\d{6}$/),
+    senha: z.string().min(8).max(128),
+    confirmar_senha: z.string(),
+  })
+  .refine((d) => d.senha === d.confirmar_senha, {
+    message: 'As senhas não coincidem',
+    path: ['confirmar_senha'],
+  })
+
+// ---- Recuperação de senha (D-54) ----
+
+export const SolicitarRecuperacaoSenhaSchema = z.object({
+  email: emailCorporativo,
+})
+
+export const RedefinirSenhaSchema = z
+  .object({
+    email: emailCorporativo,
+    codigo: z.string().length(6).regex(/^\d{6}$/),
+    senha: z.string().min(8).max(128),
+    confirmar_senha: z.string(),
+  })
+  .refine((d) => d.senha === d.confirmar_senha, {
+    message: 'As senhas não coincidem',
+    path: ['confirmar_senha'],
+  })
+
 // ---- Usuários ----
 
 export const CriarUsuarioSchema = z.object({
@@ -138,6 +182,11 @@ export type AnalyticsPeriodoDTO = z.infer<typeof AnalyticsPeriodoSchema>
 export type LoginDTO = z.infer<typeof LoginSchema>
 export type AtivarContaDTO = z.infer<typeof AtivarContaSchema>
 export type ReenviarCodigoDTO = z.infer<typeof ReenviarCodigoSchema>
+export type RegistrarDTO = z.infer<typeof RegistrarSchema>
+export type VerificarCodigoCadastroDTO = z.infer<typeof VerificarCodigoCadastroSchema>
+export type FinalizarCadastroDTO = z.infer<typeof FinalizarCadastroSchema>
+export type SolicitarRecuperacaoSenhaDTO = z.infer<typeof SolicitarRecuperacaoSenhaSchema>
+export type RedefinirSenhaDTO = z.infer<typeof RedefinirSenhaSchema>
 export type CriarUsuarioDTO = z.infer<typeof CriarUsuarioSchema>
 export type AlterarPerfilDTO = z.infer<typeof AlterarPerfilSchema>
 export type CriarOSDTO = z.infer<typeof CriarOSSchema>

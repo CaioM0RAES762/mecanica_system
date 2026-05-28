@@ -3,6 +3,7 @@
 import { Suspense, useState, type FormEvent } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { LoginSchema } from '@metalsider/shared'
 import styles from './page.module.css'
 
@@ -95,9 +96,14 @@ function LoginForm() {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="password" className={styles.label}>
-            Senha
-          </label>
+          <div className={styles.labelRow}>
+            <label htmlFor="password" className={styles.label}>
+              Senha
+            </label>
+            <Link href="/recuperar-senha" className={styles.forgotLink}>
+              Esqueceu a senha?
+            </Link>
+          </div>
           <input
             id="password"
             name="password"
@@ -119,9 +125,9 @@ function LoginForm() {
 
       <p className={styles.activateLink}>
         Primeira vez?{' '}
-        <a href="/ativar-conta" className={styles.link}>
-          Ativar minha conta
-        </a>
+        <Link href="/cadastro" className={styles.link}>
+          Criar minha conta
+        </Link>
       </p>
     </div>
   )

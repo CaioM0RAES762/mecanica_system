@@ -20,6 +20,7 @@ model usuarios {
   verificado            Boolean   @default(false)
   codigo_verificacao    String?   @db.NVarChar(60)
   codigo_expira_em      DateTime? @db.DateTime2
+  cargo                 String?   @db.NVarChar(120)  // D-56
   ativo                 Boolean   @default(true)
   criado_em             DateTime  @default(now()) @db.DateTime2
   ultimo_acesso_em      DateTime? @db.DateTime2

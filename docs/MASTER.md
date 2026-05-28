@@ -51,7 +51,7 @@ Nunca implemente funcionalidade fora do escopo do SDD sem registrar a decisão.
 - Validação: Zod em todas as rotas/DTOs e contratos compartilháveis.
 - Senhas e códigos: bcrypt com salt rounds 12.
 - Cache: Redis com ioredis.
-- E-mail: Microsoft Graph API / Outlook corporativo.
+- E-mail: Nodemailer com SMTP Gmail (D-55). Variáveis: EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE, EMAIL_USER, EMAIL_PASSWORD, EMAIL_FROM.
 - Uploads: Azure Blob Storage com SAS tokens.
 - Observabilidade: Application Insights ou OpenTelemetry.
 - Testes: Vitest + React Testing Library no frontend; Jest + Supertest/Fastify inject no backend; Playwright para E2E.
@@ -60,7 +60,7 @@ Nunca implemente funcionalidade fora do escopo do SDD sem registrar a decisão.
 ## Regras de implementação
 - Nunca commitar `.env` real. Manter apenas `.env.example`.
 - E-mails devem ser obrigatoriamente `@metalsider.com.br`.
-- Cadastro público não existe. Usuários são criados pelo admin.
+- Cadastro público existe para os perfis `supervisor` e `mecanico` via fluxo em 3 etapas (`/cadastro`). O perfil `admin` só pode ser criado via seed ou banco (D-52).
 - A ativação de conta usa código numérico de 6 dígitos, uso único, expiração de 30 minutos e hash bcrypt no banco.
 - Senhas nunca são armazenadas nem logadas em texto plano.
 - Todas as rotas privadas exigem Bearer JWT válido.
@@ -229,6 +229,13 @@ Resumo: módulo admin completo na API Fastify; 6 endpoints de usuários (`GET /u
 
 Objetivo: implementar painéis administrativos essenciais.
 
+
+---
+
+## CORREÇÃO PÓS-SPRINT-10 — CADASTRO, RECUPERAÇÃO DE SENHA E SERVIÇO DE E-MAIL
+Status: CONCLUÍDA
+
+Resumo: fluxo de cadastro público em 3 etapas implementado (`POST /auth/registrar`, `POST /auth/verificar-codigo-cadastro`, `POST /auth/finalizar-cadastro`); fluxo de recuperação de senha em 3 etapas (`POST /auth/solicitar-recuperacao-senha`, `POST /auth/redefinir-senha`); `/auth/reenviar-codigo` tornado público (sem auth); serviço de e-mail migrado de Graph API para Nodemailer/Gmail SMTP; campo `cargo NVARCHAR(120) NULL` adicionado à tabela `usuarios` via migration `20260528142404_add_cargo_usuarios`; telas `/cadastro` e `/recuperar-senha` criadas com stepper visual, contador regressivo, botão de reenvio com cooldown 60s e indicador de força de senha; `/ativar-conta` redireciona para `/cadastro`; tela de login atualizada com links "Criar minha conta" → `/cadastro` e "Esqueceu a senha?" → `/recuperar-senha`; rate limits aplicados em todos os endpoints públicos de auth; `docs/MASTER.md`, `CLAUDE.md`, `docs/DECISIONS.md` (D-52 a D-56) e `.env.example` atualizados. 37 testes backend (7 suites); typecheck, lint e build zerados.
 
 ---
 
