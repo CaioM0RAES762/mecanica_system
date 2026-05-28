@@ -8,6 +8,7 @@ export interface OSListParams {
   prioridade?: string
   categoria_id?: number
   mecanico_id?: string
+  supervisor_id?: string
   de?: Date
   ate?: Date
   busca?: string
@@ -99,10 +100,11 @@ function osSelect() {
 function buildWhere(params: Omit<OSListParams, 'pagina' | 'por_pagina'>): Prisma.ordens_servicoWhereInput {
   const where: Prisma.ordens_servicoWhereInput = {}
 
-  if (params.status)       where.status      = params.status
-  if (params.prioridade)   where.prioridade  = params.prioridade
-  if (params.categoria_id) where.categoria_id = params.categoria_id
-  if (params.mecanico_id)  where.mecanico_id  = params.mecanico_id
+  if (params.status)        where.status       = params.status
+  if (params.prioridade)    where.prioridade   = params.prioridade
+  if (params.categoria_id)  where.categoria_id  = params.categoria_id
+  if (params.mecanico_id)   where.mecanico_id   = params.mecanico_id
+  if (params.supervisor_id) where.supervisor_id = params.supervisor_id
 
   if (params.de || params.ate) {
     const range: Prisma.DateTimeFilter = {}

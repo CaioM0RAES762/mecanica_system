@@ -1,19 +1,28 @@
 import type { Metadata } from 'next'
-import { EmptyState } from '@/components/ui'
-import { IconClipboardList } from '@tabler/icons-react'
+import { auth } from '@/lib/auth'
+import { ChamadosClient } from '@/components/chamados/ChamadosClient'
+import { listarCategorias } from '@/lib/api/recursos'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
   title: 'Chamados Abertos',
 }
 
-export default function ChamadosPage() {
+export default async function ChamadosPage() {
+  const session = await auth()
+  const token = session?.accessToken ?? ''
+  const categorias = await listarCategorias(token)
+
   return (
     <div className={styles.page}>
-      <EmptyState
-        icon={<IconClipboardList size={40} />}
-        title="Chamados Abertos"
-        description="Grade de chamados com filtros, busca e ações de fechamento serão implementados na Sprint 7."
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Chamados Abertos</h1>
+      </div>
+      <ChamadosClient
+        accessToken={token}
+        perfil={session?.user?.perfil ?? 'mecanico'}
+        userId={session?.user?.id ?? ''}
+        categorias={categorias}
       />
     </div>
   )

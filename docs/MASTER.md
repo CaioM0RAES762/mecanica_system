@@ -197,60 +197,11 @@ Objetivo: implementar o núcleo de OSs na API.
 ---
 
 ## SPRINT 7 — CHAMADOS ABERTOS, NOVO CHAMADO E FECHAMENTO NO FRONTEND
-Status: PENDENTE
+Status: CONCLUÍDA
+
+Resumo: client API tipado para OS (`lib/api/ordens-servico.ts`); rotas mínimas de leitura no backend (`/categorias`, `/veiculos`, `/usuarios`); `supervisor_id` adicionado ao `FiltroOSSchema`; 5 componentes de chamados com CSS Modules (`OSCard`, `FilterBar`, `FecharModal`, `ChamadosClient`, `NovoChamadoForm`); páginas `/chamados` e `/chamados/novo` implementadas com server→client prop-passing; preview sticky em desktop; bottom sheet em mobile no modal de fechamento; 18 testes novos (77 total no web); lint, typecheck e build zerados. Fix colateral: `LoginPage` refatorada para Suspense (D-42). D-40, D-41, D-42 registrados.
 
 Objetivo: implementar as telas operacionais principais de OS.
-
-Prompt para executar:
-
-```text
-Leia integralmente:
-1. `SDD.md`
-2. `CLAUDE.md`
-3. `docs/MASTER.md`
-4. `docs/SPRINT-06-HANDOFF.md`
-
-Confirme em 3 linhas o estado atual do projeto antes de escrever código.
-
-Agora execute a Sprint 7 — Chamados Abertos, Novo Chamado e Fechamento no Frontend:
-
-Frontend:
-- Criar client API tipado para ordens de serviço.
-- Implementar `/chamados`:
-  - barra de filtros sticky;
-  - busca por ID/título;
-  - filtro por prioridade;
-  - filtro por categoria;
-  - segmented control `Atribuídos a mim / Todos`;
-  - ordenação;
-  - grade responsiva: 1 coluna mobile, 2 tablet, 3 desktop/TV;
-  - card com ID, prioridade, categoria, título, veículo, mecânico, supervisor, prazo e barra de progresso;
-  - destaque visual para atrasados.
-- Implementar modal de fechamento:
-  - resultado obrigatório;
-  - nota de resolução até 280 caracteres;
-  - horas trabalhadas;
-  - observações adicionais;
-  - em mobile, comportamento bottom sheet/tela cheia.
-- Implementar `/chamados/novo`:
-  - formulário com identificação, programação, descrição e anexos;
-  - preview sticky em desktop;
-  - preview como card resumo em mobile;
-  - validação client-side com Zod;
-  - submissão para API.
-
-Testes:
-- Renderizar cards.
-- Aplicar filtros.
-- Abrir e validar modal de fechamento.
-- Criar novo chamado como supervisor.
-- Bloquear acesso de mecânico ao novo chamado.
-- Layout mobile e desktop básicos.
-
-Ao final:
-- Atualize `docs/MASTER.md`, marcando a Sprint 7 como CONCLUÍDA.
-- Gere `docs/SPRINT-07-HANDOFF.md`.
-```
 
 ---
 
@@ -722,7 +673,7 @@ Confirme em 3 linhas o que já foi feito e continue de onde parou, sem refazer t
 | 4 | Autenticação, ativação de conta e RBAC | CONCLUÍDA |
 | 5 | Shell do frontend, layout responsivo e design system | CONCLUÍDA |
 | 6 | Ordens de serviço: backend core | CONCLUÍDA |
-| 7 | Chamados abertos, novo chamado e fechamento no frontend | PENDENTE |
+| 7 | Chamados abertos, novo chamado e fechamento no frontend | CONCLUÍDA |
 | 8 | Anexos, histórico e auditoria visual | PENDENTE |
 | 9 | Dashboard analítico e endpoints de analytics | PENDENTE |
 | 10 | Administração: usuários, veículos, categorias e SLA | PENDENTE |

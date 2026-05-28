@@ -1,0 +1,91 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+}
+
+/* ---- Content ---- */
+
+.content {
+  padding-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ---- Header row ---- */
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.totalLabel {
+  font-size: var(--text-sm);
+  color: var(--color-gray-500);
+}
+
+/* ---- Grade responsiva ---- */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1920px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ---- Erro ---- */
+
+.erro {
+  padding: var(--space-4);
+  background: var(--color-red-50);
+  border: 1px solid var(--color-red-500);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-red-500);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.erroRetry {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--color-red-500);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ---- Skeleton card ---- */
+
+.skeletonCard {
+  background: var(--color-white);
+  border: var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

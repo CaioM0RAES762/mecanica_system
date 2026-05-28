@@ -145,6 +145,7 @@ export interface QueryFiltroOS extends QueryPaginacao {
   prioridade?: PrioridadeOS
   categoria_id?: number
   mecanico_id?: string
+  supervisor_id?: string
   de?: string
   ate?: string
   busca?: string

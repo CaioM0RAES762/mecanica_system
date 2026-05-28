@@ -6,6 +6,9 @@ import rateLimit from '@fastify/rate-limit'
 import { healthRoutes } from './routes/health.js'
 import { authRoutes } from './routes/auth.js'
 import { ordensServicoRoutes } from './routes/ordens-servico.js'
+import { categoriasRoutes } from './routes/categorias.js'
+import { veiculosRoutes } from './routes/veiculos.js'
+import { usuariosRoutes } from './routes/usuarios.js'
 import { zodErrorHandler } from './plugins/zod-error-handler.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,6 +48,9 @@ export async function buildApp() {
   await app.register(healthRoutes, { prefix: '/api/v1' })
   await app.register(authRoutes, { prefix: '/api/v1' })
   await app.register(ordensServicoRoutes, { prefix: '/api/v1' })
+  await app.register(categoriasRoutes, { prefix: '/api/v1' })
+  await app.register(veiculosRoutes, { prefix: '/api/v1' })
+  await app.register(usuariosRoutes, { prefix: '/api/v1' })
 
   return app
 }

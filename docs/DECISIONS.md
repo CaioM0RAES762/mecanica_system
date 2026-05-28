@@ -206,3 +206,21 @@ O repositório sempre busca `notas_internas` do banco. O service chama `normaliz
 ## D-39 — `fechar` usa duas chamadas Prisma sequenciais (sem transaction) na v1
 
 `updateOSStatus` e `createFechamento` são chamadas separadas para simplificar o mock nos testes. Risco: em caso de falha entre as duas, a OS fica `fechado` sem `registros_fechamento`. Mitigação: `logs_auditoria` registra o fechamento antes; inconsistência detectável por query. Transaction a ser adicionada na Sprint 8 junto com o fluxo de upload. Decidido na Sprint 6.
+
+---
+
+## D-40 — Rotas de leitura mínimas (/categorias, /veiculos, /usuarios) adicionadas na Sprint 7
+
+O formulário de novo chamado e o filtro de chamados precisam listar categorias, veículos e mecânicos. Esses endpoints não estavam no escopo da Sprint 6 (apenas OS). Foram adicionados como rotas GET simples e autenticadas na Sprint 7 para desbloqueio do frontend. Sprint 10 adicionará CRUD completo. Decidido na Sprint 7.
+
+---
+
+## D-41 — `supervisor_id` adicionado ao FiltroOSSchema e ao repositório de OS
+
+O segmented control "Atribuídos a mim / Todos" precisa filtrar por `supervisor_id` quando o ator é supervisor/admin (ao contrário de `mecanico_id` para mecânicos). O campo foi adicionado ao schema Zod compartilhado, ao tipo `QueryFiltroOS`, ao parâmetro `OSListParams` do repositório e ao `buildWhere`. Decidido na Sprint 7.
+
+---
+
+## D-42 — LoginPage refatorada para envolver useSearchParams em Suspense
+
+Next.js 15 exige Suspense boundary em torno de `useSearchParams()` durante build estático. A solução foi extrair o formulário para um componente interno `LoginForm` e envolvê-lo com `<Suspense>` na página. Correção aplicada na Sprint 7 (bug pré-existente da Sprint 4). Decidido na Sprint 7.

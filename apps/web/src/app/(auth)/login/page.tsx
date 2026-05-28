@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { Suspense, useState, type FormEvent } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginSchema } from '@metalsider/shared'
 import styles from './page.module.css'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
@@ -57,6 +57,78 @@ export default function LoginPage() {
   }
 
   return (
+    <div className={styles.formWrapper}>
+      <h2 className={styles.title}>Bem-vindo de volta</h2>
+      <p className={styles.subtitle}>Acesse sua conta corporativa</p>
+
+      {erro && (
+        <div
+          className={styles.toast}
+          style={{
+            borderColor: erroTipo === 'warning' ? 'var(--color-amber-500)' : 'var(--color-red-500)',
+            backgroundColor: erroTipo === 'warning' ? 'var(--color-amber-50)' : 'var(--color-red-50)',
+            color: erroTipo === 'warning' ? '#92400e' : '#991b1b',
+          }}
+          role="alert"
+        >
+          {erro}
+        </div>
+      )}
+
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <div className={styles.field}>
+          <label htmlFor="email" className={styles.label}>
+            E-mail corporativo
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="seu@metalsider.com.br"
+            className={styles.input}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+            required
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="password" className={styles.label}>
+            Senha
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            className={styles.input}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            required
+          />
+        </div>
+
+        <button type="submit" className={styles.submit} disabled={loading || !email || !password}>
+          {loading ? 'Entrando…' : 'Entrar'}
+        </button>
+      </form>
+
+      <p className={styles.activateLink}>
+        Primeira vez?{' '}
+        <a href="/ativar-conta" className={styles.link}>
+          Ativar minha conta
+        </a>
+      </p>
+    </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
     <div className={styles.container}>
       <aside className={styles.panel}>
         <div className={styles.brand}>
@@ -67,73 +139,9 @@ export default function LoginPage() {
       </aside>
 
       <main className={styles.formArea}>
-        <div className={styles.formWrapper}>
-          <h2 className={styles.title}>Bem-vindo de volta</h2>
-          <p className={styles.subtitle}>Acesse sua conta corporativa</p>
-
-          {erro && (
-            <div
-              className={styles.toast}
-              style={{
-                borderColor: erroTipo === 'warning' ? 'var(--color-amber-500)' : 'var(--color-red-500)',
-                backgroundColor: erroTipo === 'warning' ? 'var(--color-amber-50)' : 'var(--color-red-50)',
-                color: erroTipo === 'warning' ? '#92400e' : '#991b1b',
-              }}
-              role="alert"
-            >
-              {erro}
-            </div>
-          )}
-
-          <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            <div className={styles.field}>
-              <label htmlFor="email" className={styles.label}>
-                E-mail corporativo
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="seu@metalsider.com.br"
-                className={styles.input}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="password" className={styles.label}>
-                Senha
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                className={styles.input}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <button type="submit" className={styles.submit} disabled={loading || !email || !password}>
-              {loading ? 'Entrando…' : 'Entrar'}
-            </button>
-          </form>
-
-          <p className={styles.activateLink}>
-            Primeira vez?{' '}
-            <a href="/ativar-conta" className={styles.link}>
-              Ativar minha conta
-            </a>
-          </p>
-        </div>
+        <Suspense fallback={<div className={styles.formWrapper} />}>
+          <LoginForm />
+        </Suspense>
       </main>
     </div>
   )

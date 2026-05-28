@@ -104,7 +104,7 @@ export async function listarOSService(
   params: FiltroOSDTO,
   ator: JwtPayload,
 ) {
-  const { pagina, por_pagina, status, prioridade, categoria_id, mecanico_id, de, ate, busca } = params
+  const { pagina, por_pagina, status, prioridade, categoria_id, mecanico_id, supervisor_id, de, ate, busca } = params
 
   const { dados, total } = await findManyOS({
     pagina,
@@ -113,6 +113,7 @@ export async function listarOSService(
     prioridade,
     categoria_id,
     mecanico_id,
+    supervisor_id,
     de:    de  ? new Date(de)  : undefined,
     ate:   ate ? new Date(ate) : undefined,
     busca,

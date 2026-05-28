@@ -112,6 +112,7 @@ export const FiltroOSSchema = PaginacaoSchema.extend({
     .optional(),
   categoria_id: z.coerce.number().int().positive().optional(),
   mecanico_id: z.string().uuid().optional(),
+  supervisor_id: z.string().uuid().optional(),
   de: z.string().datetime({ offset: true }).optional(),
   ate: z.string().datetime({ offset: true }).optional(),
   busca: z.string().max(100).optional(),
