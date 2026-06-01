@@ -28,6 +28,10 @@ const SUPERVISOR_ADMIN = [
   authenticate,
   roleGuard([PerfilUsuario.SUPERVISOR, PerfilUsuario.ADMIN]),
 ]
+const ALL_ROLES = [
+  authenticate,
+  roleGuard([PerfilUsuario.SUPERVISOR, PerfilUsuario.ADMIN, PerfilUsuario.MECANICO]),
+]
 
 export async function usuariosRoutes(fastify: FastifyInstance) {
   // GET /usuarios/eu — perfil do usuário autenticado
@@ -45,8 +49,8 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
     return reply.send({ dados: usuario })
   })
 
-  // GET /usuarios — listagem (supervisor e admin)
-  fastify.get('/usuarios', { preHandler: SUPERVISOR_ADMIN }, async (request, reply) => {
+  // GET /usuarios — listagem (todos os perfis autenticados; mecânicos usam para selecionar responsável ao fechar OS)
+  fastify.get('/usuarios', { preHandler: ALL_ROLES }, async (request, reply) => {
     const { perfil, ativo } = QuerySchema.parse(request.query)
     const usuarios = await findTodosUsuarios({ perfil, ativo })
     return reply.send({ dados: usuarios })

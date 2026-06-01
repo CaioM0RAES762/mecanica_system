@@ -116,6 +116,7 @@ export const FecharOSSchema = z.object({
   nota_resolucao: z.string().max(280).nullable().optional(),
   horas_trabalhadas: z.number().positive().nullable().optional(),
   obs_adicionais: z.string().max(500).nullable().optional(),
+  mecanico_id: z.string().uuid().nullable().optional(),
 })
 
 // ---- Veículos ----
@@ -151,6 +152,7 @@ export const PaginacaoSchema = z.object({
 
 export const FiltroOSSchema = PaginacaoSchema.extend({
   status: z.enum([StatusOS.ABERTO, StatusOS.FECHADO, StatusOS.ATRASADO]).optional(),
+  excluir_fechados: z.coerce.boolean().optional(),
   prioridade: z
     .enum([PrioridadeOS.BAIXA, PrioridadeOS.MEDIA, PrioridadeOS.ALTA, PrioridadeOS.CRITICA])
     .optional(),
@@ -159,6 +161,8 @@ export const FiltroOSSchema = PaginacaoSchema.extend({
   supervisor_id: z.string().uuid().optional(),
   de: z.string().datetime({ offset: true }).optional(),
   ate: z.string().datetime({ offset: true }).optional(),
+  fechado_de: z.string().datetime({ offset: true }).optional(),
+  fechado_ate: z.string().datetime({ offset: true }).optional(),
   busca: z.string().max(100).optional(),
 })
 

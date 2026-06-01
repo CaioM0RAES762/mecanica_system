@@ -3,14 +3,18 @@
 import { useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { FecharOSSchema, PRIORIDADE_LABEL, RESULTADO_LABEL, ResultadoFechamento } from '@metalsider/shared'
-import type { OrdemServicoResumo } from '@metalsider/shared'
+import type { OrdemServicoResumo, UsuarioResumo } from '@metalsider/shared'
 import { IconX, IconClock, IconCircleCheck, IconCircleX, IconCircleDashed, IconCheck } from '@tabler/icons-react'
+import { listarUsuarios } from '@/lib/api/admin'
+import { uploadAnexo } from '@/lib/api/anexos'
+import { UploadAnexos } from './UploadAnexos'
 import styles from './FecharModal.module.css'
 
 interface FecharModalProps {
   os: OrdemServicoResumo | null
   onClose: () => void
   onConfirm: (id: number, data: z.infer<typeof FecharOSSchema>) => Promise<void>
+  accessToken: string
 }
 
 const RESULTADO_OPTIONS = [
@@ -38,16 +42,22 @@ const PRIO_DOT: Record<string, string> = {
   critica: '#d13438',
 }
 
-export function FecharModal({ os, onClose, onConfirm }: FecharModalProps) {
+export function FecharModal({ os, onClose, onConfirm, accessToken }: FecharModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [resultado, setResultado] = useState('')
   const [notaResolucao, setNotaResolucao] = useState('')
   const [horasTrabalhadas, setHorasTrabalhadas] = useState('')
   const [obsAdicionais, setObsAdicionais] = useState('')
+  const [mecanicoId, setMecanicoId] = useState('')
+  const [mecanicos, setMecanicos] = useState<UsuarioResumo[]>([])
+  const [loadingMecanicos, setLoadingMecanicos] = useState(false)
+  const [errMecanicos, setErrMecanicos] = useState(false)
+  const [anexoFiles, setAnexoFiles] = useState<File[]>([])
   const [erros, setErros] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
   const isOpen = os !== null
+  const precisaMecanico = isOpen && os.mecanico_id === null
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -65,10 +75,25 @@ export function FecharModal({ os, onClose, onConfirm }: FecharModalProps) {
       setNotaResolucao('')
       setHorasTrabalhadas('')
       setObsAdicionais('')
+      setMecanicoId('')
+      setMecanicos([])
+      setErrMecanicos(false)
+      setAnexoFiles([])
       setErros({})
       setLoading(false)
     }
   }, [isOpen])
+
+  // Busca mecânicos quando o modal abre para uma OS sem mecânico atribuído
+  useEffect(() => {
+    if (!isOpen || !precisaMecanico) return
+    setLoadingMecanicos(true)
+    setErrMecanicos(false)
+    listarUsuarios(accessToken, { perfil: 'mecanico', ativo: true })
+      .then(res => { setMecanicos(res.dados) })
+      .catch(() => { setMecanicos([]); setErrMecanicos(true) })
+      .finally(() => setLoadingMecanicos(false))
+  }, [isOpen, precisaMecanico, accessToken])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -86,11 +111,17 @@ export function FecharModal({ os, onClose, onConfirm }: FecharModalProps) {
     e.preventDefault()
     setErros({})
 
+    if (precisaMecanico && !errMecanicos && !mecanicoId) {
+      setErros({ mecanico: 'Selecione o mecânico responsável' })
+      return
+    }
+
     const payload = {
       resultado: resultado as z.infer<typeof FecharOSSchema>['resultado'],
       nota_resolucao: notaResolucao || undefined,
       horas_trabalhadas: horasTrabalhadas ? Number(horasTrabalhadas) : undefined,
       obs_adicionais: obsAdicionais || undefined,
+      mecanico_id: mecanicoId || undefined,
     }
 
     const parsed = FecharOSSchema.safeParse(payload)
@@ -107,6 +138,16 @@ export function FecharModal({ os, onClose, onConfirm }: FecharModalProps) {
     setLoading(true)
     try {
       await onConfirm(os!.id, parsed.data)
+
+      // Upload de anexos pendentes após fechar a OS (falha silenciosa)
+      for (const file of anexoFiles) {
+        try {
+          await uploadAnexo(os!.id, file, accessToken)
+        } catch {
+          // upload não-crítico: OS já foi fechada
+        }
+      }
+
       onClose()
     } catch (err) {
       setErros({ _global: err instanceof Error ? err.message : 'Erro ao fechar chamado' })
@@ -163,6 +204,39 @@ export function FecharModal({ os, onClose, onConfirm }: FecharModalProps) {
           <div className={styles.body}>
             {erros['_global'] && (
               <div className={styles.globalError} role="alert">{erros['_global']}</div>
+            )}
+
+            {/* Mecânico responsável — exibido apenas quando o chamado não tem mecânico */}
+            {precisaMecanico && (
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="select-mecanico">
+                  Mecânico responsável <span className={styles.required}>*</span>
+                </label>
+                {errMecanicos ? (
+                  <span className={styles.error} role="alert">
+                    Não foi possível carregar a lista de mecânicos. Tente fechar e reabrir o modal.
+                  </span>
+                ) : (
+                  <select
+                    id="select-mecanico"
+                    className={styles.select}
+                    value={mecanicoId}
+                    onChange={e => setMecanicoId(e.target.value)}
+                    disabled={loadingMecanicos}
+                    data-testid="select-mecanico"
+                  >
+                    <option value="">
+                      {loadingMecanicos ? 'Carregando mecânicos…' : 'Selecione o mecânico'}
+                    </option>
+                    {mecanicos.map(m => (
+                      <option key={m.id} value={m.id}>{m.nome_completo}</option>
+                    ))}
+                  </select>
+                )}
+                {erros['mecanico'] && (
+                  <span className={styles.error} role="alert">{erros['mecanico']}</span>
+                )}
+              </div>
             )}
 
             {/* Resultado */}
@@ -247,6 +321,18 @@ export function FecharModal({ os, onClose, onConfirm }: FecharModalProps) {
                 />
               </div>
             </div>
+
+            {/* Anexos */}
+            <div className={styles.anexosSection}>
+              <label className={styles.label}>
+                Anexos <span className={styles.optional}>(opcional) — imagens ou documentos</span>
+              </label>
+              <UploadAnexos
+                token={accessToken}
+                accept="image/*,application/pdf,.doc,.docx"
+                onAnexosChange={setAnexoFiles}
+              />
+            </div>
           </div>
 
           {/* Footer */}
@@ -262,7 +348,7 @@ export function FecharModal({ os, onClose, onConfirm }: FecharModalProps) {
             <button
               type="submit"
               className={styles.confirmBtn}
-              disabled={!resultado || loading}
+              disabled={!resultado || loading || (precisaMecanico && !errMecanicos && !mecanicoId)}
               data-testid="btn-confirmar"
             >
               <IconCheck size={15} aria-hidden="true" />

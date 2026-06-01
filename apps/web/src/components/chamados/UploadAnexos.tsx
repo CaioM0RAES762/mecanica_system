@@ -26,6 +26,7 @@ interface Props {
   onAnexosChange?: (files: File[]) => void  // Modo criação
   onAnexoEnviado?: (anexo: AnexoDTO) => void
   onAnexoRemovido?: (id: number) => void
+  accept?: string        // Tipos aceitos pelo input file
 }
 
 const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -44,6 +45,7 @@ export function UploadAnexos({
   onAnexosChange,
   onAnexoEnviado,
   onAnexoRemovido,
+  accept,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [pendentes, setPendentes] = useState<AnexoPendente[]>([])
@@ -150,6 +152,7 @@ export function UploadAnexos({
           ref={inputRef}
           type="file"
           multiple
+          accept={accept}
           className={styles.hiddenInput}
           onChange={(e) => handleFiles(e.target.files)}
           aria-hidden

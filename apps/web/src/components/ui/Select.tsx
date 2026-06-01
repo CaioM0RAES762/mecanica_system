@@ -1,3 +1,6 @@
+'use client'
+
+import { useId } from 'react'
 import type { SelectHTMLAttributes } from 'react'
 import styles from './Select.module.css'
 
@@ -27,7 +30,8 @@ export function Select({
   className,
   ...props
 }: SelectProps) {
-  const selectId = id ?? `select-${Math.random().toString(36).slice(2, 8)}`
+  const generatedId = useId()
+  const selectId = id ?? generatedId
 
   return (
     <div className={styles.field}>

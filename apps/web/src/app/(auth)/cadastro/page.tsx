@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type FormEvent } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { RegistrarSchema, VerificarCodigoCadastroSchema, FinalizarCadastroSchema } from '@metalsider/shared'
 import styles from './page.module.css'
@@ -70,7 +70,7 @@ export default function CadastroPage() {
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
   }
 
-  async function handleEtapa1(e: FormEvent) {
+  async function handleEtapa1(e: React.SyntheticEvent) {
     e.preventDefault()
     setErro(null)
 
@@ -107,7 +107,7 @@ export default function CadastroPage() {
     }
   }
 
-  async function handleEtapa2(e: FormEvent) {
+  async function handleEtapa2(e: React.SyntheticEvent) {
     e.preventDefault()
     setErro(null)
 
@@ -139,7 +139,7 @@ export default function CadastroPage() {
     }
   }
 
-  async function handleEtapa3(e: FormEvent) {
+  async function handleEtapa3(e: React.SyntheticEvent) {
     e.preventDefault()
     setErro(null)
 
@@ -195,7 +195,7 @@ export default function CadastroPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <span className={styles.logo}>M</span>
+          <img src="/images/logo.png" alt="Metalsider" className={styles.logo} />
           <h1 className={styles.title}>Criar conta</h1>
           <p className={styles.subtitle}>Acesso restrito a contas @metalsider.com.br</p>
         </div>

@@ -335,6 +335,53 @@
   padding-left: 34px;
 }
 
+/* ---- Select (mecânico) ---- */
+
+.select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #323130;
+  background: #ffffff;
+  font: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23605e5c' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.15);
+}
+
+.select:disabled {
+  background-color: #f8f8f8;
+  color: #a19f9d;
+  cursor: not-allowed;
+}
+
+/* ---- Seção de anexos ---- */
+
+.anexosSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.anexosSublabel {
+  font-size: 12px;
+  font-weight: 400;
+  color: #a19f9d;
+}
+
 /* ---- Footer ---- */
 
 .footer {

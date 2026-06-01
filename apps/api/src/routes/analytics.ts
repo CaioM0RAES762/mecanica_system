@@ -14,7 +14,7 @@ import {
 
 export async function analyticsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate)
-  app.addHook('onRequest', roleGuard(['supervisor', 'admin']))
+  app.addHook('onRequest', roleGuard(['supervisor', 'admin', 'mecanico']))
 
   app.get('/analytics/kpis', kpisController)
   app.get('/analytics/por-categoria', porCategoriaController)

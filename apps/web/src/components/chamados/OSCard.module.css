@@ -5,10 +5,11 @@
   border: 1px solid #e5e5e5;
   border-left: 3px solid var(--prio-border, #797775);
   border-radius: 5px;
-  padding: 14px 16px;
+  padding: 24px 28px;
+  min-height: 180px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
@@ -18,18 +19,27 @@
   transform: translateY(-1px);
 }
 
-/* ---- Row 1: top ---- */
+/* ---- Header: tags + datas ---- */
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
 
 .topRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .id {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #605e5c;
   letter-spacing: 0.02em;
@@ -39,20 +49,20 @@
 .prioBadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
+  gap: 6px;
+  padding: 4px 10px;
   background: #f3f3f3;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 0.8rem;
   font-weight: 500;
   color: #323130;
   flex-shrink: 0;
 }
 
 .prioDot {
-  width: 7px;
-  height: 7px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -60,11 +70,11 @@
 .catBadge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  padding: 4px 10px;
   background: #f3f3f3;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 0.8rem;
   font-weight: 400;
   color: #605e5c;
   flex-shrink: 0;
@@ -74,8 +84,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-left: auto;
-  font-size: 11px;
+  font-size: 0.8rem;
   font-weight: 500;
   color: #323130;
   flex-shrink: 0;
@@ -85,10 +94,35 @@
   color: #c8ab00;
 }
 
+/* ---- Datas (canto superior direito) ---- */
+
+.datesRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.dateItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: #a19f9d;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.dateItem svg {
+  color: #c8c6c4;
+  flex-shrink: 0;
+}
+
 /* ---- Row 2: Title ---- */
 
 .titulo {
-  font-size: 14px;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #323130;
   line-height: 1.35;
@@ -103,15 +137,15 @@
 .infoRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .infoItem {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 0.95rem;
   color: #605e5c;
 }
 
@@ -122,21 +156,21 @@
 
 .infoDivider {
   color: #c8c6c4;
-  font-size: 12px;
+  font-size: 0.95rem;
   line-height: 1;
 }
 
 .avatarRow {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .avatar {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: #ffffff;
   display: flex;
@@ -153,25 +187,45 @@
 /* ---- Row 4: Aberto por ---- */
 
 .openedBy {
-  font-size: 11px;
+  font-size: 0.95rem;
   color: #a19f9d;
   line-height: 1.4;
 }
 
-/* ---- Row 5: Time line ---- */
+/* ---- Rows 5a/5b: Data abertura + Prazo ---- */
 
-.timeLine {
+.dateRow {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 0.95rem;
   color: #a19f9d;
   line-height: 1.4;
 }
 
-.timeLine svg {
+.dateRow svg {
   color: #c8c6c4;
   flex-shrink: 0;
+}
+
+.prazoLabel {
+  font-weight: 500;
+}
+
+.prazoVencido {
+  color: #dc2626;
+}
+
+.prazoVencido svg {
+  color: #dc2626;
+}
+
+.prazoUrgente {
+  color: #f97316;
+}
+
+.prazoUrgente svg {
+  color: #f97316;
 }
 
 /* ---- Row 6: Progress ---- */
@@ -179,12 +233,12 @@
 .progressWrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .progressTrack {
   flex: 1;
-  height: 4px;
+  height: 10px;
   background: #e5e5e5;
   border-radius: 9999px;
   overflow: hidden;
@@ -197,10 +251,10 @@
 }
 
 .progressLabel {
-  font-size: 11px;
+  font-size: 0.9rem;
   color: #605e5c;
   flex-shrink: 0;
-  min-width: 30px;
+  min-width: 34px;
   text-align: right;
 }
 
@@ -212,15 +266,15 @@
   justify-content: space-between;
   gap: 8px;
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid #f3f3f3;
 }
 
 .detailsBtn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 0.95rem;
   font-weight: 500;
   color: #605e5c;
   background: none;
@@ -231,7 +285,7 @@
   text-underline-offset: 2px;
   text-decoration-color: #c8c6c4;
   transition: color 0.15s ease;
-  font: inherit;
+  font-family: inherit;
 }
 
 .detailsBtn:hover {
@@ -246,18 +300,18 @@
 .fecharBtn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 8px 16px;
   background: #0078d4;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 0.95rem;
   font-weight: 500;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s ease;
   white-space: nowrap;
-  font: inherit;
+  font-family: inherit;
 }
 
 .fecharBtn:hover {

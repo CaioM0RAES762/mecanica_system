@@ -193,18 +193,25 @@ export async function listarOSService(
   params: FiltroOSDTO,
   ator: JwtPayload,
 ) {
-  const { pagina, por_pagina, status, prioridade, categoria_id, mecanico_id, supervisor_id, de, ate, busca } = params
+  const {
+    pagina, por_pagina, status, excluir_fechados,
+    prioridade, categoria_id, mecanico_id, supervisor_id,
+    de, ate, fechado_de, fechado_ate, busca,
+  } = params
 
   const { dados, total } = await findManyOS({
     pagina,
     por_pagina,
     status,
+    excluir_fechados,
     prioridade,
     categoria_id,
     mecanico_id,
     supervisor_id,
-    de:    de  ? new Date(de)  : undefined,
-    ate:   ate ? new Date(ate) : undefined,
+    de:          de          ? new Date(de)          : undefined,
+    ate:         ate         ? new Date(ate)         : undefined,
+    fechado_de:  fechado_de  ? new Date(fechado_de)  : undefined,
+    fechado_ate: fechado_ate ? new Date(fechado_ate) : undefined,
     busca,
   })
 
@@ -359,6 +366,18 @@ export async function fecharOSService(
     os.mecanico?.id !== ator.sub
   ) {
     throw httpError(403, 'Mecânico só pode fechar OS atribuída a si')
+  }
+
+  // Atribuir mecânico se não havia um e foi informado no fechamento
+  if (dto.mecanico_id && !os.mecanico) {
+    await updateOS(id, { mecanico_id: dto.mecanico_id })
+    await criarAuditoria({
+      ordem_servico_id:   id,
+      ator_id:            ator.sub,
+      acao:               AcaoAuditoria.OS_REATRIBUIDA,
+      valores_anteriores: JSON.stringify({ mecanico_id: null }),
+      novos_valores:      JSON.stringify({ mecanico_id: dto.mecanico_id }),
+    })
   }
 
   const agora = new Date()

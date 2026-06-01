@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { CategoriaResumo, OrdemServicoResumo, RespostaPaginada } from '@metalsider/shared'
 import type { FecharOSDTO } from '@metalsider/shared'
-import { IconClipboardList } from '@tabler/icons-react'
+import { IconClipboardList, IconArchive } from '@tabler/icons-react'
 import { EmptyState, Skeleton } from '@/components/ui'
 import { listarOS, fecharOS } from '@/lib/api/ordens-servico'
 import { FilterBar, FILTRO_INICIAL } from './FilterBar'
-import type { FiltroState } from './FilterBar'
+import type { FiltroState, TabAtiva, PeriodoFechados } from './FilterBar'
 import { OSCard } from './OSCard'
 import { FecharModal } from './FecharModal'
 import styles from './ChamadosClient.module.css'
@@ -26,12 +26,78 @@ function filtroReducer(state: FiltroState, action: FiltroAction): FiltroState {
   return { ...state, ...action.payload }
 }
 
-function buildApiParams(
+// ---- Helpers de período ----
+
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
+}
+
+function endOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999)
+}
+
+function daysAgo(n: number): Date {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return d
+}
+
+function periodoParaDatas(
+  periodo: PeriodoFechados,
+  dataInicio: string,
+  dataFim: string,
+): { fechado_de: string; fechado_ate: string } | null {
+  const hoje = new Date()
+
+  switch (periodo) {
+    case 'hoje':
+      return {
+        fechado_de: startOfDay(hoje).toISOString(),
+        fechado_ate: endOfDay(hoje).toISOString(),
+      }
+    case 'ontem': {
+      const ontem = daysAgo(1)
+      return {
+        fechado_de: startOfDay(ontem).toISOString(),
+        fechado_ate: endOfDay(ontem).toISOString(),
+      }
+    }
+    case '3d':
+      return {
+        fechado_de: startOfDay(daysAgo(2)).toISOString(),
+        fechado_ate: endOfDay(hoje).toISOString(),
+      }
+    case '5d':
+      return {
+        fechado_de: startOfDay(daysAgo(4)).toISOString(),
+        fechado_ate: endOfDay(hoje).toISOString(),
+      }
+    case '7d':
+      return {
+        fechado_de: startOfDay(daysAgo(6)).toISOString(),
+        fechado_ate: endOfDay(hoje).toISOString(),
+      }
+    case 'personalizado': {
+      if (!dataInicio || !dataFim) return null
+      const de = new Date(dataInicio + 'T00:00:00')
+      const ate = new Date(dataFim + 'T23:59:59')
+      if (isNaN(de.getTime()) || isNaN(ate.getTime())) return null
+      return {
+        fechado_de: de.toISOString(),
+        fechado_ate: ate.toISOString(),
+      }
+    }
+  }
+}
+
+// ---- Builders de parâmetros da API ----
+
+function buildParamsAbertos(
   filtros: FiltroState,
   perfil: string,
   userId: string,
 ): Record<string, string> {
-  const p: Record<string, string> = {}
+  const p: Record<string, string> = { excluir_fechados: 'true' }
 
   if (filtros.busca) p['busca'] = filtros.busca
   if (filtros.prioridade) p['prioridade'] = filtros.prioridade
@@ -60,6 +126,22 @@ function buildApiParams(
   return p
 }
 
+function buildParamsFechados(
+  periodo: PeriodoFechados,
+  dataInicio: string,
+  dataFim: string,
+): Record<string, string> | null {
+  const datas = periodoParaDatas(periodo, dataInicio, dataFim)
+  if (!datas) return null
+  return {
+    status: 'fechado',
+    fechado_de: datas.fechado_de,
+    fechado_ate: datas.fechado_ate,
+  }
+}
+
+// ---- Componente ----
+
 export function ChamadosClient({
   accessToken,
   perfil,
@@ -67,6 +149,11 @@ export function ChamadosClient({
   categorias,
 }: ChamadosClientProps) {
   const [filtros, dispatch] = useReducer(filtroReducer, FILTRO_INICIAL)
+  const [tabAtiva, setTabAtiva] = useState<TabAtiva>('abertos')
+  const [periodoFechados, setPeriodoFechados] = useState<PeriodoFechados>('hoje')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
+
   const [dados, setDados] = useState<RespostaPaginada<OrdemServicoResumo> | null>(null)
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -80,11 +167,30 @@ export function ChamadosClient({
   }, [categorias])
 
   const fetchOS = useCallback(
-    async (f: FiltroState) => {
+    async (
+      tab: TabAtiva,
+      f: FiltroState,
+      periodo: PeriodoFechados,
+      inicio: string,
+      fim: string,
+    ) => {
       setLoading(true)
       setErro(null)
       try {
-        const params = buildApiParams(f, perfil, userId)
+        let params: Record<string, string> | null
+
+        if (tab === 'abertos') {
+          params = buildParamsAbertos(f, perfil, userId)
+        } else {
+          params = buildParamsFechados(periodo, inicio, fim)
+          if (!params) {
+            // Personalizado com datas incompletas: não busca
+            setDados(null)
+            setLoading(false)
+            return
+          }
+        }
+
         const res = await listarOS(params, accessToken)
         setDados(res)
       } catch (e) {
@@ -96,24 +202,44 @@ export function ChamadosClient({
     [accessToken, perfil, userId],
   )
 
-  // Debounce na busca; imediato nos outros filtros
+  // Debounce na busca; imediato nos outros filtros / mudanças de aba ou período
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
+    const delay = tabAtiva === 'abertos' && filtros.busca ? 400 : 0
     debounceRef.current = setTimeout(() => {
-      void fetchOS(filtros)
-    }, filtros.busca ? 400 : 0)
+      void fetchOS(tabAtiva, filtros, periodoFechados, dataInicio, dataFim)
+    }, delay)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [filtros, fetchOS])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtros, tabAtiva, periodoFechados, dataInicio, dataFim, fetchOS])
 
   async function handleFechar(id: number, data: FecharOSDTO) {
     await fecharOS(id, data, accessToken)
-    void fetchOS(filtros)
+    // Remove otimisticamente da lista de abertos; refetch garante contagem correta
+    setDados(prev => {
+      if (!prev) return prev
+      const novosDados = prev.dados.filter(os => os.id !== id)
+      return {
+        ...prev,
+        dados: novosDados,
+        paginacao: { ...prev.paginacao, total: prev.paginacao.total - 1 },
+      }
+    })
+  }
+
+  function handleTabChange(t: TabAtiva) {
+    setTabAtiva(t)
+    setDados(null)
   }
 
   const lista = dados?.dados ?? []
   const total = dados?.paginacao.total ?? 0
+
+  // dados === null quando o fetch foi pulado (personalizado sem datas)
+  const emptyFechados =
+    !loading && !erro && tabAtiva === 'fechados' && dados !== null && lista.length === 0
 
   return (
     <div className={styles.wrapper}>
@@ -123,7 +249,15 @@ export function ChamadosClient({
         perfil={perfil}
         total={total}
         loading={loading}
-        onAtualizar={() => void fetchOS(filtros)}
+        tabAtiva={tabAtiva}
+        periodoFechados={periodoFechados}
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        onTabChange={handleTabChange}
+        onPeriodoChange={setPeriodoFechados}
+        onDataInicioChange={setDataInicio}
+        onDataFimChange={setDataFim}
+        onAtualizar={() => void fetchOS(tabAtiva, filtros, periodoFechados, dataInicio, dataFim)}
         onChange={payload => dispatch({ type: 'set', payload })}
         onReset={() => dispatch({ type: 'reset' })}
       />
@@ -132,7 +266,10 @@ export function ChamadosClient({
         {erro && (
           <div className={styles.erro} role="alert">
             {erro}
-            <button onClick={() => void fetchOS(filtros)} className={styles.erroRetry}>
+            <button
+              onClick={() => void fetchOS(tabAtiva, filtros, periodoFechados, dataInicio, dataFim)}
+              className={styles.erroRetry}
+            >
               Tentar novamente
             </button>
           </div>
@@ -146,11 +283,19 @@ export function ChamadosClient({
           </div>
         )}
 
-        {!loading && !erro && lista.length === 0 && (
+        {!loading && !erro && tabAtiva === 'abertos' && lista.length === 0 && (
           <EmptyState
             icon={<IconClipboardList size={40} />}
             title="Nenhum chamado encontrado"
             description="Ajuste os filtros ou aguarde novos chamados."
+          />
+        )}
+
+        {emptyFechados && (
+          <EmptyState
+            icon={<IconArchive size={40} />}
+            title="Nenhum chamado fechado neste período"
+            description="Tente ampliar o período ou selecione um intervalo diferente."
           />
         )}
 
@@ -160,8 +305,6 @@ export function ChamadosClient({
               <OSCard
                 key={os.id}
                 os={os}
-                perfil={perfil}
-                userId={userId}
                 categoriaCor={categoriaCores.get(os.categoria_id)}
                 onFechar={setOsParaFechar}
               />
@@ -174,6 +317,7 @@ export function ChamadosClient({
         os={osParaFechar}
         onClose={() => setOsParaFechar(null)}
         onConfirm={handleFechar}
+        accessToken={accessToken}
       />
     </div>
   )
@@ -186,6 +330,7 @@ function SkeletonCard() {
       <Skeleton style={{ height: 20, width: '85%' }} />
       <Skeleton style={{ height: 14, width: '60%' }} />
       <Skeleton style={{ height: 14, width: '50%' }} />
+      <Skeleton style={{ height: 14, width: '55%' }} />
       <Skeleton style={{ height: 4, width: '100%', borderRadius: 9999 }} />
     </div>
   )

@@ -78,5 +78,6 @@ export async function buscarAuditoria(
     cache: 'no-store',
   })
   if (!res.ok) throw new Error(`Falha ao buscar auditoria da OS #${id}`)
-  return res.json() as Promise<LogAuditoriaDTO[]>
+  const body = await res.json() as { dados: LogAuditoriaDTO[] }
+  return body.dados
 }

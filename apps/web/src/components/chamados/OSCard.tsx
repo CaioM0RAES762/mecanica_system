@@ -1,14 +1,13 @@
 'use client'
 
+import Link from 'next/link'
 import type { OrdemServicoResumo } from '@metalsider/shared'
 import { PRIORIDADE_LABEL, StatusOS } from '@metalsider/shared'
-import { IconClock, IconTruck, IconUser, IconAlertTriangle, IconEye } from '@tabler/icons-react'
+import { IconCalendar, IconClock, IconTruck, IconUser, IconAlertTriangle, IconEye } from '@tabler/icons-react'
 import styles from './OSCard.module.css'
 
 interface OSCardProps {
   os: OrdemServicoResumo
-  perfil: string
-  userId: string
   categoriaCor?: string
   onFechar: (os: OrdemServicoResumo) => void
 }
@@ -50,32 +49,23 @@ function calcSlaProgress(criadoEm: string, prazo: string): number {
   return Math.min(100, ((agora - inicio) / (fim - inicio)) * 100)
 }
 
-function abertoHa(criadoEm: string): string {
-  const diff = Date.now() - new Date(criadoEm).getTime()
-  const dias = Math.floor(diff / 86400000)
-  const horas = Math.floor((diff % 86400000) / 3600000)
-  if (dias > 0) return `${dias}d`
-  if (horas > 0) return `${horas}h`
-  return '< 1h'
-}
-
-function prazoFormatado(prazo: string): string {
-  return new Date(prazo).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function abertoPorData(criadoEm: string): string {
-  return new Date(criadoEm).toLocaleString('pt-BR', {
+function formatDataHora(iso: string): string {
+  return new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+type PrazoUrgencia = 'vencido' | 'urgente' | 'normal'
+
+function prazoUrgencia(prazo: string): PrazoUrgencia {
+  const diff = new Date(prazo).getTime() - Date.now()
+  if (diff < 0) return 'vencido'
+  if (diff < 24 * 60 * 60 * 1000) return 'urgente'
+  return 'normal'
 }
 
 function diasAtrasado(prazo: string): number {
@@ -85,14 +75,12 @@ function diasAtrasado(prazo: string): number {
 
 // ---- Component ----
 
-export function OSCard({ os, perfil, userId, onFechar }: OSCardProps) {
+export function OSCard({ os, onFechar }: OSCardProps) {
   const isAtrasado = os.status === StatusOS.ATRASADO
   const isFechado = os.status === StatusOS.FECHADO
   const progress = isFechado ? 100 : calcSlaProgress(os.criado_em, os.prazo)
 
-  const podeFechar =
-    !isFechado &&
-    (perfil === 'supervisor' || perfil === 'admin' || os.mecanico_id === userId)
+  const podeFechar = !isFechado
 
   const progressColor =
     isAtrasado || progress > 90 ? '#d13438'
@@ -110,38 +98,60 @@ export function OSCard({ os, perfil, userId, onFechar }: OSCardProps) {
       data-status={os.status}
       data-id={os.id}
     >
-      {/* Row 1: ID + badges + atrasado badge */}
-      <div className={styles.topRow}>
-        <span className={styles.id}>#{os.id}</span>
-        <span className={styles.prioBadge}>
-          <span className={styles.prioDot} style={{ background: PRIO_DOT[os.prioridade] }} />
-          {PRIORIDADE_LABEL[os.prioridade]}
-        </span>
-        <span className={styles.catBadge}>{os.categoria_nome}</span>
-        {isAtrasado && (
-          <span className={styles.atrasadoBadge}>
-            <IconAlertTriangle size={11} aria-hidden="true" />
-            {diasAtrasado(os.prazo) === 1
-              ? 'Atrasado 1 dia'
-              : `Atrasado ${diasAtrasado(os.prazo)} dias`}
+      {/* Header: tags esquerda, datas direita */}
+      <div className={styles.headerRow}>
+        <div className={styles.topRow}>
+          <span className={styles.id}>#{os.id}</span>
+          <span className={styles.prioBadge}>
+            <span className={styles.prioDot} style={{ background: PRIO_DOT[os.prioridade] }} />
+            {PRIORIDADE_LABEL[os.prioridade]}
           </span>
-        )}
+          <span className={styles.catBadge}>{os.categoria_nome}</span>
+          {isAtrasado && (
+            <span className={styles.atrasadoBadge}>
+              <IconAlertTriangle size={13} aria-hidden="true" />
+              {diasAtrasado(os.prazo) === 1
+                ? 'Atrasado 1 dia'
+                : `Atrasado ${diasAtrasado(os.prazo)} dias`}
+            </span>
+          )}
+        </div>
+        <div className={styles.datesRight}>
+          <p className={styles.dateItem}>
+            <IconCalendar size={13} aria-hidden="true" />
+            <span>Aberto em: {formatDataHora(os.criado_em)}</span>
+          </p>
+          {(() => {
+            const urgencia = isFechado ? 'normal' : prazoUrgencia(os.prazo)
+            const cls = [
+              styles.dateItem,
+              urgencia === 'vencido' ? styles.prazoVencido : '',
+              urgencia === 'urgente' ? styles.prazoUrgente : '',
+            ].filter(Boolean).join(' ')
+            return (
+              <p className={cls}>
+                <IconClock size={13} aria-hidden="true" />
+                <span>Prazo: {formatDataHora(os.prazo)}</span>
+              </p>
+            )
+          })()}
+        </div>
       </div>
 
-      {/* Row 2: Title */}
+      {/* Título */}
       <h3 className={styles.titulo} title={os.titulo}>
         {os.titulo}
       </h3>
 
-      {/* Row 3: Veículo | Mecânico */}
+      {/* Veículo | Mecânico */}
       <div className={styles.infoRow}>
         <span className={styles.infoItem}>
-          <IconTruck size={14} aria-hidden="true" />
+          <IconTruck size={16} aria-hidden="true" />
           <span>{os.veiculo_placa}</span>
         </span>
         <span className={styles.infoDivider} aria-hidden="true">|</span>
         <span className={styles.infoItem}>
-          <IconUser size={14} aria-hidden="true" />
+          <IconUser size={16} aria-hidden="true" />
           {os.mecanico_nome ? (
             <span className={styles.avatarRow}>
               <span
@@ -159,15 +169,9 @@ export function OSCard({ os, perfil, userId, onFechar }: OSCardProps) {
         </span>
       </div>
 
-      {/* Row 4: Aberto por */}
+      {/* Aberto por */}
       <p className={styles.openedBy}>
-        Aberto por {os.supervisor_nome} · {abertoPorData(os.criado_em)}
-      </p>
-
-      {/* Row 5: Tempo aberto + prazo */}
-      <p className={styles.timeLine}>
-        <IconClock size={12} aria-hidden="true" />
-        Aberto há {abertoHa(os.criado_em)} · prazo {prazoFormatado(os.prazo)}
+        Aberto por {os.supervisor_nome}
       </p>
 
       {/* Row 6: Progress bar (se > 0) */}
@@ -191,10 +195,10 @@ export function OSCard({ os, perfil, userId, onFechar }: OSCardProps) {
 
       {/* Footer: Ver detalhes | Fechar Chamado */}
       <div className={styles.actions}>
-        <button className={styles.detailsBtn} type="button">
-          <IconEye size={14} aria-hidden="true" />
+        <Link href={`/chamados/${os.id}`} className={styles.detailsBtn}>
+          <IconEye size={16} aria-hidden="true" />
           Ver detalhes
-        </button>
+        </Link>
         {podeFechar && (
           <button
             className={styles.fecharBtn}

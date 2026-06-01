@@ -5,12 +5,15 @@ import { prisma } from '../lib/prisma.js'
 
 export interface OSListParams {
   status?: string
+  excluir_fechados?: boolean
   prioridade?: string
   categoria_id?: number
   mecanico_id?: string
   supervisor_id?: string
   de?: Date
   ate?: Date
+  fechado_de?: Date
+  fechado_ate?: Date
   busca?: string
   pagina: number
   por_pagina: number
@@ -136,7 +139,12 @@ function osListSelect() {
 function buildWhere(params: Omit<OSListParams, 'pagina' | 'por_pagina'>): Prisma.ordens_servicoWhereInput {
   const where: Prisma.ordens_servicoWhereInput = {}
 
-  if (params.status)        where.status       = params.status
+  if (params.status) {
+    where.status = params.status
+  } else if (params.excluir_fechados) {
+    where.status = { not: 'fechado' }
+  }
+
   if (params.prioridade)    where.prioridade   = params.prioridade
   if (params.categoria_id)  where.categoria_id  = params.categoria_id
   if (params.mecanico_id)   where.mecanico_id   = params.mecanico_id
@@ -147,6 +155,13 @@ function buildWhere(params: Omit<OSListParams, 'pagina' | 'por_pagina'>): Prisma
     if (params.de)  range.gte = params.de
     if (params.ate) range.lte = params.ate
     where.criado_em = range
+  }
+
+  if (params.fechado_de || params.fechado_ate) {
+    const range: Prisma.DateTimeNullableFilter = {}
+    if (params.fechado_de)  range.gte = params.fechado_de
+    if (params.fechado_ate) range.lte = params.fechado_ate
+    where.fechado_em = range
   }
 
   if (params.busca) {

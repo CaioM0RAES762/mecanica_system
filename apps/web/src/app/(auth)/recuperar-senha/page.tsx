@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type FormEvent } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SolicitarRecuperacaoSenhaSchema, RedefinirSenhaSchema } from '@metalsider/shared'
 import styles from '../cadastro/page.module.css'
@@ -61,7 +61,7 @@ export default function RecuperarSenhaPage() {
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
   }
 
-  async function handleEtapa1(e: FormEvent) {
+  async function handleEtapa1(e: React.SyntheticEvent) {
     e.preventDefault()
     setErro(null)
 
@@ -88,7 +88,7 @@ export default function RecuperarSenhaPage() {
     }
   }
 
-  async function handleEtapa2(e: FormEvent) {
+  async function handleEtapa2(e: React.SyntheticEvent) {
     e.preventDefault()
     setErro(null)
     if (codigo.length !== 6) {
@@ -98,7 +98,7 @@ export default function RecuperarSenhaPage() {
     setEtapa(3)
   }
 
-  async function handleEtapa3(e: FormEvent) {
+  async function handleEtapa3(e: React.SyntheticEvent) {
     e.preventDefault()
     setErro(null)
 
@@ -155,7 +155,7 @@ export default function RecuperarSenhaPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <span className={styles.logo}>M</span>
+          <img src="/images/logo.png" alt="Metalsider" className={styles.logo} />
           <h1 className={styles.title}>Recuperar senha</h1>
           <p className={styles.subtitle}>Enviaremos um código para seu e-mail corporativo</p>
         </div>

@@ -1,4 +1,6 @@
-import type { InputHTMLAttributes, ReactNode } from 'react'
+'use client'
+
+import { useId, type InputHTMLAttributes, type ReactNode } from 'react'
 import styles from './Input.module.css'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -23,7 +25,8 @@ export function Input({
   className,
   ...props
 }: InputProps) {
-  const inputId = id ?? `input-${Math.random().toString(36).slice(2, 8)}`
+  const generatedId = useId()
+  const inputId = id ?? generatedId
 
   return (
     <div className={styles.field}>

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 const AUTH_PAGES = ['/login', '/ativar-conta', '/cadastro', '/recuperar-senha']
-const PUBLIC_PREFIX = ['/api/auth', '/_next', '/favicon.ico']
+const PUBLIC_PREFIX = ['/api/auth', '/_next', '/favicon.ico', '/images', '/icons', '/fonts']
 
 export default auth((req: NextRequest & { auth: { user?: unknown } | null }) => {
   const { pathname } = req.nextUrl

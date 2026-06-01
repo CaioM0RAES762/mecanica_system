@@ -87,7 +87,6 @@ export function Topbar({ userName, userPerfil, onMenuToggle, chamadosAbertos = 0
         <div className={styles.breadcrumb} aria-label="Navegação breadcrumb">
           <span className={styles.breadcrumbSection}>{routeInfo.section}</span>
           <span className={styles.breadcrumbSep} aria-hidden="true">/</span>
-          <span className={styles.breadcrumbPage}>{routeInfo.title}</span>
         </div>
 
         <h1 className={styles.pageTitle}>{routeInfo.title}</h1>

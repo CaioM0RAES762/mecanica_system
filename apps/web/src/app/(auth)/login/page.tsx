@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, type FormEvent } from 'react'
+import React, { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -18,7 +18,7 @@ function LoginForm() {
   const [erro, setErro] = useState<string | null>(null)
   const [erroTipo, setErroTipo] = useState<'error' | 'warning'>('error')
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
     setErro(null)
     setLoading(true)
@@ -59,6 +59,10 @@ function LoginForm() {
 
   return (
     <div className={styles.formWrapper}>
+      <div className={styles.mobileLogo}>
+        <img src="/images/logo.png" alt="Metalsider" className={styles.mobileLogoImg} />
+      </div>
+
       <h2 className={styles.title}>Bem-vindo de volta</h2>
       <p className={styles.subtitle}>Acesse sua conta corporativa</p>
 
@@ -137,11 +141,49 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <aside className={styles.panel}>
+        <svg
+          className={styles.panelDecoration}
+          viewBox="0 0 440 760"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          {/* Anéis concêntricos — canto superior direito */}
+          <circle cx="400" cy="-80" r="320" stroke="white" strokeOpacity="0.06" strokeWidth="1" />
+          <circle cx="400" cy="-80" r="230" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
+          <circle cx="400" cy="-80" r="145" stroke="white" strokeOpacity="0.04" strokeWidth="1" />
+          {/* Anéis concêntricos — canto inferior esquerdo */}
+          <circle cx="20" cy="840" r="300" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
+          <circle cx="20" cy="840" r="200" stroke="white" strokeOpacity="0.04" strokeWidth="1" />
+          {/* Linhas diagonais sutis */}
+          <line x1="-30" y1="400" x2="470" y2="180" stroke="white" strokeOpacity="0.025" strokeWidth="1" />
+          <line x1="-30" y1="460" x2="470" y2="240" stroke="white" strokeOpacity="0.02" strokeWidth="1" />
+          <line x1="-30" y1="520" x2="470" y2="300" stroke="white" strokeOpacity="0.015" strokeWidth="1" />
+          {/* Quadrado decorativo centralizado */}
+          <rect x="170" y="340" width="100" height="100" rx="4" stroke="white" strokeOpacity="0.045" strokeWidth="1" />
+          <rect x="186" y="356" width="68" height="68" rx="2" stroke="white" strokeOpacity="0.03" strokeWidth="1" />
+        </svg>
+
         <div className={styles.brand}>
-          <span className={styles.logo}>M</span>
-          <h1 className={styles.brandName}>Metalsider</h1>
+          <img src="/images/logo.png" alt="Metalsider" className={styles.logoImg} />
           <p className={styles.brandTagline}>Gestão de Ordens de Serviço</p>
+          <div className={styles.brandDivider} />
+          <div className={styles.brandFeatures}>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureDot} />
+              Controle total de ordens de serviço
+            </div>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureDot} />
+              Analytics e relatórios em tempo real
+            </div>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureDot} />
+              Notificações automáticas por e-mail
+            </div>
+          </div>
         </div>
+        <p className={styles.panelFooter}>© {new Date().getFullYear()} Metalsider</p>
       </aside>
 
       <main className={styles.formArea}>

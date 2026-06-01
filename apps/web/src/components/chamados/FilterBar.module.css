@@ -1,5 +1,40 @@
 /* ---- Zona de Controles — Fluent-inspired ---- */
 
+/* ---- Tabs principais: Abertos / Fechados ---- */
+
+.mainTabRow {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e5e5e5;
+  margin: 0 calc(var(--content-px) * -1);
+  padding: 0 var(--content-px);
+}
+
+.mainTab {
+  padding: 10px 20px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: #605e5c;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+  white-space: nowrap;
+  margin-bottom: -1px;
+}
+
+.mainTabActive {
+  color: #0078d4;
+  border-bottom-color: #0078d4;
+  font-weight: var(--font-semibold);
+}
+
+.mainTab:hover:not(.mainTabActive) {
+  color: #323130;
+  background: #f3f2f1;
+}
+
 .bar {
   position: sticky;
   top: var(--topbar-height);
@@ -21,8 +56,8 @@
 }
 
 .titleText {
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
+  font-size: 1.25rem;
+  font-weight: 600;
   color: #323130;
   line-height: var(--leading-tight);
 }
@@ -150,4 +185,73 @@
 
 .resetBtn:hover {
   background: var(--color-blue-50);
+}
+
+/* ---- Período (aba Fechados) ---- */
+
+.periodRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.periodBtn {
+  padding: 5px 12px;
+  height: 32px;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: #323130;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.periodBtn:hover:not(.periodBtnActive) {
+  background: #f3f2f1;
+  border-color: #c8c6c4;
+}
+
+.periodBtnActive {
+  background: #0078d4;
+  border-color: #0078d4;
+  color: #ffffff;
+}
+
+.dateRangeWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: 4px;
+}
+
+.dateLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: #605e5c;
+  white-space: nowrap;
+}
+
+.dateInput {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: #323130;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.15);
 }
