@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { CriarOSDTO, AtualizarOSDTO, FecharOSDTO, FiltroOSDTO } from '@metalsider/shared'
 import {
   listarOSService,
+  contarOSService,
   buscarOSService,
   criarOSService,
   atualizarOSService,
@@ -9,6 +10,14 @@ import {
   buscarAuditoriaService,
 } from '../services/ordens-servico.service.js'
 import type { JwtPayload } from '../middlewares/authenticate.js'
+
+export async function contagemOSController(
+  request: FastifyRequest<{ Querystring: FiltroOSDTO }>,
+  reply: FastifyReply,
+) {
+  const total = await contarOSService(request.query)
+  return reply.code(200).send({ total })
+}
 
 export async function listarOSController(
   request: FastifyRequest<{ Querystring: FiltroOSDTO }>,

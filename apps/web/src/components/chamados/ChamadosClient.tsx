@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type { CategoriaResumo, OrdemServicoResumo, RespostaPaginada } from '@metalsider/shared'
 import type { FecharOSDTO } from '@metalsider/shared'
-import { IconClipboardList, IconRefresh } from '@tabler/icons-react'
-import { Button, EmptyState, Skeleton } from '@/components/ui'
+import { IconClipboardList } from '@tabler/icons-react'
+import { EmptyState, Skeleton } from '@/components/ui'
 import { listarOS, fecharOS } from '@/lib/api/ordens-servico'
 import { FilterBar, FILTRO_INICIAL } from './FilterBar'
 import type { FiltroState } from './FilterBar'
@@ -121,27 +121,14 @@ export function ChamadosClient({
         filtros={filtros}
         categorias={categorias}
         perfil={perfil}
+        total={total}
+        loading={loading}
+        onAtualizar={() => void fetchOS(filtros)}
         onChange={payload => dispatch({ type: 'set', payload })}
         onReset={() => dispatch({ type: 'reset' })}
       />
 
       <div className={styles.content}>
-        <div className={styles.headerRow}>
-          <p className={styles.totalLabel}>
-            {loading ? '…' : `${total} chamado${total !== 1 ? 's' : ''}`}
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void fetchOS(filtros)}
-            leftIcon={<IconRefresh size={14} />}
-            aria-label="Atualizar lista"
-            disabled={loading}
-          >
-            Atualizar
-          </Button>
-        </div>
-
         {erro && (
           <div className={styles.erro} role="alert">
             {erro}

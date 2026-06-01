@@ -1,38 +1,37 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
 import { Sidebar, type UserPerfil } from './Sidebar'
 import { Topbar } from './Topbar'
 import styles from './AppShellClient.module.css'
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1'
-const POLL_INTERVAL = 60_000 // 60 segundos
+const POLL_INTERVAL = 120_000 // 120 segundos
 
 interface AppShellClientProps {
   userPerfil: UserPerfil
   userName: string
+  accessToken?: string
   children: React.ReactNode
 }
 
-export function AppShellClient({ userPerfil, userName, children }: AppShellClientProps) {
+export function AppShellClient({ userPerfil, userName, accessToken, children }: AppShellClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [chamadosAbertos, setChamadosAbertos] = useState(0)
-  const { data: session } = useSession()
 
   useEffect(() => {
-    const token = session?.accessToken
+    const token = accessToken
     if (!token) return
 
     const fetchCount = async () => {
       try {
         const res = await fetch(
-          `${API_URL}/ordens-servico?status=aberto&por_pagina=1`,
+          `${API_URL}/ordens-servico/contagem?status=aberto`,
           { headers: { Authorization: `Bearer ${token}` } },
         )
         if (!res.ok) return
-        const data = (await res.json()) as { paginacao?: { total: number } }
-        setChamadosAbertos(data.paginacao?.total ?? 0)
+        const data = (await res.json()) as { total?: number }
+        setChamadosAbertos(data.total ?? 0)
       } catch {
         // Redis / network transiente — ignorar silenciosamente
       }
@@ -41,7 +40,7 @@ export function AppShellClient({ userPerfil, userName, children }: AppShellClien
     void fetchCount()
     const interval = setInterval(() => void fetchCount(), POLL_INTERVAL)
     return () => clearInterval(interval)
-  }, [session?.accessToken])
+  }, [accessToken])
 
   return (
     <div className={styles.app}>

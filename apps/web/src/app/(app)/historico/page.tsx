@@ -15,9 +15,6 @@ export default async function HistoricoPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Histórico de Chamados</h1>
-      </div>
       <HistoricoClient
         token={token}
         perfil={session?.user?.perfil ?? 'mecanico'}

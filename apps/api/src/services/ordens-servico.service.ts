@@ -2,6 +2,7 @@ import { AcaoAuditoria, PerfilUsuario, type PrioridadeOS } from '@metalsider/sha
 import type { CriarOSDTO, AtualizarOSDTO, FecharOSDTO, FiltroOSDTO } from '@metalsider/shared'
 import {
   findManyOS,
+  countOS,
   findOSById,
   createOS,
   updateOS,
@@ -77,13 +78,41 @@ function normalizarFechamento(
 ) {
   if (!f) return null
   return {
-    ...f,
+    id:                f.id,
+    resultado:         f.resultado,
+    nota_resolucao:    f.nota_resolucao,
     horas_trabalhadas: f.horas_trabalhadas != null
       ? (typeof f.horas_trabalhadas === 'object' && 'toNumber' in f.horas_trabalhadas
           ? (f.horas_trabalhadas as { toNumber: () => number }).toNumber()
           : Number(f.horas_trabalhadas))
       : null,
+    obs_adicionais:   f.obs_adicionais,
+    fechado_em:       f.fechado_em,
+    fechado_por_id:   f.fechado_por.id,
+    fechado_por_nome: f.fechado_por.nome_completo,
   }
+}
+
+function normalizarAnexos(
+  anexos: Array<{
+    id: number
+    nome_arquivo: string
+    url: string
+    tipo: string | null
+    tamanho_bytes: number | null
+    criado_em: Date
+    enviado_por: { id: string; nome_completo: string }
+  }>,
+) {
+  return anexos.map((a) => ({
+    id:             a.id,
+    nome_arquivo:   a.nome_arquivo,
+    url:            a.url,
+    tipo:           a.tipo,
+    tamanho_bytes:  a.tamanho_bytes,
+    enviado_por_id: a.enviado_por.id,
+    criado_em:      a.criado_em,
+  }))
 }
 
 // BigInt em logs_auditoria.id não serializa com JSON.stringify; converter para string
@@ -105,7 +134,33 @@ function normalizarAuditoria(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizarOS(os: any, perfil: string): any {
-  const resultado = { ...os, fechamento: normalizarFechamento(os.fechamento ?? null) }
+  const resultado = {
+    // Campos diretos da tabela ordens_servico
+    id:              os.id,
+    titulo:          os.titulo,
+    prioridade:      os.prioridade,
+    status:          os.status,
+    descricao:       os.descricao,
+    notas_internas:  os.notas_internas,
+    inicio_previsto: os.inicio_previsto,
+    prazo:           os.prazo,
+    fechado_em:      os.fechado_em,
+    criado_em:       os.criado_em,
+    atualizado_em:   os.atualizado_em,
+    // Relações achatadas → campos planos exigidos por OrdemServicoResumo
+    categoria_id:    os.categoria?.id   ?? null,
+    categoria_nome:  os.categoria?.nome ?? '',
+    veiculo_id:      os.veiculo?.id     ?? null,
+    veiculo_placa:   os.veiculo?.placa  ?? '',
+    veiculo_modelo:  os.veiculo?.modelo ?? '',
+    supervisor_id:   os.supervisor?.id  ?? '',
+    supervisor_nome: os.supervisor?.nome_completo ?? '',
+    mecanico_id:     os.mecanico?.id              ?? null,
+    mecanico_nome:   os.mecanico?.nome_completo   ?? null,
+    // Campos de OrdemServicoDetalhe
+    fechamento: normalizarFechamento(os.fechamento ?? null),
+    anexos:     normalizarAnexos(os.anexos ?? []),
+  }
   // Remover notas_internas para mecânicos (SDD § 8.5 / CLAUDE.md)
   if (perfil === PerfilUsuario.MECANICO) {
     delete resultado.notas_internas
@@ -119,6 +174,19 @@ function httpError(statusCode: number, message: string): Error {
   const err = new Error(message) as Error & { statusCode: number }
   err.statusCode = statusCode
   return err
+}
+
+export async function contarOSService(params: FiltroOSDTO) {
+  return countOS({
+    status:       params.status,
+    prioridade:   params.prioridade,
+    categoria_id: params.categoria_id,
+    mecanico_id:  params.mecanico_id,
+    supervisor_id: params.supervisor_id,
+    de:  params.de  ? new Date(params.de)  : undefined,
+    ate: params.ate ? new Date(params.ate) : undefined,
+    busca: params.busca,
+  })
 }
 
 export async function listarOSService(

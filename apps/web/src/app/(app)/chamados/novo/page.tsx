@@ -33,6 +33,7 @@ export default async function NovoChamadoPage() {
       <NovoChamadoForm
         accessToken={token}
         perfil={perfil ?? 'supervisor'}
+        userName={session?.user?.name ?? ''}
         categorias={categorias}
         veiculos={veiculos}
         mecanicos={mecanicos}

@@ -15,9 +15,6 @@ export default async function ChamadosPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Chamados Abertos</h1>
-      </div>
       <ChamadosClient
         accessToken={token}
         perfil={session?.user?.perfil ?? 'mecanico'}

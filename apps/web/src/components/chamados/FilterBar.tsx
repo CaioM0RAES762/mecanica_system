@@ -2,7 +2,7 @@
 
 import type { CategoriaResumo } from '@metalsider/shared'
 import { Input, Select } from '@/components/ui'
-import { IconSearch } from '@tabler/icons-react'
+import { IconSearch, IconRefresh } from '@tabler/icons-react'
 import styles from './FilterBar.module.css'
 
 export interface FiltroState {
@@ -17,6 +17,9 @@ interface FilterBarProps {
   filtros: FiltroState
   categorias: CategoriaResumo[]
   perfil: string
+  total: number
+  loading: boolean
+  onAtualizar: () => void
   onChange: (f: Partial<FiltroState>) => void
   onReset: () => void
 }
@@ -45,7 +48,16 @@ export const FILTRO_INICIAL: FiltroState = {
   ordenacao: 'prazo_asc',
 }
 
-export function FilterBar({ filtros, categorias, perfil, onChange, onReset }: FilterBarProps) {
+export function FilterBar({
+  filtros,
+  categorias,
+  perfil,
+  total,
+  loading,
+  onAtualizar,
+  onChange,
+  onReset,
+}: FilterBarProps) {
   const categoriaOptions = [
     { value: '', label: 'Todas as categorias' },
     ...categorias.map(c => ({ value: String(c.id), label: c.nome })),
@@ -59,6 +71,26 @@ export function FilterBar({ filtros, categorias, perfil, onChange, onReset }: Fi
 
   return (
     <div className={styles.bar} data-testid="filter-bar">
+      {/* Linha 1: título + badge contador + botão atualizar */}
+      <div className={styles.titleRow}>
+        <h1 className={styles.titleText}>Chamados Abertos</h1>
+        <span className={styles.badge}>
+          {loading ? '…' : `${total} chamado${total !== 1 ? 's' : ''}`}
+        </span>
+        <div className={styles.titleSpacer} />
+        <button
+          type="button"
+          className={styles.atualizarBtn}
+          onClick={onAtualizar}
+          disabled={loading}
+          aria-label="Atualizar lista"
+        >
+          <IconRefresh size={14} aria-hidden="true" />
+          Atualizar
+        </button>
+      </div>
+
+      {/* Linha 2: input de busca + dropdowns */}
       <div className={styles.row}>
         <div className={styles.searchWrap}>
           <Input
@@ -96,12 +128,12 @@ export function FilterBar({ filtros, categorias, perfil, onChange, onReset }: Fi
         />
       </div>
 
-      <div className={styles.secondRow}>
-        {/* Segmented control */}
-        <div className={styles.segmented} role="group" aria-label="Escopo de chamados">
+      {/* Linha 3: tabs underline + limpar filtros */}
+      <div className={styles.tabRow}>
+        <div className={styles.tabs} role="group" aria-label="Escopo de chamados">
           <button
             type="button"
-            className={[styles.segment, !filtros.atribuidos_a_mim ? styles.segmentActive : ''].filter(Boolean).join(' ')}
+            className={[styles.tab, !filtros.atribuidos_a_mim ? styles.tabActive : ''].filter(Boolean).join(' ')}
             onClick={() => onChange({ atribuidos_a_mim: false })}
             data-testid="segment-todos"
           >
@@ -109,7 +141,7 @@ export function FilterBar({ filtros, categorias, perfil, onChange, onReset }: Fi
           </button>
           <button
             type="button"
-            className={[styles.segment, filtros.atribuidos_a_mim ? styles.segmentActive : ''].filter(Boolean).join(' ')}
+            className={[styles.tab, filtros.atribuidos_a_mim ? styles.tabActive : ''].filter(Boolean).join(' ')}
             onClick={() => onChange({ atribuidos_a_mim: true })}
             data-testid="segment-atribuidos"
           >

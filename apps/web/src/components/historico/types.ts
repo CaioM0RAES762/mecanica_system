@@ -1,5 +1,4 @@
-import { StatusOS } from '@metalsider/shared'
-import type { PrioridadeOS } from '@metalsider/shared'
+import type { PrioridadeOS, StatusOS } from '@metalsider/shared'
 
 export interface FiltrosHistorico {
   busca?: string
@@ -13,7 +12,6 @@ export interface FiltrosHistorico {
 }
 
 export const FILTROS_PADRAO: FiltrosHistorico = {
-  status: StatusOS.FECHADO,
   pagina: 1,
   por_pagina: 20,
 }

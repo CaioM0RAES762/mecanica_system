@@ -59,8 +59,9 @@ export interface CriarAuditoriaData {
   novos_valores?: string | null
 }
 
-// ---- Select reutilizável ----
+// ---- Selects reutilizáveis ----
 
+// Select completo: usado em findOSById, createOS e updateOS (detalhe + fechamento + anexos)
 function osSelect() {
   return {
     id: true,
@@ -107,6 +108,29 @@ function osSelect() {
   } as const
 }
 
+// Select reduzido para listagem: não carrega fechamento, anexos nem _count (evita 3 queries extras)
+function osListSelect() {
+  return {
+    id: true,
+    titulo: true,
+    prioridade: true,
+    status: true,
+    descricao: true,
+    notas_internas: true,
+    inicio_previsto: true,
+    prazo: true,
+    fechado_em: true,
+    criado_em: true,
+    atualizado_em: true,
+    supervisor: { select: { id: true, nome_completo: true, email: true } },
+    mecanico: { select: { id: true, nome_completo: true, email: true } },
+    categoria: { select: { id: true, nome: true, cor: true } },
+    veiculo: {
+      select: { id: true, placa: true, marca: true, modelo: true, codigo_frota: true },
+    },
+  } as const
+}
+
 // ---- Helpers ----
 
 function buildWhere(params: Omit<OSListParams, 'pagina' | 'por_pagina'>): Prisma.ordens_servicoWhereInput {
@@ -148,7 +172,7 @@ export async function findManyOS(params: OSListParams) {
   const [dados, total] = await Promise.all([
     prisma.ordens_servico.findMany({
       where,
-      select: osSelect(),
+      select: osListSelect(),
       skip,
       take: por_pagina,
       orderBy: { criado_em: 'desc' },
@@ -194,6 +218,10 @@ export async function createFechamento(data: CriarFechamentoData) {
 
 export async function criarAuditoria(data: CriarAuditoriaData) {
   return prisma.logs_auditoria.create({ data })
+}
+
+export async function countOS(params: Omit<OSListParams, 'pagina' | 'por_pagina'>) {
+  return prisma.ordens_servico.count({ where: buildWhere(params) })
 }
 
 export async function findAuditoriaByOS(osId: number) {

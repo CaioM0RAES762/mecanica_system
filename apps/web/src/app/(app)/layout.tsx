@@ -12,9 +12,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const userPerfil = (session.user.perfil ?? 'mecanico') as UserPerfil
   const userName = session.user.name ?? session.user.email ?? 'Usuário'
+  const accessToken = session.accessToken
 
   return (
-    <AppShellClient userPerfil={userPerfil} userName={userName}>
+    <AppShellClient userPerfil={userPerfil} userName={userName} accessToken={accessToken}>
       {children}
     </AppShellClient>
   )

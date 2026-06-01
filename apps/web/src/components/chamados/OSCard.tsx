@@ -2,8 +2,7 @@
 
 import type { OrdemServicoResumo } from '@metalsider/shared'
 import { PRIORIDADE_LABEL, StatusOS } from '@metalsider/shared'
-import { IconClock, IconUser, IconCar } from '@tabler/icons-react'
-import { Button } from '@/components/ui'
+import { IconClock, IconTruck, IconUser, IconAlertTriangle, IconEye } from '@tabler/icons-react'
 import styles from './OSCard.module.css'
 
 interface OSCardProps {
@@ -14,6 +13,35 @@ interface OSCardProps {
   onFechar: (os: OrdemServicoResumo) => void
 }
 
+// ---- Helpers ----
+
+const PRIO_BORDER: Record<string, string> = {
+  baixa:   '#107c10',
+  media:   '#797775',
+  alta:    '#ca5010',
+  critica: '#d13438',
+}
+
+const PRIO_DOT: Record<string, string> = {
+  baixa:   '#107c10',
+  media:   '#797775',
+  alta:    '#ca5010',
+  critica: '#d13438',
+}
+
+const AVATAR_COLORS = ['#1D6FE8', '#E8A020', '#1D9E75', '#7C5CFC', '#E24B4A', '#0AA89D', '#D95C9A', '#3C7CE0']
+
+function avatarBg(name: string): string {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
+  return AVATAR_COLORS[h % AVATAR_COLORS.length] ?? '#1D6FE8'
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase()
+}
+
 function calcSlaProgress(criadoEm: string, prazo: string): number {
   const inicio = new Date(criadoEm).getTime()
   const fim = new Date(prazo).getTime()
@@ -22,27 +50,26 @@ function calcSlaProgress(criadoEm: string, prazo: string): number {
   return Math.min(100, ((agora - inicio) / (fim - inicio)) * 100)
 }
 
-function prazoLabel(prazo: string, isAtrasado: boolean): string {
-  const d = new Date(prazo)
-  const diff = d.getTime() - Date.now()
-  if (isAtrasado || diff < 0) {
-    const abs = Math.abs(diff)
-    const dias = Math.floor(abs / 86400000)
-    const horas = Math.floor((abs % 86400000) / 3600000)
-    if (dias > 0) return `${dias}d atrasado`
-    if (horas > 0) return `${horas}h atrasado`
-    return 'Atrasado'
-  }
+function abertoHa(criadoEm: string): string {
+  const diff = Date.now() - new Date(criadoEm).getTime()
   const dias = Math.floor(diff / 86400000)
   const horas = Math.floor((diff % 86400000) / 3600000)
-  if (dias > 1) return `${dias} dias`
-  if (dias === 1) return '1 dia'
+  if (dias > 0) return `${dias}d`
   if (horas > 0) return `${horas}h`
   return '< 1h'
 }
 
 function prazoFormatado(prazo: string): string {
-  return new Date(prazo).toLocaleDateString('pt-BR', {
+  return new Date(prazo).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function abertoPorData(criadoEm: string): string {
+  return new Date(criadoEm).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
@@ -51,7 +78,14 @@ function prazoFormatado(prazo: string): string {
   })
 }
 
-export function OSCard({ os, perfil, userId, categoriaCor, onFechar }: OSCardProps) {
+function diasAtrasado(prazo: string): number {
+  const diff = Date.now() - new Date(prazo).getTime()
+  return Math.max(1, Math.floor(diff / 86400000))
+}
+
+// ---- Component ----
+
+export function OSCard({ os, perfil, userId, onFechar }: OSCardProps) {
   const isAtrasado = os.status === StatusOS.ATRASADO
   const isFechado = os.status === StatusOS.FECHADO
   const progress = isFechado ? 100 : calcSlaProgress(os.criado_em, os.prazo)
@@ -61,100 +95,115 @@ export function OSCard({ os, perfil, userId, categoriaCor, onFechar }: OSCardPro
     (perfil === 'supervisor' || perfil === 'admin' || os.mecanico_id === userId)
 
   const progressColor =
-    isAtrasado || progress > 90
-      ? 'var(--color-red-500)'
-      : progress > 75
-        ? '#d97020'
-        : progress > 50
-          ? 'var(--color-amber-500)'
-          : 'var(--color-green-500)'
+    isAtrasado || progress > 90 ? '#d13438'
+      : progress > 75 ? '#ca5010'
+        : progress > 50 ? '#797775'
+          : '#107c10'
 
-  const prioridadeClass: Record<string, string | undefined> = {
-    baixa: styles.prioridadeBaixa,
-    media: styles.prioridadeMedia,
-    alta: styles.prioridadeAlta,
-    critica: styles.prioridadeCritica,
-  }
-
-  const statusClass: Record<string, string | undefined> = {
-    aberto: styles.statusAberto,
-    atrasado: styles.statusAtrasado,
-    fechado: styles.statusFechado,
-  }
+  const borderColor = isAtrasado ? '#d13438' : (PRIO_BORDER[os.prioridade] ?? '#797775')
 
   return (
     <article
-      className={[styles.card, isAtrasado ? styles.cardAtrasado : ''].filter(Boolean).join(' ')}
+      className={styles.card}
+      style={{ '--prio-border': borderColor } as React.CSSProperties}
       data-testid="os-card"
       data-status={os.status}
       data-id={os.id}
     >
+      {/* Row 1: ID + badges + atrasado badge */}
       <div className={styles.topRow}>
         <span className={styles.id}>#{os.id}</span>
-        <span
-          className={[styles.prioridade, prioridadeClass[os.prioridade] ?? ''].filter(Boolean).join(' ')}
-          data-testid="prioridade-badge"
-        >
+        <span className={styles.prioBadge}>
+          <span className={styles.prioDot} style={{ background: PRIO_DOT[os.prioridade] }} />
           {PRIORIDADE_LABEL[os.prioridade]}
         </span>
-        <span
-          className={styles.categoria}
-          style={
-            categoriaCor
-              ? ({ '--cat-cor': categoriaCor } as React.CSSProperties)
-              : undefined
-          }
-          data-testid="categoria-badge"
-        >
-          {os.categoria_nome}
-        </span>
-        <span className={[styles.status, statusClass[os.status] ?? ''].filter(Boolean).join(' ')}>
-          {os.status === StatusOS.ATRASADO ? 'Atrasado' : os.status === StatusOS.FECHADO ? 'Fechado' : 'Aberto'}
-        </span>
+        <span className={styles.catBadge}>{os.categoria_nome}</span>
+        {isAtrasado && (
+          <span className={styles.atrasadoBadge}>
+            <IconAlertTriangle size={11} aria-hidden="true" />
+            {diasAtrasado(os.prazo) === 1
+              ? 'Atrasado 1 dia'
+              : `Atrasado ${diasAtrasado(os.prazo)} dias`}
+          </span>
+        )}
       </div>
 
+      {/* Row 2: Title */}
       <h3 className={styles.titulo} title={os.titulo}>
         {os.titulo}
       </h3>
 
-      <div className={styles.meta}>
-        <span className={styles.metaItem}>
-          <IconCar size={13} aria-hidden="true" />
-          <span>{os.veiculo_placa} — {os.veiculo_modelo}</span>
+      {/* Row 3: Veículo | Mecânico */}
+      <div className={styles.infoRow}>
+        <span className={styles.infoItem}>
+          <IconTruck size={14} aria-hidden="true" />
+          <span>{os.veiculo_placa}</span>
         </span>
-        <span className={styles.metaItem}>
-          <IconUser size={13} aria-hidden="true" />
-          <span>{os.mecanico_nome ?? 'Não atribuído'}</span>
+        <span className={styles.infoDivider} aria-hidden="true">|</span>
+        <span className={styles.infoItem}>
+          <IconUser size={14} aria-hidden="true" />
+          {os.mecanico_nome ? (
+            <span className={styles.avatarRow}>
+              <span
+                className={styles.avatar}
+                style={{ background: avatarBg(os.mecanico_nome) }}
+                aria-hidden="true"
+              >
+                {initials(os.mecanico_nome)}
+              </span>
+              {os.mecanico_nome.split(' ')[0]}
+            </span>
+          ) : (
+            <span className={styles.notAssigned}>Não atribuído</span>
+          )}
         </span>
       </div>
 
-      <div className={styles.footer}>
-        <div className={styles.prazoRow}>
-          <IconClock size={13} aria-hidden="true" />
-          <span
-            className={[styles.prazo, isAtrasado ? styles.prazoAtrasado : ''].filter(Boolean).join(' ')}
-            title={prazoFormatado(os.prazo)}
-          >
-            {prazoLabel(os.prazo, isAtrasado)}
-          </span>
-        </div>
+      {/* Row 4: Aberto por */}
+      <p className={styles.openedBy}>
+        Aberto por {os.supervisor_nome} · {abertoPorData(os.criado_em)}
+      </p>
 
-        <div className={styles.progressTrack} role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
+      {/* Row 5: Tempo aberto + prazo */}
+      <p className={styles.timeLine}>
+        <IconClock size={12} aria-hidden="true" />
+        Aberto há {abertoHa(os.criado_em)} · prazo {prazoFormatado(os.prazo)}
+      </p>
+
+      {/* Row 6: Progress bar (se > 0) */}
+      {progress > 0 && (
+        <div className={styles.progressWrap}>
           <div
-            className={styles.progressFill}
-            style={{ width: `${progress}%`, backgroundColor: progressColor }}
-          />
+            className={styles.progressTrack}
+            role="progressbar"
+            aria-valuenow={Math.round(progress)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className={styles.progressFill}
+              style={{ width: `${progress}%`, backgroundColor: progressColor }}
+            />
+          </div>
+          <span className={styles.progressLabel}>{Math.round(progress)}%</span>
         </div>
+      )}
 
+      {/* Footer: Ver detalhes | Fechar Chamado */}
+      <div className={styles.actions}>
+        <button className={styles.detailsBtn} type="button">
+          <IconEye size={14} aria-hidden="true" />
+          Ver detalhes
+        </button>
         {podeFechar && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            className={styles.fecharBtn}
+            type="button"
             onClick={() => onFechar(os)}
             data-testid="btn-fechar"
           >
-            Fechar
-          </Button>
+            Fechar Chamado
+          </button>
         )}
       </div>
     </article>

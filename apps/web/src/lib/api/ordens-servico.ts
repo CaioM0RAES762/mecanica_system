@@ -18,6 +18,7 @@ function authHeaders(token: string) {
 export async function listarOS(
   filtros: Partial<FiltroOSDTO>,
   token: string,
+  signal?: AbortSignal,
 ): Promise<RespostaPaginada<OrdemServicoResumo>> {
   const params = new URLSearchParams()
   for (const [k, v] of Object.entries(filtros)) {
@@ -28,6 +29,7 @@ export async function listarOS(
   const res = await fetch(`${API_URL}/ordens-servico?${params.toString()}`, {
     headers: authHeaders(token),
     cache: 'no-store',
+    signal,
   })
   if (!res.ok) throw new Error('Falha ao carregar chamados')
   return res.json() as Promise<RespostaPaginada<OrdemServicoResumo>>

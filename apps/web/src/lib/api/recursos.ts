@@ -13,7 +13,7 @@ export async function listarCategorias(token: string): Promise<CategoriaResumo[]
   try {
     const res = await fetch(`${API_URL}/categorias`, {
       headers: authHeaders(token),
-      cache: 'no-store',
+      next: { revalidate: 30 },
     })
     if (!res.ok) return []
     const data = (await res.json()) as { dados: CategoriaResumo[] }
@@ -27,7 +27,7 @@ export async function listarVeiculos(token: string): Promise<VeiculoResumo[]> {
   try {
     const res = await fetch(`${API_URL}/veiculos`, {
       headers: authHeaders(token),
-      cache: 'no-store',
+      next: { revalidate: 30 },
     })
     if (!res.ok) return []
     const data = (await res.json()) as { dados: VeiculoResumo[] }
@@ -41,7 +41,7 @@ export async function listarMecanicos(token: string): Promise<UsuarioResumo[]> {
   try {
     const res = await fetch(`${API_URL}/usuarios?perfil=mecanico`, {
       headers: authHeaders(token),
-      cache: 'no-store',
+      next: { revalidate: 30 },
     })
     if (!res.ok) return []
     const data = (await res.json()) as { dados: UsuarioResumo[] }

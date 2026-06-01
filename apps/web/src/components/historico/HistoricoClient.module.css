@@ -1,121 +1,259 @@
 .layout {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  min-height: 0;
   flex: 1;
+  min-height: 0;
 }
 
-/* Filtros ocultos em mobile, visíveis em desktop */
-.filtrosDesktop {
-  display: none;
-}
-
-.main {
+/* ---- Zona de controles ---- */
+.controles {
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 16px var(--content-px) 12px;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-width: 0;
-  gap: var(--space-4);
-  padding: var(--space-4);
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-@media (min-width: 1024px) {
-  .layout {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .filtrosDesktop {
-    display: block;
-    width: 240px;
-    flex-shrink: 0;
-  }
-
-  .main {
-    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6);
-  }
-}
-
-/* Top bar */
-.topBar {
+.controlesLinha1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.topBarLeft {
+.controlesEsquerda {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 10px;
 }
 
-.btnFiltrosMobile {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  color: var(--color-text);
-  transition: background 0.15s;
+.titulo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #323130;
+  margin: 0;
 }
 
-.btnFiltrosMobile:hover {
-  background: var(--color-primary-50, #eef4ff);
-}
-
-@media (min-width: 1024px) {
-  .btnFiltrosMobile {
-    display: none;
-  }
-}
-
-.total {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+.contador {
+  background: #f3f2f1;
+  color: #605e5c;
+  font-size: 13px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
 }
 
 .exportacoes {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .btnExport {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   background: transparent;
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  font-size: 13px;
+  color: #323130;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s;
 }
 
 .btnExport:hover {
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: #f3f2f1;
 }
 
-.btnExportLabel {
+/* ---- Linha de filtros ---- */
+.filtrosLinha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Container dos filtros — visível apenas em desktop */
+.filtrosDesktop {
   display: none;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
 }
 
-@media (min-width: 480px) {
-  .btnExportLabel {
-    display: inline;
+/* Botão de filtros — visível apenas em mobile */
+.btnFiltrosMobile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 13px;
+  color: #323130;
+  cursor: pointer;
+  position: relative;
+}
+
+.filtrosAtivoBadge {
+  width: 7px;
+  height: 7px;
+  background: #0078d4;
+  border-radius: 50%;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+@media (min-width: 768px) {
+  .filtrosDesktop {
+    display: flex;
+  }
+  .btnFiltrosMobile {
+    display: none;
   }
 }
 
-/* Bottom sheet — mobile */
+/* Campo de busca */
+.campoBusca {
+  position: relative;
+  width: 25%;
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+.iconeInput {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #605e5c;
+  pointer-events: none;
+}
+
+.inputBusca {
+  width: 100%;
+  padding: 6px 8px 6px 28px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #323130;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.inputBusca::placeholder {
+  color: #a19f9d;
+}
+
+.inputBusca:focus {
+  border-color: #0078d4;
+}
+
+/* Dropdowns */
+.select {
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #323130;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  height: 32px;
+}
+
+.select:focus {
+  border-color: #0078d4;
+}
+
+/* Date inputs */
+.inputData {
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #323130;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 32px;
+}
+
+.inputData:focus {
+  border-color: #0078d4;
+}
+
+/* Limpar filtros */
+.btnLimpar {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #0078d4;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btnLimpar:hover {
+  text-decoration: underline;
+}
+
+/* ---- Zona de conteúdo ---- */
+.conteudo {
+  flex: 1;
+  background: #f3f2f1;
+  padding: 20px var(--content-px) var(--content-py);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 767px) {
+  .controles {
+    padding: 12px var(--content-px);
+  }
+  .conteudo {
+    padding: 12px var(--content-px);
+  }
+}
+
+/* Erro */
+.erro {
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btnTentar {
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+
+/* ---- Bottom sheet — mobile ---- */
 .bsOverlay {
   position: fixed;
   inset: 0;
@@ -128,8 +266,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--color-bg, #fff);
-  border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
   z-index: 70;
   max-height: 90vh;
   display: flex;
@@ -145,9 +283,9 @@
 .bsHandle {
   width: 40px;
   height: 4px;
-  background: var(--color-border);
+  background: #e5e5e5;
   border-radius: 2px;
-  margin: var(--space-3) auto 0;
+  margin: 12px auto 0;
   flex-shrink: 0;
 }
 
@@ -155,15 +293,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
   flex-shrink: 0;
 }
 
 .bsTitulo {
-  font-size: var(--text-base);
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
+  color: #323130;
 }
 
 .bsBtnFechar {
@@ -171,36 +310,82 @@
   height: 32px;
   border: none;
   background: transparent;
-  font-size: var(--text-lg);
+  font-size: 18px;
   cursor: pointer;
-  color: var(--color-text-secondary);
-  border-radius: var(--radius-md);
+  color: #605e5c;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bsBody {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-4);
+  padding: 16px;
+}
+
+.bsCampos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bsLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #605e5c;
+  margin-top: 6px;
+}
+
+.inputMobile {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #323130;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.inputMobile:focus {
+  border-color: #0078d4;
 }
 
 .bsFooter {
-  padding: var(--space-4);
-  border-top: 1px solid var(--color-border);
+  padding: 12px 16px;
+  border-top: 1px solid #e5e5e5;
   flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.btnLimparMobile {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 14px;
+  color: #605e5c;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnLimparMobile:hover {
+  background: #f3f2f1;
 }
 
 .btnAplicar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-3);
+  flex: 1;
+  padding: 10px;
   border: none;
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
+  border-radius: 4px;
+  background: #0078d4;
   color: #fff;
-  font-size: var(--text-sm);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s;

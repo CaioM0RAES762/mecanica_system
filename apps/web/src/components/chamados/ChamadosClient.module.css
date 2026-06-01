@@ -1,30 +1,20 @@
 .wrapper {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0;
   min-height: 0;
 }
 
-/* ---- Content ---- */
+/* ---- Zona de conteúdo (cards) ---- */
 
 .content {
-  padding-top: var(--space-4);
+  flex: 1;
+  padding: 20px var(--content-px) var(--content-py);
+  background: #f3f2f1;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-}
-
-/* ---- Header row ---- */
-
-.headerRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.totalLabel {
-  font-size: var(--text-sm);
-  color: var(--color-gray-500);
 }
 
 /* ---- Grade responsiva ---- */

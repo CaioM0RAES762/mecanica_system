@@ -10,6 +10,7 @@ import { authenticate } from '../middlewares/authenticate.js'
 import { roleGuard } from '../middlewares/role-guard.js'
 import {
   listarOSController,
+  contagemOSController,
   buscarOSController,
   criarOSController,
   atualizarOSController,
@@ -39,6 +40,16 @@ export async function ordensServicoRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const query = FiltroOSSchema.parse(request.query)
       return listarOSController({ ...request, query } as Parameters<typeof listarOSController>[0], reply)
+    },
+  )
+
+  // GET /ordens-servico/contagem — retorna apenas total (1 query); usado pelo badge da sidebar
+  fastify.get(
+    '/ordens-servico/contagem',
+    { preHandler: AUTH },
+    async (request, reply) => {
+      const query = FiltroOSSchema.parse(request.query)
+      return contagemOSController({ ...request, query } as Parameters<typeof contagemOSController>[0], reply)
     },
   )
 
