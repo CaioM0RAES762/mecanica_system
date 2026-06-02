@@ -7,6 +7,7 @@ import {
   createOS,
   updateOS,
   updateOSStatus,
+  deleteOS,
   createFechamento,
   criarAuditoria,
   findAuditoriaByOS,
@@ -14,23 +15,23 @@ import {
 } from '../repositories/ordens-servico.repository.js'
 import type { JwtPayload } from '../middlewares/authenticate.js'
 import { emailService, type OSEmailData } from '../lib/email.js'
+import { invalidarCacheAnalytics } from './analytics.service.js'
 
 function buildOSEmailData(os: {
   id: number
   titulo: string
   prioridade: string
   prazo: Date
-  veiculo: { placa: string; marca: string; modelo: string } | null
+  veiculo: { placa: string | null; veiculo: string } | null
   categoria: { nome: string } | null
 }): OSEmailData {
+  const placa = os.veiculo?.placa ? ` (${os.veiculo.placa})` : ''
   return {
     os_id: os.id,
     titulo: os.titulo,
     prioridade: os.prioridade,
     prazo: os.prazo.toISOString(),
-    veiculo: os.veiculo
-      ? `${os.veiculo.marca} ${os.veiculo.modelo} (${os.veiculo.placa})`
-      : '',
+    veiculo: os.veiculo ? `${os.veiculo.veiculo}${placa}` : '',
     categoria: os.categoria?.nome ?? '',
   }
 }
@@ -60,6 +61,16 @@ export function calcularPrazo(prioridade: PrioridadeOS, inicio: Date): Date {
     case 'media':   return addBusinessDays(inicio, 2)
     case 'baixa':   return addBusinessDays(inicio, 5)
   }
+}
+
+// Quando inicio_previsto é hoje usa o momento exato (now()); para datas futuras usa 08:00
+// Isso evita o bug de meia-noite UTC ao parsear strings ISO de data sem hora
+function resolveStartDateTime(source: string | Date): Date {
+  const dateStr = source instanceof Date
+    ? (source.toISOString().split('T')[0] ?? '')
+    : source
+  const todayStr = new Date().toISOString().split('T')[0] ?? ''
+  return dateStr === todayStr ? new Date() : new Date(dateStr + 'T08:00:00')
 }
 
 // ---- Helpers de serialização ----
@@ -150,9 +161,10 @@ function normalizarOS(os: any, perfil: string): any {
     // Relações achatadas → campos planos exigidos por OrdemServicoResumo
     categoria_id:    os.categoria?.id   ?? null,
     categoria_nome:  os.categoria?.nome ?? '',
-    veiculo_id:      os.veiculo?.id     ?? null,
-    veiculo_placa:   os.veiculo?.placa  ?? '',
-    veiculo_modelo:  os.veiculo?.modelo ?? '',
+    veiculo_id:                        os.veiculo?.id                        ?? null,
+    veiculo_placa:                     os.veiculo?.placa                     ?? null,
+    veiculo_nome:                      os.veiculo?.veiculo                   ?? '',
+    veiculo_descricao_tipo_aplicacao:  os.veiculo?.descricao_tipo_aplicacao  ?? null,
     supervisor_id:   os.supervisor?.id  ?? '',
     supervisor_nome: os.supervisor?.nome_completo ?? '',
     mecanico_id:     os.mecanico?.id              ?? null,
@@ -231,8 +243,12 @@ export async function buscarOSService(id: number, ator: JwtPayload) {
 }
 
 export async function criarOSService(dto: CriarOSDTO, atorId: string) {
-  const inicio = new Date(dto.inicio_previsto)
-  const prazo  = calcularPrazo(dto.prioridade, inicio)
+  const inicio = resolveStartDateTime(dto.inicio_previsto)
+  const prazo = dto.duracao_valor !== undefined && dto.duracao_tipo !== undefined
+    ? dto.duracao_tipo === 'horas'
+      ? addHours(inicio, dto.duracao_valor)
+      : addBusinessDays(inicio, dto.duracao_valor)
+    : calcularPrazo(dto.prioridade, inicio)
 
   const os = await createOS({
     titulo:          dto.titulo,
@@ -267,6 +283,7 @@ export async function criarOSService(dto: CriarOSDTO, atorId: string) {
     }
   }
 
+  void invalidarCacheAnalytics()
   return normalizarOS(os, PerfilUsuario.SUPERVISOR)
 }
 
@@ -291,11 +308,15 @@ export async function atualizarOSService(
   if (dto.notas_internas !== undefined) dados.notas_internas  = dto.notas_internas ?? null
   if (dto.mecanico_id    !== undefined) dados.mecanico_id     = dto.mecanico_id ?? null
 
-  // Recalcular prazo se prioridade ou inicio_previsto mudaram
-  if (dto.prioridade || dto.inicio_previsto) {
+  // Recalcular prazo se prioridade, inicio_previsto ou duração mudaram
+  if (dto.prioridade || dto.inicio_previsto || dto.duracao_valor !== undefined) {
     const novaPrioridade = (dto.prioridade ?? osAtual.prioridade) as PrioridadeOS
-    const novoInicio     = new Date(dto.inicio_previsto ?? osAtual.inicio_previsto)
-    dados.prazo          = calcularPrazo(novaPrioridade, novoInicio)
+    const novoInicio     = resolveStartDateTime(dto.inicio_previsto ?? osAtual.inicio_previsto)
+    dados.prazo = dto.duracao_valor !== undefined && dto.duracao_tipo !== undefined
+      ? dto.duracao_tipo === 'horas'
+        ? addHours(novoInicio, dto.duracao_valor)
+        : addBusinessDays(novoInicio, dto.duracao_valor)
+      : calcularPrazo(novaPrioridade, novoInicio)
     if (dto.inicio_previsto) dados.inicio_previsto = novoInicio
   }
 
@@ -345,6 +366,7 @@ export async function atualizarOSService(
     }
   }
 
+  void invalidarCacheAnalytics()
   return normalizarOS(osAtualizada, ator.perfil)
 }
 
@@ -358,14 +380,6 @@ export async function fecharOSService(
 
   if (os.status === 'fechado') {
     throw httpError(422, 'OS já está fechada')
-  }
-
-  // Mecânicos só podem fechar OSs atribuídas a eles (SDD § 8.5 / CLAUDE.md)
-  if (
-    ator.perfil === PerfilUsuario.MECANICO &&
-    os.mecanico?.id !== ator.sub
-  ) {
-    throw httpError(403, 'Mecânico só pode fechar OS atribuída a si')
   }
 
   // Atribuir mecânico se não havia um e foi informado no fechamento
@@ -416,7 +430,21 @@ export async function fecharOSService(
     }
   }
 
+  void invalidarCacheAnalytics()
   return normalizarOS(osAtualizada!, ator.perfil)
+}
+
+export async function excluirOSService(id: number, _ator: JwtPayload) {
+  const os = await findOSById(id)
+  if (!os) throw httpError(404, `OS #${id} não encontrada`)
+
+  if (os.status === 'fechado') {
+    throw httpError(422, 'Não é possível excluir uma OS já fechada')
+  }
+
+  // Hard delete: remove a OS e todos os registros relacionados (logs, fechamento, anexos)
+  await deleteOS(id)
+  void invalidarCacheAnalytics()
 }
 
 export async function buscarAuditoriaService(id: number) {

@@ -96,7 +96,7 @@ function makeUsuario(overrides: Record<string, unknown> = {}) {
 }
 
 function makeVeiculo(overrides: Record<string, unknown> = {}) {
-  return { id: 1, placa: 'ABC1234', marca: 'Volvo', modelo: 'FH', codigo_frota: 'V-001', ativo: true, ...overrides }
+  return { id: 1, veiculo: 'Volvo FH', placa: 'ABC1234', cod_tipo_aplicacao: null, descricao_tipo_aplicacao: null, ativo: true, ...overrides }
 }
 
 function makeCategoria(overrides: Record<string, unknown> = {}) {
@@ -369,13 +369,13 @@ describe('Admin routes — Veículos', () => {
       method: 'POST',
       url: '/api/v1/veiculos',
       headers: { authorization: `Bearer ${token}` },
-      payload: { placa: 'ABC1234', marca: 'Volvo', modelo: 'FH', codigo_frota: 'V-001' },
+      payload: { veiculo: 'Volvo FH', placa: 'ABC1234' },
     })
 
     expect(res.statusCode).toBe(201)
   })
 
-  it('POST /veiculos — placa duplicada retorna 409', async () => {
+  it('POST /veiculos — veiculo duplicado retorna 409', async () => {
     const token = makeToken(app, 'admin', ADMIN_ID)
     mockVeiculosFindFirst.mockResolvedValue(makeVeiculo())
 
@@ -383,7 +383,7 @@ describe('Admin routes — Veículos', () => {
       method: 'POST',
       url: '/api/v1/veiculos',
       headers: { authorization: `Bearer ${token}` },
-      payload: { placa: 'ABC1234', marca: 'Volvo', modelo: 'FH' },
+      payload: { veiculo: 'Volvo FH' },
     })
 
     expect(res.statusCode).toBe(409)
@@ -403,13 +403,13 @@ describe('Admin routes — Veículos', () => {
   it('PATCH /veiculos/:id — admin edita veículo', async () => {
     const token = makeToken(app, 'admin', ADMIN_ID)
     mockVeiculosFindUnique.mockResolvedValue(makeVeiculo())
-    mockVeiculosUpdate.mockResolvedValue(makeVeiculo({ modelo: 'FH 500' }))
+    mockVeiculosUpdate.mockResolvedValue(makeVeiculo({ veiculo: 'Volvo FH 500' }))
 
     const res = await app.inject({
       method: 'PATCH',
       url: '/api/v1/veiculos/1',
       headers: { authorization: `Bearer ${token}` },
-      payload: { modelo: 'FH 500' },
+      payload: { veiculo: 'Volvo FH 500' },
     })
 
     expect(res.statusCode).toBe(200)

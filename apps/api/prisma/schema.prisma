@@ -33,12 +33,12 @@ model usuarios {
 }
 
 model veiculos {
-  id           Int     @id @default(autoincrement())
-  placa        String  @unique @db.NVarChar(10)
-  marca        String  @db.NVarChar(100)
-  modelo       String  @db.NVarChar(100)
-  codigo_frota String? @db.NVarChar(20)
-  ativo        Boolean @default(true)
+  id                       Int     @id @default(autoincrement())
+  placa                    String? @db.NVarChar(10)
+  veiculo                  String  @unique @db.NVarChar(100)
+  cod_tipo_aplicacao       String? @db.NVarChar(50)
+  descricao_tipo_aplicacao String? @db.NVarChar(200)
+  ativo                    Boolean @default(true)
 
   ordens ordens_servico[]
 }

@@ -18,7 +18,7 @@ const categoriasMock: CategoriaResumo[] = [
   { id: 1, nome: 'Motor', cor: '#1D6FE8', ativo: true },
 ]
 const veiculosMock: VeiculoResumo[] = [
-  { id: 10, placa: 'ABC-1234', marca: 'Fiat', modelo: 'Strada', codigo_frota: null, ativo: true },
+  { id: 10, veiculo: 'Fiat Strada', placa: 'ABC-1234', cod_tipo_aplicacao: null, descricao_tipo_aplicacao: null, ativo: true },
 ]
 const mecanicosMock: UsuarioResumo[] = [
   {
@@ -36,6 +36,7 @@ const mecanicosMock: UsuarioResumo[] = [
 const defaultProps = {
   accessToken: 'fake-token',
   perfil: 'supervisor',
+  userName: 'Supervisor Teste',
   categorias: categoriasMock,
   veiculos: veiculosMock,
   mecanicos: mecanicosMock,
@@ -44,9 +45,9 @@ const defaultProps = {
 describe('NovoChamadoForm — renderização', () => {
   it('renderiza seções de Identificação, Programação e Descrição', () => {
     render(<NovoChamadoForm {...defaultProps} />)
-    expect(screen.getByText('Identificação')).toBeTruthy()
-    expect(screen.getByText('Programação')).toBeTruthy()
-    expect(screen.getByText('Descrição')).toBeTruthy()
+    expect(screen.getByText('IDENTIFICAÇÃO DO SERVIÇO')).toBeTruthy()
+    expect(screen.getByText('PROGRAMAÇÃO')).toBeTruthy()
+    expect(screen.getByText('DESCRIÇÃO & ANEXOS')).toBeTruthy()
   })
 
   it('renderiza campos obrigatórios', () => {
@@ -106,7 +107,6 @@ describe('NovoChamadoForm — validação', () => {
 
   it('submeter sem título não chama criarOS', async () => {
     render(<NovoChamadoForm {...defaultProps} />)
-    // Preencher só categoria e prioridade, deixar título vazio
     fireEvent.change(screen.getByTestId('select-categoria'), { target: { value: '1' } })
     fireEvent.change(screen.getByTestId('select-prioridade'), { target: { value: 'alta' } })
     fireEvent.change(screen.getByTestId('select-veiculo'), { target: { value: '10' } })

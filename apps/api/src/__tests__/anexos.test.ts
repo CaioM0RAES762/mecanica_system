@@ -63,7 +63,7 @@ function makeOS(overrides: Record<string, unknown> = {}) {
     supervisor: { id: SUPERVISOR_ID, nome_completo: 'Sup', email: 'sup@metalsider.com.br' },
     mecanico: { id: MECANICO_ID, nome_completo: 'Mec', email: 'mec@metalsider.com.br' },
     categoria: { id: 1, nome: 'Motor', cor: '#1D6FE8' },
-    veiculo: { id: 1, placa: 'ABC-1234', marca: 'Volvo', modelo: 'FH', codigo_frota: null },
+    veiculo: { id: 1, placa: 'ABC-1234', veiculo: 'Volvo FH' },
     fechamento: null,
     anexos: [],
     _count: { anexos: 0 },

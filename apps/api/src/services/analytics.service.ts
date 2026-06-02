@@ -89,3 +89,15 @@ export async function atrasadosPorCategoriaService(dto: AnalyticsPeriodoDTO) {
   const key = cacheKey('atrasados-por-categoria', dto)
   return withCache(key, getTtl(dto.periodo), () => queryAtrasadosPorCategoria(period))
 }
+
+export async function invalidarCacheAnalytics(): Promise<void> {
+  try {
+    const redis = getRedis()
+    const keys = await redis.keys('analytics:*')
+    if (keys.length > 0) {
+      await redis.del(keys)
+    }
+  } catch {
+    // Redis failure is non-critical
+  }
+}

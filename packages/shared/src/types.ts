@@ -58,8 +58,9 @@ export interface OrdemServicoResumo {
   categoria_id: number
   categoria_nome: string
   veiculo_id: number
-  veiculo_placa: string
-  veiculo_modelo: string
+  veiculo_placa: string | null
+  veiculo_nome: string
+  veiculo_descricao_tipo_aplicacao: string | null
   supervisor_id: string
   supervisor_nome: string
   mecanico_id: string | null
@@ -104,10 +105,10 @@ export interface AnexoDTO {
 
 export interface VeiculoResumo {
   id: number
-  placa: string
-  marca: string
-  modelo: string
-  codigo_frota: string | null
+  veiculo: string
+  placa: string | null
+  cod_tipo_aplicacao: string | null
+  descricao_tipo_aplicacao: string | null
   ativo: boolean
 }
 

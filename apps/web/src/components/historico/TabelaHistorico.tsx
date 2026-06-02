@@ -106,7 +106,7 @@ export function TabelaHistorico({ dados, paginacao, loading, onSelecionar, onPag
                       {STATUS_LABEL[os.status] ?? os.status}
                     </span>
                   </td>
-                  <td className={`${styles.td} ${styles.meta}`}>{os.veiculo_placa}</td>
+                  <td className={`${styles.td} ${styles.meta}`}>{os.veiculo_placa ?? '—'}</td>
                   <td className={`${styles.td} ${styles.meta}`}>{os.mecanico_nome ?? '—'}</td>
                   <td className={`${styles.td} ${styles.meta}`}>{formatData(os.criado_em)}</td>
                   <td className={`${styles.td} ${styles.meta}`}>{formatDuracao(os.criado_em, os.fechado_em ?? null)}</td>

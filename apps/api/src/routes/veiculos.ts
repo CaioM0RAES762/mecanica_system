@@ -9,10 +9,10 @@ const ONLY_ADMIN = [authenticate, roleGuard([PerfilUsuario.ADMIN])]
 
 const SELECT_VEICULO = {
   id: true,
+  veiculo: true,
   placa: true,
-  marca: true,
-  modelo: true,
-  codigo_frota: true,
+  cod_tipo_aplicacao: true,
+  descricao_tipo_aplicacao: true,
   ativo: true,
 } as const
 
@@ -32,22 +32,22 @@ export async function veiculosRoutes(fastify: FastifyInstance) {
   fastify.post('/veiculos', { preHandler: ONLY_ADMIN }, async (request, reply) => {
     const body = CriarVeiculoSchema.parse(request.body)
 
-    const existente = await prisma.veiculos.findFirst({ where: { placa: body.placa } })
+    const existente = await prisma.veiculos.findFirst({ where: { veiculo: body.veiculo } })
     if (existente) {
       return reply.code(409).send({
         type: 'https://metalsider.com.br/erros/409',
         title: 'Conflito',
         status: 409,
-        detail: `Veículo com placa "${body.placa}" já cadastrado`,
+        detail: `Veículo "${body.veiculo}" já cadastrado`,
       })
     }
 
     const novo = await prisma.veiculos.create({
       data: {
-        placa: body.placa.toUpperCase(),
-        marca: body.marca,
-        modelo: body.modelo,
-        codigo_frota: body.codigo_frota ?? null,
+        veiculo: body.veiculo,
+        placa: body.placa ? body.placa.toUpperCase() : null,
+        cod_tipo_aplicacao: body.cod_tipo_aplicacao ?? null,
+        descricao_tipo_aplicacao: body.descricao_tipo_aplicacao ?? null,
         ativo: true,
       },
       select: SELECT_VEICULO,
@@ -74,10 +74,10 @@ export async function veiculosRoutes(fastify: FastifyInstance) {
     const atualizado = await prisma.veiculos.update({
       where: { id },
       data: {
-        ...(body.placa ? { placa: body.placa.toUpperCase() } : {}),
-        ...(body.marca ? { marca: body.marca } : {}),
-        ...(body.modelo ? { modelo: body.modelo } : {}),
-        ...(body.codigo_frota !== undefined ? { codigo_frota: body.codigo_frota } : {}),
+        ...(body.veiculo ? { veiculo: body.veiculo } : {}),
+        ...(body.placa !== undefined ? { placa: body.placa ? body.placa.toUpperCase() : null } : {}),
+        ...(body.cod_tipo_aplicacao !== undefined ? { cod_tipo_aplicacao: body.cod_tipo_aplicacao ?? null } : {}),
+        ...(body.descricao_tipo_aplicacao !== undefined ? { descricao_tipo_aplicacao: body.descricao_tipo_aplicacao ?? null } : {}),
       },
       select: SELECT_VEICULO,
     })
@@ -85,7 +85,25 @@ export async function veiculosRoutes(fastify: FastifyInstance) {
     return reply.send({ dados: atualizado })
   })
 
-  // DELETE /veiculos/:id — soft-delete (somente admin)
+  // PATCH /veiculos/:id/desativar — soft-delete (somente admin)
+  fastify.patch('/veiculos/:id/desativar', { preHandler: ONLY_ADMIN }, async (request, reply) => {
+    const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(request.params)
+
+    const existente = await prisma.veiculos.findUnique({ where: { id } })
+    if (!existente) {
+      return reply.code(404).send({
+        type: 'https://metalsider.com.br/erros/404',
+        title: 'Não encontrado',
+        status: 404,
+        detail: 'Veículo não encontrado',
+      })
+    }
+
+    await prisma.veiculos.update({ where: { id }, data: { ativo: false } })
+    return reply.code(204).send()
+  })
+
+  // DELETE /veiculos/:id — exclusão permanente (somente admin)
   fastify.delete('/veiculos/:id', { preHandler: ONLY_ADMIN }, async (request, reply) => {
     const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(request.params)
 
@@ -99,11 +117,17 @@ export async function veiculosRoutes(fastify: FastifyInstance) {
       })
     }
 
-    await prisma.veiculos.update({
-      where: { id },
-      data: { ativo: false },
-    })
+    const ordens = await prisma.ordens_servico.count({ where: { veiculo_id: id } })
+    if (ordens > 0) {
+      return reply.code(409).send({
+        type: 'https://metalsider.com.br/erros/409',
+        title: 'Conflito',
+        status: 409,
+        detail: `Este veículo possui ${ordens} ordem(ns) de serviço vinculada(s) e não pode ser excluído. Desative-o em vez de excluir.`,
+      })
+    }
 
+    await prisma.veiculos.delete({ where: { id } })
     return reply.code(204).send()
   })
 }

@@ -3,13 +3,26 @@
 import Link from 'next/link'
 import type { OrdemServicoResumo } from '@metalsider/shared'
 import { PRIORIDADE_LABEL, StatusOS } from '@metalsider/shared'
-import { IconCalendar, IconClock, IconTruck, IconUser, IconAlertTriangle, IconEye } from '@tabler/icons-react'
+import {
+  IconCalendar,
+  IconClock,
+  IconTruck,
+  IconUser,
+  IconAlertTriangle,
+  IconEye,
+  IconPencil,
+  IconTrash,
+} from '@tabler/icons-react'
 import styles from './OSCard.module.css'
 
 interface OSCardProps {
   os: OrdemServicoResumo
   categoriaCor?: string
+  perfil: string
+  userId: string
   onFechar: (os: OrdemServicoResumo) => void
+  onEditar: (os: OrdemServicoResumo) => void
+  onExcluir: (os: OrdemServicoResumo) => void
 }
 
 // ---- Helpers ----
@@ -73,14 +86,21 @@ function diasAtrasado(prazo: string): number {
   return Math.max(1, Math.floor(diff / 86400000))
 }
 
+function veiculoLabel(os: OrdemServicoResumo): string {
+  const nome = os.veiculo_nome || os.veiculo_placa || '—'
+  const desc = os.veiculo_descricao_tipo_aplicacao
+  return desc ? `${nome} — ${desc}` : nome
+}
+
 // ---- Component ----
 
-export function OSCard({ os, onFechar }: OSCardProps) {
+export function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OSCardProps) {
   const isAtrasado = os.status === StatusOS.ATRASADO
   const isFechado = os.status === StatusOS.FECHADO
   const progress = isFechado ? 100 : calcSlaProgress(os.criado_em, os.prazo)
 
   const podeFechar = !isFechado
+  const isSupervisor = perfil === 'supervisor' || perfil === 'admin'
 
   const progressColor =
     isAtrasado || progress > 90 ? '#d13438'
@@ -102,11 +122,11 @@ export function OSCard({ os, onFechar }: OSCardProps) {
       <div className={styles.headerRow}>
         <div className={styles.topRow}>
           <span className={styles.id}>#{os.id}</span>
-          <span className={styles.prioBadge}>
+          <span className={styles.prioBadge} data-testid="prioridade-badge">
             <span className={styles.prioDot} style={{ background: PRIO_DOT[os.prioridade] }} />
             {PRIORIDADE_LABEL[os.prioridade]}
           </span>
-          <span className={styles.catBadge}>{os.categoria_nome}</span>
+          <span className={styles.catBadge} data-testid="categoria-badge">{os.categoria_nome}</span>
           {isAtrasado && (
             <span className={styles.atrasadoBadge}>
               <IconAlertTriangle size={13} aria-hidden="true" />
@@ -145,9 +165,9 @@ export function OSCard({ os, onFechar }: OSCardProps) {
 
       {/* Veículo | Mecânico */}
       <div className={styles.infoRow}>
-        <span className={styles.infoItem}>
+        <span className={styles.infoItem} title={veiculoLabel(os)}>
           <IconTruck size={16} aria-hidden="true" />
-          <span>{os.veiculo_placa}</span>
+          <span className={styles.veiculoLabel}>{veiculoLabel(os)}</span>
         </span>
         <span className={styles.infoDivider} aria-hidden="true">|</span>
         <span className={styles.infoItem}>
@@ -174,7 +194,7 @@ export function OSCard({ os, onFechar }: OSCardProps) {
         Aberto por {os.supervisor_nome}
       </p>
 
-      {/* Row 6: Progress bar (se > 0) */}
+      {/* Progress bar */}
       {progress > 0 && (
         <div className={styles.progressWrap}>
           <div
@@ -193,22 +213,49 @@ export function OSCard({ os, onFechar }: OSCardProps) {
         </div>
       )}
 
-      {/* Footer: Ver detalhes | Fechar Chamado */}
+      {/* Footer: Ver detalhes | Ações supervisor | Fechar Chamado */}
       <div className={styles.actions}>
         <Link href={`/chamados/${os.id}`} className={styles.detailsBtn}>
           <IconEye size={16} aria-hidden="true" />
           Ver detalhes
         </Link>
-        {podeFechar && (
-          <button
-            className={styles.fecharBtn}
-            type="button"
-            onClick={() => onFechar(os)}
-            data-testid="btn-fechar"
-          >
-            Fechar Chamado
-          </button>
-        )}
+
+        <div className={styles.actionsRight}>
+          {isSupervisor && !isFechado && (
+            <>
+              <button
+                className={styles.iconBtn}
+                type="button"
+                onClick={() => onEditar(os)}
+                title="Editar chamado"
+                aria-label="Editar chamado"
+                data-testid="btn-editar"
+              >
+                <IconPencil size={16} aria-hidden="true" />
+              </button>
+              <button
+                className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                type="button"
+                onClick={() => onExcluir(os)}
+                title="Excluir chamado"
+                aria-label="Excluir chamado"
+                data-testid="btn-excluir"
+              >
+                <IconTrash size={16} aria-hidden="true" />
+              </button>
+            </>
+          )}
+          {podeFechar && (
+            <button
+              className={styles.fecharBtn}
+              type="button"
+              onClick={() => onFechar(os)}
+              data-testid="btn-fechar"
+            >
+              Fechar Chamado
+            </button>
+          )}
+        </div>
       </div>
     </article>
   )

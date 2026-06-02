@@ -47,7 +47,7 @@ function exportarCSV(dados: OrdemServicoDetalhe[]) {
     os.categoria_nome,
     os.prioridade,
     os.status,
-    os.veiculo_placa,
+    os.veiculo_placa ?? '',
     os.mecanico_nome ?? '',
     os.criado_em,
     os.fechado_em ?? '',
@@ -70,7 +70,7 @@ function exportarPDF(dados: OrdemServicoDetalhe[]) {
       <td>${os.categoria_nome}</td>
       <td>${os.prioridade}</td>
       <td>${os.status}</td>
-      <td>${os.veiculo_placa}</td>
+      <td>${os.veiculo_placa ?? '—'}</td>
       <td>${os.mecanico_nome ?? '—'}</td>
       <td>${new Date(os.criado_em).toLocaleDateString('pt-BR')}</td>
       <td>${os.fechado_em ? new Date(os.fechado_em).toLocaleDateString('pt-BR') : '—'}</td>

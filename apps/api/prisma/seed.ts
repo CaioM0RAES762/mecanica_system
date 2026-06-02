@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import { CATEGORIAS_BASE } from '@metalsider/shared'
+import { syncVeiculosNeti } from '../scripts/sync-veiculos-neti.js'
 
 const prisma = new PrismaClient()
 
@@ -50,24 +51,9 @@ async function main() {
   }
   console.log(`✅ ${CATEGORIAS_BASE.length} categorias base`)
 
-  // Veículos de demonstração (apenas se SEED_DEMO_DATA=true)
+  // Sincronizar veículos do Neti (apenas se SEED_DEMO_DATA=true)
   if (process.env.SEED_DEMO_DATA === 'true') {
-    const veiculosDemo = [
-      { placa: 'ABC-1D34', marca: 'Volvo',         modelo: 'FH 540',        codigo_frota: 'V-1001' },
-      { placa: 'DEF-5E78', marca: 'Scania',         modelo: 'R 450',         codigo_frota: 'S-1002' },
-      { placa: 'GHI-9F12', marca: 'Mercedes-Benz',  modelo: 'Actros 2651',   codigo_frota: 'M-1003' },
-      { placa: 'JKL-3A56', marca: 'DAF',            modelo: 'XF 530',        codigo_frota: 'D-1004' },
-      { placa: 'MNO-7B90', marca: 'Iveco',          modelo: 'Stralis 570',   codigo_frota: 'I-1005' },
-    ]
-
-    for (const v of veiculosDemo) {
-      await prisma.veiculos.upsert({
-        where: { placa: v.placa },
-        update: {},
-        create: { ...v, ativo: true },
-      })
-    }
-    console.log(`✅ ${veiculosDemo.length} veículos de demonstração`)
+    await syncVeiculosNeti()
   }
 
   console.log('✅ Seed concluído.')

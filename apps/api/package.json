@@ -18,7 +18,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "sync:veiculos": "tsx scripts/sync-veiculos-neti.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.0",
@@ -32,11 +33,13 @@
     "dotenv": "^17.4.2",
     "fastify": "^4.28.0",
     "ioredis": "^5.4.0",
+    "mssql": "^11.0.1",
     "nodemailer": "^8.0.9",
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/mssql": "^9.1.5",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@types/nodemailer": "^8.0.0",

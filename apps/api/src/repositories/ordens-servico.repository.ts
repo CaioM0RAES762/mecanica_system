@@ -82,7 +82,7 @@ function osSelect() {
     mecanico: { select: { id: true, nome_completo: true, email: true } },
     categoria: { select: { id: true, nome: true, cor: true } },
     veiculo: {
-      select: { id: true, placa: true, marca: true, modelo: true, codigo_frota: true },
+      select: { id: true, placa: true, veiculo: true, descricao_tipo_aplicacao: true },
     },
     fechamento: {
       select: {
@@ -129,7 +129,7 @@ function osListSelect() {
     mecanico: { select: { id: true, nome_completo: true, email: true } },
     categoria: { select: { id: true, nome: true, cor: true } },
     veiculo: {
-      select: { id: true, placa: true, marca: true, modelo: true, codigo_frota: true },
+      select: { id: true, placa: true, veiculo: true, descricao_tipo_aplicacao: true },
     },
   } as const
 }
@@ -237,6 +237,15 @@ export async function criarAuditoria(data: CriarAuditoriaData) {
 
 export async function countOS(params: Omit<OSListParams, 'pagina' | 'por_pagina'>) {
   return prisma.ordens_servico.count({ where: buildWhere(params) })
+}
+
+export async function deleteOS(id: number) {
+  return prisma.$transaction([
+    prisma.logs_auditoria.deleteMany({ where: { ordem_servico_id: id } }),
+    prisma.registros_fechamento.deleteMany({ where: { ordem_servico_id: id } }),
+    prisma.anexos.deleteMany({ where: { ordem_servico_id: id } }),
+    prisma.ordens_servico.delete({ where: { id } }),
+  ])
 }
 
 export async function findAuditoriaByOS(osId: number) {

@@ -7,6 +7,7 @@ import {
   criarOSService,
   atualizarOSService,
   fecharOSService,
+  excluirOSService,
   buscarAuditoriaService,
 } from '../services/ordens-servico.service.js'
 import type { JwtPayload } from '../middlewares/authenticate.js'
@@ -85,6 +86,23 @@ export async function fecharOSController(
   }
   const os = await fecharOSService(id, request.body, request.user as JwtPayload)
   return reply.code(200).send(os)
+}
+
+export async function excluirOSController(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  const id = parseInt(request.params.id, 10)
+  if (isNaN(id)) {
+    return reply.code(400).send({
+      type:   'https://metalsider.com.br/erros/400',
+      title:  'Parâmetro inválido',
+      status: 400,
+      detail: 'O parâmetro :id deve ser um número inteiro',
+    })
+  }
+  await excluirOSService(id, request.user as JwtPayload)
+  return reply.code(204).send()
 }
 
 export async function buscarAuditoriaController(

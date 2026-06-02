@@ -155,7 +155,7 @@ export function DrawerDetalhes({ os, onClose, token, perfil }: Props) {
                   </div>
                   <div className={styles.campo}>
                     <dt><IconCar size={12} /> Veículo</dt>
-                    <dd>{os.veiculo_placa} — {os.veiculo_modelo}</dd>
+                    <dd>{os.veiculo_nome}{os.veiculo_placa ? ` — ${os.veiculo_placa}` : ''}</dd>
                   </div>
                   <div className={styles.campo}>
                     <dt><IconTag size={12} /> Categoria</dt>
@@ -246,7 +246,7 @@ export function DrawerDetalhes({ os, onClose, token, perfil }: Props) {
 
           {abaSelecionada === 'auditoria' && isSupervisor && (
             <div className={styles.secoes} data-testid="aba-auditoria">
-              <TimelineAuditoria logs={auditoria} loading={loadingAuditoria} />
+              <TimelineAuditoria logs={auditoria} loading={loadingAuditoria} os={os} perfil={perfil} />
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { CategoriaResumo, OrdemServicoResumo, RespostaPaginada } from '@metalsider/shared'
+import type { CategoriaResumo, OrdemServicoDetalhe, OrdemServicoResumo, RespostaPaginada } from '@metalsider/shared'
 import type { FecharOSDTO } from '@metalsider/shared'
 import { IconClipboardList, IconArchive } from '@tabler/icons-react'
 import { EmptyState, Skeleton } from '@/components/ui'
@@ -10,6 +10,8 @@ import { FilterBar, FILTRO_INICIAL } from './FilterBar'
 import type { FiltroState, TabAtiva, PeriodoFechados } from './FilterBar'
 import { OSCard } from './OSCard'
 import { FecharModal } from './FecharModal'
+import { EditarOSModal } from './EditarOSModal'
+import { ExcluirOSModal } from './ExcluirOSModal'
 import styles from './ChamadosClient.module.css'
 
 interface ChamadosClientProps {
@@ -157,7 +159,12 @@ export function ChamadosClient({
   const [dados, setDados] = useState<RespostaPaginada<OrdemServicoResumo> | null>(null)
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
+
+  // Modais
   const [osParaFechar, setOsParaFechar] = useState<OrdemServicoResumo | null>(null)
+  const [osParaEditar, setOsParaEditar] = useState<OrdemServicoResumo | null>(null)
+  const [osParaExcluir, setOsParaExcluir] = useState<OrdemServicoResumo | null>(null)
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const categoriaCores = useMemo(() => {
@@ -217,13 +224,49 @@ export function ChamadosClient({
 
   async function handleFechar(id: number, data: FecharOSDTO) {
     await fecharOS(id, data, accessToken)
-    // Remove otimisticamente da lista de abertos; refetch garante contagem correta
     setDados(prev => {
       if (!prev) return prev
       const novosDados = prev.dados.filter(os => os.id !== id)
       return {
         ...prev,
         dados: novosDados,
+        paginacao: { ...prev.paginacao, total: prev.paginacao.total - 1 },
+      }
+    })
+  }
+
+  function handleEditarSuccess(osAtualizada: OrdemServicoDetalhe) {
+    setDados(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        dados: prev.dados.map(os =>
+          os.id === osAtualizada.id
+            ? {
+                ...os,
+                titulo:             osAtualizada.titulo,
+                prioridade:         osAtualizada.prioridade,
+                categoria_id:       osAtualizada.categoria_id,
+                categoria_nome:     osAtualizada.categoria_nome,
+                veiculo_id:         osAtualizada.veiculo_id,
+                veiculo_placa:      osAtualizada.veiculo_placa,
+                veiculo_nome:       osAtualizada.veiculo_nome,
+                veiculo_descricao_tipo_aplicacao: osAtualizada.veiculo_descricao_tipo_aplicacao,
+                mecanico_id:        osAtualizada.mecanico_id,
+                mecanico_nome:      osAtualizada.mecanico_nome,
+              }
+            : os,
+        ),
+      }
+    })
+  }
+
+  function handleExcluirSuccess(id: number) {
+    setDados(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        dados: prev.dados.filter(os => os.id !== id),
         paginacao: { ...prev.paginacao, total: prev.paginacao.total - 1 },
       }
     })
@@ -237,7 +280,6 @@ export function ChamadosClient({
   const lista = dados?.dados ?? []
   const total = dados?.paginacao.total ?? 0
 
-  // dados === null quando o fetch foi pulado (personalizado sem datas)
   const emptyFechados =
     !loading && !erro && tabAtiva === 'fechados' && dados !== null && lista.length === 0
 
@@ -306,7 +348,11 @@ export function ChamadosClient({
                 key={os.id}
                 os={os}
                 categoriaCor={categoriaCores.get(os.categoria_id)}
+                perfil={perfil}
+                userId={userId}
                 onFechar={setOsParaFechar}
+                onEditar={setOsParaEditar}
+                onExcluir={setOsParaExcluir}
               />
             ))}
           </div>
@@ -318,6 +364,21 @@ export function ChamadosClient({
         onClose={() => setOsParaFechar(null)}
         onConfirm={handleFechar}
         accessToken={accessToken}
+      />
+
+      <EditarOSModal
+        os={osParaEditar}
+        categorias={categorias}
+        accessToken={accessToken}
+        onClose={() => setOsParaEditar(null)}
+        onSuccess={handleEditarSuccess}
+      />
+
+      <ExcluirOSModal
+        os={osParaExcluir}
+        accessToken={accessToken}
+        onClose={() => setOsParaExcluir(null)}
+        onSuccess={handleExcluirSuccess}
       />
     </div>
   )

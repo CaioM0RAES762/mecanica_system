@@ -1,7 +1,7 @@
 .tab {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .tabHeader {
@@ -10,13 +10,16 @@
   justify-content: space-between;
   gap: var(--space-3);
   flex-wrap: wrap;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .tabTitle {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-gray-900);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .tableWrap {
@@ -76,6 +79,15 @@
   color: var(--color-text-muted);
 }
 
+.descricao {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .actions {
   display: flex;
   gap: var(--space-2);
@@ -104,4 +116,60 @@
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
   margin: 0;
+}
+
+.alertaPerigo {
+  font-size: var(--text-sm);
+  color: var(--color-gray-900);
+  margin: 0 0 var(--space-2);
+}
+
+.btnExcluir {
+  color: var(--color-error) !important;
+}
+
+.btnExcluir:hover {
+  background: color-mix(in srgb, var(--color-error) 8%, transparent) !important;
+}
+
+/* Status toggle pill */
+
+.statusToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none;
+  font-family: inherit;
+  white-space: nowrap;
+  line-height: 1.4;
+  transition: background var(--transition-fast);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.statusAtivo {
+  background: var(--color-green-50);
+  color: var(--color-green-500);
+  cursor: pointer;
+}
+
+.statusAtivo:hover {
+  background: color-mix(in srgb, var(--color-green-500) 15%, transparent);
+}
+
+.statusInativo {
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
+  cursor: default;
 }

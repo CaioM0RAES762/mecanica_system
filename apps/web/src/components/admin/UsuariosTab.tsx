@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { IconPlus, IconPencil, IconTrash, IconUser } from '@tabler/icons-react'
+import { IconPlus, IconPencil, IconUser, IconTrash } from '@tabler/icons-react'
 import {
   Button,
   Input,
@@ -17,6 +17,7 @@ import {
   criarUsuario,
   alterarPerfil,
   desativarUsuario,
+  excluirUsuario,
   type CriarUsuarioInput,
 } from '@/lib/api/admin'
 import styles from './UsuariosTab.module.css'
@@ -46,6 +47,7 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
   const [showCriar, setShowCriar] = useState(false)
   const [showEditar, setShowEditar] = useState<UsuarioResumo | null>(null)
   const [showDesativar, setShowDesativar] = useState<UsuarioResumo | null>(null)
+  const [showExcluir, setShowExcluir] = useState<UsuarioResumo | null>(null)
 
   const [formCriar, setFormCriar] = useState<CriarUsuarioInput>({
     email: '',
@@ -117,6 +119,21 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
     }
   }
 
+  async function handleExcluir() {
+    if (!showExcluir) return
+    setSalvando(true)
+    try {
+      await excluirUsuario(showExcluir.id, token)
+      setShowExcluir(null)
+      await recarregar()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao excluir usuário.'
+      setErro(msg)
+    } finally {
+      setSalvando(false)
+    }
+  }
+
   if (loading && usuarios.length === 0) {
     return <Skeleton height={300} />
   }
@@ -166,9 +183,25 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
                   <td>
                     {u.ativo
                       ? u.verificado
-                        ? <Badge variant="green">Ativo</Badge>
-                        : <Badge variant="amber">Aguardando ativação</Badge>
-                      : <Badge variant="red">Inativo</Badge>
+                        ? (
+                          <button
+                            type="button"
+                            className={`${styles.statusToggle} ${styles.statusAtivo}`}
+                            onClick={() => setShowDesativar(u)}
+                            title="Clique para desativar"
+                            aria-label={`Desativar ${u.nome_completo}`}
+                          >
+                            <span className={styles.statusDot} aria-hidden="true" />
+                            Ativo
+                          </button>
+                        )
+                        : <Badge variant="amber">Aguardando</Badge>
+                      : (
+                        <span className={`${styles.statusToggle} ${styles.statusInativo}`}>
+                          <span className={styles.statusDot} aria-hidden="true" />
+                          Inativo
+                        </span>
+                      )
                     }
                   </td>
                   <td>
@@ -186,17 +219,16 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
                       >
                         Perfil
                       </Button>
-                      {u.ativo && (
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          leftIcon={<IconTrash size={14} />}
-                          onClick={() => setShowDesativar(u)}
-                          aria-label={`Desativar ${u.nome_completo}`}
-                        >
-                          Desativar
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        leftIcon={<IconTrash size={14} />}
+                        onClick={() => setShowExcluir(u)}
+                        aria-label={`Excluir ${u.nome_completo}`}
+                        className={styles.btnExcluir}
+                      >
+                        Excluir
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -294,7 +326,7 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
         open={!!showDesativar}
         onClose={() => setShowDesativar(null)}
         title="Desativar usuário"
-        description={`Tem certeza que deseja desativar "${showDesativar?.nome_completo}"? O acesso será revogado imediatamente.`}
+        description={`Tem certeza que deseja desativar "${showDesativar?.nome_completo}"?`}
         size="sm"
         footer={
           <div className={styles.modalFooter}>
@@ -308,7 +340,32 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
         }
       >
         <p className={styles.alerta}>
-          O usuário não conseguirá mais fazer login. Esta ação pode ser revertida pelo administrador.
+          O acesso será revogado imediatamente. Esta ação pode ser revertida pelo administrador.
+        </p>
+      </Modal>
+
+      {/* Modal: Excluir permanentemente */}
+      <Modal
+        open={!!showExcluir}
+        onClose={() => setShowExcluir(null)}
+        title="Excluir usuário permanentemente"
+        size="sm"
+        footer={
+          <div className={styles.modalFooter}>
+            <Button variant="secondary" onClick={() => setShowExcluir(null)} disabled={salvando}>
+              Cancelar
+            </Button>
+            <Button variant="danger" loading={salvando} onClick={handleExcluir}>
+              Excluir permanentemente
+            </Button>
+          </div>
+        }
+      >
+        <p className={styles.alertaPerigo}>
+          <strong>{showExcluir?.nome_completo}</strong> será removido definitivamente do sistema. Esta ação não pode ser desfeita.
+        </p>
+        <p className={styles.alerta}>
+          Usuários com ordens de serviço, fechamentos ou logs de auditoria vinculados não podem ser excluídos — desative-os em vez disso.
         </p>
       </Modal>
     </div>

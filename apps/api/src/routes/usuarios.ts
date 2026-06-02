@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { prisma } from '../lib/prisma.js'
 import { authenticate } from '../middlewares/authenticate.js'
 import { roleGuard } from '../middlewares/role-guard.js'
 import { PerfilUsuario, AcaoAuditoria, CriarUsuarioSchema, AlterarPerfilSchema } from '@metalsider/shared'
@@ -134,8 +135,8 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
     return reply.send({ dados: atualizado })
   })
 
-  // DELETE /usuarios/:id — soft-delete (somente admin)
-  fastify.delete('/usuarios/:id', { preHandler: ONLY_ADMIN }, async (request, reply) => {
+  // PATCH /usuarios/:id/desativar — soft-delete (somente admin)
+  fastify.patch('/usuarios/:id/desativar', { preHandler: ONLY_ADMIN }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
 
     const usuario = await findUsuarioById(id)
@@ -165,6 +166,51 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
       valoresAnteriores: { id, email: usuario.email, ativo: true },
       novosValores: { id, ativo: false },
     })
+
+    return reply.code(204).send()
+  })
+
+  // DELETE /usuarios/:id — exclusão permanente (somente admin)
+  fastify.delete('/usuarios/:id', { preHandler: ONLY_ADMIN }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
+
+    const usuario = await findUsuarioById(id)
+    if (!usuario) {
+      return reply.code(404).send({
+        type: 'https://metalsider.com.br/erros/404',
+        title: 'Não encontrado',
+        status: 404,
+        detail: 'Usuário não encontrado',
+      })
+    }
+
+    if (usuario.id === request.user.sub) {
+      return reply.code(400).send({
+        type: 'https://metalsider.com.br/erros/auto-desativacao',
+        title: 'Operação inválida',
+        status: 400,
+        detail: 'Administrador não pode excluir a própria conta',
+      })
+    }
+
+    const [osSupervisor, osMecanico, fechamentos, logs] = await Promise.all([
+      prisma.ordens_servico.count({ where: { supervisor_id: id } }),
+      prisma.ordens_servico.count({ where: { mecanico_id: id } }),
+      prisma.registros_fechamento.count({ where: { fechado_por_id: id } }),
+      prisma.logs_auditoria.count({ where: { ator_id: id } }),
+    ])
+
+    const total = osSupervisor + osMecanico + fechamentos + logs
+    if (total > 0) {
+      return reply.code(409).send({
+        type: 'https://metalsider.com.br/erros/409',
+        title: 'Conflito',
+        status: 409,
+        detail: 'Este usuário possui registros vinculados (ordens de serviço, fechamentos ou logs de auditoria) e não pode ser excluído permanentemente. Desative-o em vez de excluir.',
+      })
+    }
+
+    await prisma.usuarios.delete({ where: { id } })
 
     return reply.code(204).send()
   })

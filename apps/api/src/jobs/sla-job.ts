@@ -26,15 +26,16 @@ function buildOSEmailData(os: {
   titulo: string
   prioridade: string
   prazo: Date
-  veiculo: { placa: string; marca: string; modelo: string }
+  veiculo: { placa: string | null; veiculo: string }
   categoria: { nome: string }
 }): OSEmailData {
+  const placa = os.veiculo.placa ? ` (${os.veiculo.placa})` : ''
   return {
     os_id: os.id,
     titulo: os.titulo,
     prioridade: os.prioridade,
     prazo: os.prazo.toISOString(),
-    veiculo: `${os.veiculo.marca} ${os.veiculo.modelo} (${os.veiculo.placa})`,
+    veiculo: `${os.veiculo.veiculo}${placa}`,
     categoria: os.categoria.nome,
   }
 }
@@ -55,7 +56,7 @@ export async function jobMarcaAtrasadas(): Promise<void> {
       prioridade: true,
       prazo: true,
       mecanico: { select: { id: true, nome_completo: true, email: true } },
-      veiculo: { select: { placa: true, marca: true, modelo: true } },
+      veiculo: { select: { placa: true, veiculo: true } },
       categoria: { select: { nome: true } },
     },
   })
@@ -124,7 +125,7 @@ export async function jobAlertaPrazo(): Promise<void> {
       prioridade: true,
       prazo: true,
       mecanico: { select: { id: true, nome_completo: true, email: true } },
-      veiculo: { select: { placa: true, marca: true, modelo: true } },
+      veiculo: { select: { placa: true, veiculo: true } },
       categoria: { select: { nome: true } },
     },
   })

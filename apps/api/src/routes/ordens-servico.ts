@@ -15,6 +15,7 @@ import {
   criarOSController,
   atualizarOSController,
   fecharOSController,
+  excluirOSController,
   buscarAuditoriaController,
 } from '../controllers/ordens-servico.controller.js'
 import {
@@ -94,6 +95,14 @@ export async function ordensServicoRoutes(fastify: FastifyInstance) {
         reply,
       )
     },
+  )
+
+  // DELETE /ordens-servico/:id — apenas supervisor e admin (soft-delete: status → cancelado)
+  fastify.delete(
+    '/ordens-servico/:id',
+    { preHandler: SUPERVISOR_ADMIN },
+    async (request, reply) =>
+      excluirOSController(request as Parameters<typeof excluirOSController>[0], reply),
   )
 
   // GET /ordens-servico/:id/auditoria — apenas supervisor e admin

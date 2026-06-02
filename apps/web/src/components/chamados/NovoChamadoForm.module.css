@@ -40,7 +40,7 @@
   background: var(--color-white);
   border-radius: var(--radius-xl);
   box-shadow: 0 1px 4px rgba(0 0 0 / 0.07), 0 4px 16px rgba(0 0 0 / 0.04);
-  overflow: hidden;
+  /* Sem overflow:hidden para permitir dropdowns dos comboboxes escaparem do card */
 }
 
 /* ---- Cabeçalho de seção com borda esquerda amarela ---- */
@@ -50,6 +50,7 @@
   border-left: 3px solid var(--color-amber-500);
   background: var(--color-gray-50);
   border-bottom: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .sectionTitle {
@@ -118,7 +119,11 @@
 }
 
 .inputError {
-  border-color: var(--color-red-500);
+  border-color: var(--color-red-500) !important;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.14) !important;
 }
 
 .select {
@@ -216,10 +221,27 @@
 /* ---- Linha de duração ---- */
 
 .durationRow {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: var(--space-2);
+  display: flex;
   align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.durationNumInput {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.durationSuffix {
+  font-size: var(--text-xs);
+  color: var(--color-gray-500);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.unitSegFlex {
+  flex: 1;
+  min-width: 110px;
 }
 
 .unitSeg {
@@ -241,6 +263,7 @@
   background: transparent;
   color: var(--color-gray-600);
   transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
 }
 
 .unitBtn:hover {
@@ -252,11 +275,69 @@
   color: var(--color-white);
 }
 
-/* ---- Hint ---- */
+/* ---- Programação: prazo ---- */
+
+.prazoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
+.prazoHeader .label {
+  margin-bottom: 0;
+}
+
+.prazoReset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border: 1px solid var(--color-amber-300);
+  border-radius: var(--radius-full);
+  background: var(--color-amber-50);
+  color: var(--color-amber-700);
+  font-size: 11px;
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: background 0.12s;
+  line-height: 1.6;
+}
+
+.prazoReset:hover {
+  background: var(--color-amber-100);
+}
+
+.inputOverridden {
+  border-color: var(--color-amber-400) !important;
+  background: var(--color-amber-50) !important;
+}
+
+.inputOverridden:focus {
+  border-color: var(--color-amber-500) !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.14) !important;
+}
+
+/* ---- Hints ---- */
 
 .hint {
   font-size: var(--text-xs);
   color: var(--color-gray-400);
+  margin-top: 4px;
+}
+
+.hintOverride {
+  font-size: var(--text-xs);
+  color: var(--color-amber-600);
+  margin-top: 4px;
+}
+
+.hintError {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-red-500);
   margin-top: 4px;
 }
 
@@ -542,4 +623,268 @@
   color: var(--color-blue-500);
   flex-shrink: 0;
   margin-top: 1px;
+}
+
+/* ================================================================
+   SearchableSelect (combobox com busca fuzzy)
+   ================================================================ */
+
+.comboHiddenSelect {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.comboWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.comboLeadIcon {
+  position: absolute;
+  left: 10px;
+  color: var(--color-gray-400);
+  pointer-events: none;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.comboInput {
+  width: 100%;
+  padding: 9px var(--space-3);
+  padding-right: 34px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-gray-900);
+  background: var(--color-white);
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+
+.comboInput:focus {
+  outline: none;
+  border-color: var(--color-blue-500);
+  box-shadow: 0 0 0 3px rgba(29, 111, 232, 0.14);
+  cursor: text;
+}
+
+.comboInputWithIcon {
+  padding-left: 34px;
+}
+
+.comboClear {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  color: var(--color-gray-400);
+  transition: color 0.1s, background 0.1s;
+  line-height: 1;
+}
+
+.comboClear:hover {
+  color: var(--color-gray-700);
+  background: var(--color-gray-100);
+}
+
+.comboChevron {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  color: var(--color-gray-400);
+  pointer-events: none;
+}
+
+.comboList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0 0 0 / 0.13);
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+}
+
+.comboItem {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--color-gray-800);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comboItem:hover {
+  background: var(--color-blue-50);
+  color: var(--color-blue-700);
+}
+
+.comboItemActive {
+  background: var(--color-blue-50);
+  color: var(--color-blue-700);
+}
+
+.comboItemSelected {
+  font-weight: var(--font-semibold);
+}
+
+.comboEmpty {
+  padding: 12px 10px;
+  font-size: var(--text-sm);
+  color: var(--color-gray-400);
+  text-align: center;
+  cursor: default;
+}
+
+/* ================================================================
+   TimeInput — dois inputs numéricos para hora e minuto
+   ================================================================ */
+
+.timeFieldRow {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.timeLabel {
+  font-size: 11px;
+  color: var(--color-gray-400);
+  font-weight: var(--font-normal);
+}
+
+.timeWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.timeWrap:focus-within {
+  border-color: var(--color-blue-500);
+  box-shadow: 0 0 0 3px rgba(29, 111, 232, 0.14);
+}
+
+.timeInput {
+  width: 28px;
+  border: none;
+  outline: none;
+  font-size: var(--text-sm);
+  color: var(--color-gray-900);
+  background: transparent;
+  text-align: center;
+  font-family: inherit;
+  padding: 0;
+}
+
+.timeInput::placeholder {
+  color: var(--color-gray-400);
+}
+
+.timeSep {
+  color: var(--color-gray-400);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  user-select: none;
+  line-height: 1;
+}
+
+/* ================================================================
+   Aviso de fim de semana
+   ================================================================ */
+
+.weekendWarn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 10px 12px;
+  background: var(--color-amber-50);
+  border: 1px solid var(--color-amber-300);
+  border-radius: var(--radius-md);
+}
+
+.weekendWarnText {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--color-amber-700);
+  margin: 0;
+}
+
+.weekendWarnText svg {
+  flex-shrink: 0;
+  color: var(--color-amber-500);
+}
+
+.weekendWarnBtns {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.weekendWarnBtn {
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-amber-300);
+  background: var(--color-white);
+  color: var(--color-amber-700);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: background 0.12s;
+  line-height: 1.5;
+}
+
+.weekendWarnBtn:hover {
+  background: var(--color-amber-100);
+}
+
+.weekendWarnBtnPrimary {
+  background: var(--color-amber-500);
+  color: var(--color-white);
+  border-color: var(--color-amber-500);
+}
+
+.weekendWarnBtnPrimary:hover {
+  background: var(--color-amber-600);
+  border-color: var(--color-amber-600);
+}
+
+/* Em telas pequenas, os inputs de hora/min ficam abaixo da data */
+@media (max-width: 480px) {
+  .timeFieldRow {
+    flex-direction: column;
+  }
 }

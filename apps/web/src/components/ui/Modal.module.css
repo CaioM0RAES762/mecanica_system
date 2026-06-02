@@ -7,6 +7,8 @@
   background: transparent;
   max-height: 92vh;
   overflow: visible;
+  /* CSS reset zeroes margin; restore the browser default for <dialog> */
+  margin: auto;
 }
 
 /* Backdrop via ::backdrop */

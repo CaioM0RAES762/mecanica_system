@@ -4,7 +4,7 @@ import type {
   OrdemServicoDetalhe,
   LogAuditoriaDTO,
 } from '@metalsider/shared'
-import type { CriarOSDTO, FecharOSDTO, FiltroOSDTO } from '@metalsider/shared'
+import type { CriarOSDTO, AtualizarOSDTO, FecharOSDTO, FiltroOSDTO } from '@metalsider/shared'
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1'
 
@@ -67,6 +67,34 @@ export async function buscarOS(id: number, token: string): Promise<OrdemServicoD
   })
   if (!res.ok) throw new Error(`Falha ao buscar OS #${id}`)
   return res.json() as Promise<OrdemServicoDetalhe>
+}
+
+export async function editarOS(
+  id: number,
+  data: AtualizarOSDTO,
+  token: string,
+): Promise<OrdemServicoDetalhe> {
+  const res = await fetch(`${API_URL}/ordens-servico/${id}`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { detail?: string }
+    throw new Error(err.detail ?? 'Falha ao editar chamado')
+  }
+  return res.json() as Promise<OrdemServicoDetalhe>
+}
+
+export async function excluirOS(id: number, token: string): Promise<void> {
+  const res = await fetch(`${API_URL}/ordens-servico/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { detail?: string }
+    throw new Error(err.detail ?? 'Falha ao excluir chamado')
+  }
 }
 
 export async function buscarAuditoria(

@@ -14,6 +14,9 @@ beforeAll(() => {
 vi.mock('@/lib/api/ordens-servico', () => ({
   listarOS: vi.fn(),
   fecharOS: vi.fn().mockResolvedValue(undefined),
+  editarOS: vi.fn().mockResolvedValue({}),
+  excluirOS: vi.fn().mockResolvedValue(undefined),
+  buscarOS: vi.fn().mockResolvedValue({}),
 }))
 
 import { listarOS } from '@/lib/api/ordens-servico'
@@ -34,7 +37,8 @@ function makeOS(overrides: Partial<OrdemServicoResumo> = {}): OrdemServicoResumo
     categoria_nome: 'Motor',
     veiculo_id: 10,
     veiculo_placa: 'ABC-1234',
-    veiculo_modelo: 'Fiat Strada',
+    veiculo_nome: 'Fiat Strada',
+    veiculo_descricao_tipo_aplicacao: null,
     supervisor_id: 'sup-1',
     supervisor_nome: 'Carlos',
     mecanico_id: 'mec-1',

@@ -77,7 +77,25 @@ export async function categoriasRoutes(fastify: FastifyInstance) {
     return reply.send({ dados: atualizada })
   })
 
-  // DELETE /categorias/:id — soft-delete (somente admin)
+  // PATCH /categorias/:id/desativar — soft-delete (somente admin)
+  fastify.patch('/categorias/:id/desativar', { preHandler: ONLY_ADMIN }, async (request, reply) => {
+    const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(request.params)
+
+    const existente = await prisma.categorias.findUnique({ where: { id } })
+    if (!existente) {
+      return reply.code(404).send({
+        type: 'https://metalsider.com.br/erros/404',
+        title: 'Não encontrado',
+        status: 404,
+        detail: 'Categoria não encontrada',
+      })
+    }
+
+    await prisma.categorias.update({ where: { id }, data: { ativo: false } })
+    return reply.code(204).send()
+  })
+
+  // DELETE /categorias/:id — exclusão permanente (somente admin)
   fastify.delete('/categorias/:id', { preHandler: ONLY_ADMIN }, async (request, reply) => {
     const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(request.params)
 
@@ -91,11 +109,17 @@ export async function categoriasRoutes(fastify: FastifyInstance) {
       })
     }
 
-    await prisma.categorias.update({
-      where: { id },
-      data: { ativo: false },
-    })
+    const ordens = await prisma.ordens_servico.count({ where: { categoria_id: id } })
+    if (ordens > 0) {
+      return reply.code(409).send({
+        type: 'https://metalsider.com.br/erros/409',
+        title: 'Conflito',
+        status: 409,
+        detail: `Esta categoria possui ${ordens} ordem(ns) de serviço vinculada(s) e não pode ser excluída. Desative-a em vez de excluir.`,
+      })
+    }
 
+    await prisma.categorias.delete({ where: { id } })
     return reply.code(204).send()
   })
 }

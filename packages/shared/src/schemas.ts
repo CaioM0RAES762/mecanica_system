@@ -103,6 +103,8 @@ export const CriarOSSchema = z.object({
   descricao: z.string().max(10000).nullable().optional(),
   notas_internas: z.string().max(10000).nullable().optional(),
   inicio_previsto: z.string().date(),
+  duracao_valor: z.number().positive().optional(),
+  duracao_tipo: z.enum(['horas', 'dias_uteis']).optional(),
 })
 
 export const AtualizarOSSchema = CriarOSSchema.partial()
@@ -122,10 +124,10 @@ export const FecharOSSchema = z.object({
 // ---- Veículos ----
 
 export const CriarVeiculoSchema = z.object({
-  placa: z.string().min(7).max(10),
-  marca: z.string().min(2).max(100),
-  modelo: z.string().min(2).max(100),
-  codigo_frota: z.string().max(20).nullable().optional(),
+  veiculo: z.string().min(2).max(100),
+  placa: z.string().min(7).max(10).nullable().optional(),
+  cod_tipo_aplicacao: z.string().max(50).nullable().optional(),
+  descricao_tipo_aplicacao: z.string().max(200).nullable().optional(),
 })
 
 export const AtualizarVeiculoSchema = CriarVeiculoSchema.partial()

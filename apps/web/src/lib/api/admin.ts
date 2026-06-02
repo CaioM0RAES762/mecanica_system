@@ -59,6 +59,10 @@ export function alterarPerfil(id: string, perfil: string, token: string): Promis
 }
 
 export function desativarUsuario(id: string, token: string): Promise<void> {
+  return req('PATCH', `/usuarios/${id}/desativar`, token)
+}
+
+export function excluirUsuario(id: string, token: string): Promise<void> {
   return req('DELETE', `/usuarios/${id}`, token)
 }
 
@@ -72,10 +76,10 @@ export function listarVeiculos(token: string, params?: { ativo?: boolean }): Pro
 }
 
 export interface CriarVeiculoInput {
-  placa: string
-  marca: string
-  modelo: string
-  codigo_frota?: string | null
+  veiculo: string
+  placa?: string | null
+  cod_tipo_aplicacao?: string | null
+  descricao_tipo_aplicacao?: string | null
 }
 
 export function criarVeiculo(body: CriarVeiculoInput, token: string): Promise<{ dados: VeiculoResumo }> {
@@ -87,6 +91,10 @@ export function editarVeiculo(id: number, body: Partial<CriarVeiculoInput>, toke
 }
 
 export function desativarVeiculo(id: number, token: string): Promise<void> {
+  return req('PATCH', `/veiculos/${id}/desativar`, token)
+}
+
+export function excluirVeiculo(id: number, token: string): Promise<void> {
   return req('DELETE', `/veiculos/${id}`, token)
 }
 
@@ -113,5 +121,9 @@ export function editarCategoria(id: number, body: Partial<CriarCategoriaInput>, 
 }
 
 export function desativarCategoria(id: number, token: string): Promise<void> {
+  return req('PATCH', `/categorias/${id}/desativar`, token)
+}
+
+export function excluirCategoria(id: number, token: string): Promise<void> {
   return req('DELETE', `/categorias/${id}`, token)
 }

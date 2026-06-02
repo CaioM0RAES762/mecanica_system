@@ -80,7 +80,7 @@ const osBase = {
   prazo:      new Date(Date.now() - 60 * 60 * 1000), // 1h atrás
   mecanico:   { id: MECANICO_ID, nome_completo: 'Carlos Mecânico', email: 'mec@metalsider.com.br' },
   supervisor: { id: SUPERVISOR_ID, nome_completo: 'João Supervisor', email: 'sup@metalsider.com.br' },
-  veiculo:    { placa: 'ABC-1234', marca: 'Volvo', modelo: 'FH 500' },
+  veiculo:    { placa: 'ABC-1234', veiculo: 'Volvo FH 500' },
   categoria:  { nome: 'Motor' },
 }
 
@@ -264,7 +264,7 @@ describe('OS criada/fechada dispara e-mails via service', () => {
     supervisor: { id: SUPERVISOR_ID, nome_completo: 'João Supervisor', email: 'sup@metalsider.com.br' },
     mecanico:   { id: MECANICO_ID,   nome_completo: 'Carlos Mecânico', email: 'mec@metalsider.com.br' },
     categoria:  { id: 1, nome: 'Motor', cor: '#1D6FE8' },
-    veiculo:    { id: 1, placa: 'ABC-1234', marca: 'Volvo', modelo: 'FH 500', codigo_frota: 'V-01' },
+    veiculo:    { id: 1, placa: 'ABC-1234', veiculo: 'Volvo FH 500' },
     fechamento: null,
     anexos:     [],
     _count:     { anexos: 0 },

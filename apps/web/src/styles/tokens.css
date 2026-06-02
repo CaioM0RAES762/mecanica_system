@@ -57,6 +57,16 @@
   --color-error: #e24b4a;
   --color-info: #1d6fe8;
 
+  /* Semantic aliases (usados em módulos CSS como --color-primary, --color-surface, etc.) */
+  --color-primary:        var(--color-blue-500);
+  --color-primary-50:     var(--color-blue-50);
+  --color-text-primary:   var(--color-gray-900);
+  --color-text-secondary: var(--color-gray-700);
+  --color-text-muted:     var(--color-gray-500);
+  --color-surface:        var(--color-white);
+  --color-surface-raised: var(--color-gray-50);
+  --color-border:         var(--color-gray-200);
+
   /* ------------------------------------------------------------------ */
   /* Tipografia                                                           */
   /* ------------------------------------------------------------------ */

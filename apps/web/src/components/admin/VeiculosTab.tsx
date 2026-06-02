@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { IconPlus, IconPencil, IconTrash, IconCar } from '@tabler/icons-react'
-import { Button, Input, Modal, Badge, EmptyState, Skeleton } from '@/components/ui'
+import { IconPlus, IconPencil, IconCar, IconTrash } from '@tabler/icons-react'
+import { Button, Input, Modal, EmptyState, Skeleton } from '@/components/ui'
 import type { VeiculoResumo } from '@metalsider/shared'
 import {
   listarVeiculos,
   criarVeiculo,
   editarVeiculo,
   desativarVeiculo,
+  excluirVeiculo,
   type CriarVeiculoInput,
 } from '@/lib/api/admin'
 import styles from './VeiculosTab.module.css'
@@ -18,7 +19,7 @@ interface VeiculosTabProps {
   initialVeiculos: VeiculoResumo[]
 }
 
-const VAZIO: CriarVeiculoInput = { placa: '', marca: '', modelo: '', codigo_frota: '' }
+const VAZIO: CriarVeiculoInput = { veiculo: '', placa: '', cod_tipo_aplicacao: '', descricao_tipo_aplicacao: '' }
 
 export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
   const [veiculos, setVeiculos] = useState<VeiculoResumo[]>(initialVeiculos)
@@ -28,6 +29,7 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
   const [showCriar, setShowCriar] = useState(false)
   const [showEditar, setShowEditar] = useState<VeiculoResumo | null>(null)
   const [showDesativar, setShowDesativar] = useState<VeiculoResumo | null>(null)
+  const [showExcluir, setShowExcluir] = useState<VeiculoResumo | null>(null)
 
   const [form, setForm] = useState<CriarVeiculoInput>(VAZIO)
   const [formEditar, setFormEditar] = useState<Partial<CriarVeiculoInput>>({})
@@ -92,6 +94,20 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
     }
   }
 
+  async function handleExcluir() {
+    if (!showExcluir) return
+    setSalvando(true)
+    try {
+      await excluirVeiculo(showExcluir.id, token)
+      setShowExcluir(null)
+      await recarregar()
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : 'Erro ao excluir veículo.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
   if (loading && veiculos.length === 0) return <Skeleton height={300} />
 
   return (
@@ -119,9 +135,10 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
           <table className={styles.table}>
             <thead>
               <tr>
+                <th>Identificação</th>
                 <th>Placa</th>
-                <th>Marca / Modelo</th>
-                <th>Frota</th>
+                <th>Tipo de aplicação</th>
+                <th>Descrição</th>
                 <th>Status</th>
                 <th aria-label="Ações"></th>
               </tr>
@@ -129,13 +146,31 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
             <tbody>
               {veiculos.map((v) => (
                 <tr key={v.id} className={!v.ativo ? styles.inativo : ''}>
-                  <td><code className={styles.placa}>{v.placa}</code></td>
-                  <td>{v.marca} {v.modelo}</td>
-                  <td className={styles.frota}>{v.codigo_frota ?? '—'}</td>
+                  <td><strong>{v.veiculo}</strong></td>
+                  <td><code className={styles.placa}>{v.placa ?? '—'}</code></td>
+                  <td className={styles.frota}>{v.cod_tipo_aplicacao ?? '—'}</td>
+                  <td className={styles.descricao}>{v.descricao_tipo_aplicacao ?? '—'}</td>
                   <td>
                     {v.ativo
-                      ? <Badge variant="green">Ativo</Badge>
-                      : <Badge variant="red">Inativo</Badge>}
+                      ? (
+                        <button
+                          type="button"
+                          className={`${styles.statusToggle} ${styles.statusAtivo}`}
+                          onClick={() => setShowDesativar(v)}
+                          title="Clique para desativar"
+                          aria-label={`Desativar ${v.veiculo}`}
+                        >
+                          <span className={styles.statusDot} aria-hidden="true" />
+                          Ativo
+                        </button>
+                      )
+                      : (
+                        <span className={`${styles.statusToggle} ${styles.statusInativo}`}>
+                          <span className={styles.statusDot} aria-hidden="true" />
+                          Inativo
+                        </span>
+                      )
+                    }
                   </td>
                   <td>
                     <div className={styles.actions}>
@@ -144,25 +179,24 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
                         size="sm"
                         leftIcon={<IconPencil size={14} />}
                         onClick={() => {
-                          setFormEditar({ placa: v.placa, marca: v.marca, modelo: v.modelo, codigo_frota: v.codigo_frota ?? '' })
+                          setFormEditar({ veiculo: v.veiculo, placa: v.placa ?? '', cod_tipo_aplicacao: v.cod_tipo_aplicacao ?? '', descricao_tipo_aplicacao: v.descricao_tipo_aplicacao ?? '' })
                           setErroForm(null)
                           setShowEditar(v)
                         }}
-                        aria-label={`Editar ${v.placa}`}
+                        aria-label={`Editar ${v.veiculo}`}
                       >
                         Editar
                       </Button>
-                      {v.ativo && (
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          leftIcon={<IconTrash size={14} />}
-                          onClick={() => setShowDesativar(v)}
-                          aria-label={`Desativar ${v.placa}`}
-                        >
-                          Desativar
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        leftIcon={<IconTrash size={14} />}
+                        onClick={() => setShowExcluir(v)}
+                        aria-label={`Excluir ${v.veiculo}`}
+                        className={styles.btnExcluir}
+                      >
+                        Excluir
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -186,10 +220,10 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
         }
       >
         <form id="form-v-criar" onSubmit={handleCriar} className={styles.form}>
-          <Input label="Placa" required value={form.placa} onChange={(e) => setForm((p) => ({ ...p, placa: e.target.value.toUpperCase() }))} placeholder="ABC1D23" maxLength={10} />
-          <Input label="Marca" required value={form.marca} onChange={(e) => setForm((p) => ({ ...p, marca: e.target.value }))} placeholder="Volvo" />
-          <Input label="Modelo" required value={form.modelo} onChange={(e) => setForm((p) => ({ ...p, modelo: e.target.value }))} placeholder="FH 460" />
-          <Input label="Código de frota" value={form.codigo_frota ?? ''} onChange={(e) => setForm((p) => ({ ...p, codigo_frota: e.target.value }))} placeholder="V-001" />
+          <Input label="Identificação" required value={form.veiculo} onChange={(e) => setForm((p) => ({ ...p, veiculo: e.target.value }))} placeholder="Volvo FH 500" maxLength={100} />
+          <Input label="Placa" value={form.placa ?? ''} onChange={(e) => setForm((p) => ({ ...p, placa: e.target.value.toUpperCase() }))} placeholder="ABC1D23" maxLength={10} />
+          <Input label="Cód. tipo de aplicação" value={form.cod_tipo_aplicacao ?? ''} onChange={(e) => setForm((p) => ({ ...p, cod_tipo_aplicacao: e.target.value }))} placeholder="CAMINHAO" maxLength={50} />
+          <Input label="Desc. tipo de aplicação" value={form.descricao_tipo_aplicacao ?? ''} onChange={(e) => setForm((p) => ({ ...p, descricao_tipo_aplicacao: e.target.value }))} placeholder="Caminhão pesado" maxLength={200} />
           {erroForm && <p className={styles.erro} role="alert">{erroForm}</p>}
         </form>
       </Modal>
@@ -208,10 +242,10 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
         }
       >
         <form id="form-v-editar" onSubmit={handleEditar} className={styles.form}>
+          <Input label="Identificação" value={formEditar.veiculo ?? ''} onChange={(e) => setFormEditar((p) => ({ ...p, veiculo: e.target.value }))} maxLength={100} />
           <Input label="Placa" value={formEditar.placa ?? ''} onChange={(e) => setFormEditar((p) => ({ ...p, placa: e.target.value.toUpperCase() }))} maxLength={10} />
-          <Input label="Marca" value={formEditar.marca ?? ''} onChange={(e) => setFormEditar((p) => ({ ...p, marca: e.target.value }))} />
-          <Input label="Modelo" value={formEditar.modelo ?? ''} onChange={(e) => setFormEditar((p) => ({ ...p, modelo: e.target.value }))} />
-          <Input label="Código de frota" value={formEditar.codigo_frota ?? ''} onChange={(e) => setFormEditar((p) => ({ ...p, codigo_frota: e.target.value }))} />
+          <Input label="Cód. tipo de aplicação" value={formEditar.cod_tipo_aplicacao ?? ''} onChange={(e) => setFormEditar((p) => ({ ...p, cod_tipo_aplicacao: e.target.value }))} maxLength={50} />
+          <Input label="Desc. tipo de aplicação" value={formEditar.descricao_tipo_aplicacao ?? ''} onChange={(e) => setFormEditar((p) => ({ ...p, descricao_tipo_aplicacao: e.target.value }))} maxLength={200} />
           {erroForm && <p className={styles.erro} role="alert">{erroForm}</p>}
         </form>
       </Modal>
@@ -221,7 +255,7 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
         open={!!showDesativar}
         onClose={() => setShowDesativar(null)}
         title="Desativar veículo"
-        description={`Deseja desativar o veículo ${showDesativar?.placa}?`}
+        description={`Deseja desativar "${showDesativar?.veiculo}"?`}
         size="sm"
         footer={
           <div className={styles.modalFooter}>
@@ -230,7 +264,28 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
           </div>
         }
       >
-        <p className={styles.alerta}>OSs abertas vinculadas a este veículo não serão afetadas.</p>
+        <p className={styles.alerta}>O veículo não aparecerá em novos chamados. OSs existentes não serão afetadas.</p>
+      </Modal>
+
+      {/* Modal: Excluir permanentemente */}
+      <Modal
+        open={!!showExcluir}
+        onClose={() => setShowExcluir(null)}
+        title="Excluir veículo permanentemente"
+        size="sm"
+        footer={
+          <div className={styles.modalFooter}>
+            <Button variant="secondary" onClick={() => setShowExcluir(null)} disabled={salvando}>Cancelar</Button>
+            <Button variant="danger" loading={salvando} onClick={handleExcluir}>Excluir permanentemente</Button>
+          </div>
+        }
+      >
+        <p className={styles.alertaPerigo}>
+          <strong>{showExcluir?.veiculo}</strong> será removido definitivamente. Esta ação não pode ser desfeita.
+        </p>
+        <p className={styles.alerta}>
+          Veículos com ordens de serviço vinculadas não podem ser excluídos — desative-os em vez disso.
+        </p>
       </Modal>
     </div>
   )

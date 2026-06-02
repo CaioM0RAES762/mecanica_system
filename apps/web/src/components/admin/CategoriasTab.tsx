@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { IconPlus, IconPencil, IconTrash, IconTag } from '@tabler/icons-react'
-import { Button, Input, Modal, Badge, EmptyState, Skeleton } from '@/components/ui'
+import { IconPlus, IconPencil, IconTag, IconTrash } from '@tabler/icons-react'
+import { Button, Input, Modal, EmptyState, Skeleton } from '@/components/ui'
 import type { CategoriaResumo } from '@metalsider/shared'
 import {
   listarCategorias,
   criarCategoria,
   editarCategoria,
   desativarCategoria,
+  excluirCategoria,
   type CriarCategoriaInput,
 } from '@/lib/api/admin'
 import styles from './CategoriasTab.module.css'
@@ -28,6 +29,7 @@ export function CategoriasTab({ token, initialCategorias }: CategoriasTabProps) 
   const [showCriar, setShowCriar] = useState(false)
   const [showEditar, setShowEditar] = useState<CategoriaResumo | null>(null)
   const [showDesativar, setShowDesativar] = useState<CategoriaResumo | null>(null)
+  const [showExcluir, setShowExcluir] = useState<CategoriaResumo | null>(null)
 
   const [form, setForm] = useState<CriarCategoriaInput>(VAZIO)
   const [formEditar, setFormEditar] = useState<Partial<CriarCategoriaInput>>({})
@@ -92,6 +94,20 @@ export function CategoriasTab({ token, initialCategorias }: CategoriasTabProps) 
     }
   }
 
+  async function handleExcluir() {
+    if (!showExcluir) return
+    setSalvando(true)
+    try {
+      await excluirCategoria(showExcluir.id, token)
+      setShowExcluir(null)
+      await recarregar()
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : 'Erro ao excluir categoria.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
   if (loading && categorias.length === 0) return <Skeleton height={300} />
 
   return (
@@ -128,8 +144,25 @@ export function CategoriasTab({ token, initialCategorias }: CategoriasTabProps) 
               </div>
               <div className={styles.cardRight}>
                 {c.ativo
-                  ? <Badge variant="green">Ativa</Badge>
-                  : <Badge variant="red">Inativa</Badge>}
+                  ? (
+                    <button
+                      type="button"
+                      className={`${styles.statusToggle} ${styles.statusAtivo}`}
+                      onClick={() => setShowDesativar(c)}
+                      title="Clique para desativar"
+                      aria-label={`Desativar ${c.nome}`}
+                    >
+                      <span className={styles.statusDot} aria-hidden="true" />
+                      Ativa
+                    </button>
+                  )
+                  : (
+                    <span className={`${styles.statusToggle} ${styles.statusInativo}`}>
+                      <span className={styles.statusDot} aria-hidden="true" />
+                      Inativa
+                    </span>
+                  )
+                }
                 <Button
                   variant="ghost"
                   size="sm"
@@ -143,17 +176,16 @@ export function CategoriasTab({ token, initialCategorias }: CategoriasTabProps) 
                 >
                   Editar
                 </Button>
-                {c.ativo && (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    leftIcon={<IconTrash size={14} />}
-                    onClick={() => setShowDesativar(c)}
-                    aria-label={`Desativar ${c.nome}`}
-                  >
-                    Desativar
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  leftIcon={<IconTrash size={14} />}
+                  onClick={() => setShowExcluir(c)}
+                  aria-label={`Excluir ${c.nome}`}
+                  className={styles.btnExcluir}
+                >
+                  Excluir
+                </Button>
               </div>
             </div>
           ))}
@@ -248,7 +280,28 @@ export function CategoriasTab({ token, initialCategorias }: CategoriasTabProps) 
           </div>
         }
       >
-        <p className={styles.alerta}>A categoria não aparecerá em novos chamados, mas OSs existentes não serão afetadas.</p>
+        <p className={styles.alerta}>A categoria não aparecerá em novos chamados. OSs existentes não serão afetadas.</p>
+      </Modal>
+
+      {/* Modal: Excluir permanentemente */}
+      <Modal
+        open={!!showExcluir}
+        onClose={() => setShowExcluir(null)}
+        title="Excluir categoria permanentemente"
+        size="sm"
+        footer={
+          <div className={styles.modalFooter}>
+            <Button variant="secondary" onClick={() => setShowExcluir(null)} disabled={salvando}>Cancelar</Button>
+            <Button variant="danger" loading={salvando} onClick={handleExcluir}>Excluir permanentemente</Button>
+          </div>
+        }
+      >
+        <p className={styles.alertaPerigo}>
+          <strong>{showExcluir?.nome}</strong> será removida definitivamente. Esta ação não pode ser desfeita.
+        </p>
+        <p className={styles.alerta}>
+          Categorias com ordens de serviço vinculadas não podem ser excluídas — desative-as em vez disso.
+        </p>
       </Modal>
     </div>
   )

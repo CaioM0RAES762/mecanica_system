@@ -6,6 +6,7 @@ import {
   IconCar,
   IconTag,
   IconSettings,
+  IconInfoCircle,
 } from '@tabler/icons-react'
 import { UsuariosTab } from './UsuariosTab'
 import { VeiculosTab } from './VeiculosTab'
@@ -49,7 +50,8 @@ export function ConfiguracoesClient({
 
       {!isAdmin && (
         <div className={styles.aviso} role="note">
-          Você tem acesso de leitura. Apenas administradores podem criar ou editar itens.
+          <IconInfoCircle size={16} className={styles.avisoIcon} aria-hidden="true" />
+          <span>Você tem acesso de leitura. Apenas administradores podem criar ou editar itens.</span>
         </div>
       )}
 

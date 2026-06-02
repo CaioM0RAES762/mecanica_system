@@ -1,3 +1,66 @@
+/* ── KPI Cards ── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.kpiCard {
+  padding: 12px;
+  border: 1px solid #edebe9;
+  border-radius: 4px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.kpiLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #a19f9d;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: #201f1e;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiSkeleton {
+  height: 58px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Badges — same tokens as DrawerDetalhes ── */
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  display: inline-block;
+  line-height: 1.6;
+}
+
+.badge_aberto   { background: #dce7f7; color: #004578; }
+.badge_fechado  { background: #dff6dd; color: #0e6b0e; }
+.badge_atrasado { background: #fde7e9; color: #a4252c; }
+.badge_baixa    { background: #dff6dd; color: #0e6b0e; }
+.badge_media    { background: #fff4ce; color: #7a5d00; }
+.badge_alta     { background: #fde7e9; color: #a4252c; }
+.badge_critica  { background: #201f1e; color: #ffffff; }
+.badge_neutro   { background: #f3f2f1; color: #605e5c; }
+
+/* ── Timeline ── */
 .container {
   list-style: none;
   margin: 0;
@@ -7,32 +70,38 @@
   position: relative;
 }
 
-/* Linha vertical */
+/* Vertical line */
 .container::before {
   content: '';
   position: absolute;
-  left: 6px;
-  top: 8px;
+  left: 3px;
+  top: 13px;
   bottom: 8px;
-  width: 2px;
-  background: var(--color-border);
+  width: 1px;
+  background: #edebe9;
 }
 
 .item {
   display: flex;
-  gap: var(--space-3);
-  padding-bottom: var(--space-4);
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 20px;
   position: relative;
+}
+
+.item:last-child {
+  padding-bottom: 0;
 }
 
 .dot {
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  margin-top: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
   position: relative;
   z-index: 1;
-  background: var(--color-bg, #fff);
+  box-shadow: 0 0 0 2px #ffffff;
 }
 
 .content {
@@ -40,72 +109,99 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
-.header {
+.eventHeader {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .acao {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 500;
+  color: #201f1e;
+  line-height: 1.4;
 }
 
 .tempo {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  font-size: 11px;
+  color: #a19f9d;
   white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .ator {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-}
-
-.detalhes {
-  margin-top: var(--space-1);
-}
-
-.detalhesSummary {
-  font-size: var(--text-xs);
-  color: var(--color-primary);
-  cursor: pointer;
-}
-
-.json {
-  margin-top: var(--space-1);
   font-size: 11px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2);
+  color: #8a8886;
+  line-height: 1.4;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+/* ── Admin raw JSON ── */
+.adminZone {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btnVerTecnico {
+  font-size: 10px;
+  color: #a19f9d;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  text-decoration: underline dotted;
+  align-self: flex-start;
+  transition: color 0.1s;
+}
+
+.btnVerTecnico:hover { color: #605e5c; }
+
+.jsonBruto {
+  font-size: 10px;
+  background: #f5f5f5;
+  border-radius: 3px;
+  padding: 8px;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  color: #605e5c;
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  margin: 0;
+  line-height: 1.5;
 }
 
+/* ── Skeleton & empty ── */
 .itemSkeleton {
   height: 48px;
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-3);
+  background: #f3f2f1;
+  border-radius: 4px;
+  margin-bottom: 12px;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50%       { opacity: 0.4; }
 }
 
 .vazio {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  font-size: 13px;
+  color: #a19f9d;
   text-align: center;
-  padding: var(--space-6);
+  padding: 32px 0;
 }

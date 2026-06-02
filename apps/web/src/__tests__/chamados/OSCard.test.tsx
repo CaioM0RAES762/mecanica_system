@@ -12,7 +12,8 @@ const osBase: OrdemServicoResumo = {
   categoria_nome: 'Motor',
   veiculo_id: 10,
   veiculo_placa: 'ABC-1234',
-  veiculo_modelo: 'Fiat Strada',
+  veiculo_nome: 'Fiat Strada',
+  veiculo_descricao_tipo_aplicacao: null,
   supervisor_id: 'sup-uuid',
   supervisor_nome: 'Carlos Silva',
   mecanico_id: 'mec-uuid-1',
@@ -24,49 +25,62 @@ const osBase: OrdemServicoResumo = {
   atualizado_em: new Date().toISOString(),
 }
 
+function renderCard(overrides: Partial<OrdemServicoResumo> = {}, perfil = 'supervisor', userId = 'sup-uuid') {
+  return render(
+    <OSCard
+      os={{ ...osBase, ...overrides }}
+      perfil={perfil}
+      userId={userId}
+      onFechar={vi.fn()}
+      onEditar={vi.fn()}
+      onExcluir={vi.fn()}
+    />,
+  )
+}
+
 describe('OSCard — renderização', () => {
   it('renderiza ID, prioridade e categoria', () => {
-    render(
-      <OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />,
-    )
+    renderCard()
     expect(screen.getByText('#42')).toBeTruthy()
     expect(screen.getByTestId('prioridade-badge').textContent).toContain('Alta')
     expect(screen.getByTestId('categoria-badge').textContent).toContain('Motor')
   })
 
   it('renderiza título do chamado', () => {
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+    renderCard()
     expect(screen.getByText('Troca de óleo do motor')).toBeTruthy()
   })
 
-  it('renderiza placa e modelo do veículo', () => {
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
-    expect(screen.getByText(/ABC-1234/)).toBeTruthy()
+  it('renderiza nome do veículo', () => {
+    renderCard()
     expect(screen.getByText(/Fiat Strada/)).toBeTruthy()
   })
 
+  it('renderiza veículo com descricao_tipo_aplicacao quando presente', () => {
+    renderCard({ veiculo_descricao_tipo_aplicacao: 'Basculante' })
+    expect(screen.getByText(/Fiat Strada — Basculante/)).toBeTruthy()
+  })
+
   it('renderiza nome do mecânico', () => {
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
-    expect(screen.getByText('João Mecânico')).toBeTruthy()
+    renderCard()
+    expect(screen.getByText('João')).toBeTruthy()
   })
 
   it('exibe "Não atribuído" quando sem mecânico', () => {
-    const os = { ...osBase, mecanico_id: null, mecanico_nome: null }
-    render(<OSCard os={os} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+    renderCard({ mecanico_id: null, mecanico_nome: null })
     expect(screen.getByText('Não atribuído')).toBeTruthy()
   })
 })
 
 describe('OSCard — destaque de atrasado', () => {
   it('OS atrasada tem data-status=atrasado', () => {
-    const os = { ...osBase, status: 'atrasado' as const }
-    render(<OSCard os={os} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+    renderCard({ status: 'atrasado' })
     const card = screen.getByTestId('os-card')
     expect(card.getAttribute('data-status')).toBe('atrasado')
   })
 
-  it('OS normal não tem classe de atrasado', () => {
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+  it('OS normal tem data-status=aberto', () => {
+    renderCard()
     const card = screen.getByTestId('os-card')
     expect(card.getAttribute('data-status')).toBe('aberto')
   })
@@ -74,42 +88,102 @@ describe('OSCard — destaque de atrasado', () => {
 
 describe('OSCard — botão fechar', () => {
   it('supervisor vê botão fechar em OS aberta', () => {
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+    renderCard()
     expect(screen.getByTestId('btn-fechar')).toBeTruthy()
   })
 
   it('mecânico atribuído vê botão fechar na sua OS', () => {
-    render(<OSCard os={osBase} perfil="mecanico" userId="mec-uuid-1" onFechar={vi.fn()} />)
+    renderCard({}, 'mecanico', 'mec-uuid-1')
     expect(screen.getByTestId('btn-fechar')).toBeTruthy()
   })
 
   it('mecânico externo NÃO vê botão fechar', () => {
-    render(<OSCard os={osBase} perfil="mecanico" userId="outro-uuid" onFechar={vi.fn()} />)
+    renderCard({}, 'mecanico', 'outro-uuid')
     expect(screen.queryByTestId('btn-fechar')).toBeNull()
   })
 
   it('OS fechada não exibe botão fechar para ninguém', () => {
-    const os = { ...osBase, status: 'fechado' as const }
-    render(<OSCard os={os} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+    renderCard({ status: 'fechado' })
     expect(screen.queryByTestId('btn-fechar')).toBeNull()
   })
 
   it('clique no botão fechar chama onFechar com a OS', () => {
     const onFechar = vi.fn()
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={onFechar} />)
+    render(
+      <OSCard
+        os={osBase}
+        perfil="supervisor"
+        userId="sup-uuid"
+        onFechar={onFechar}
+        onEditar={vi.fn()}
+        onExcluir={vi.fn()}
+      />,
+    )
     fireEvent.click(screen.getByTestId('btn-fechar'))
     expect(onFechar).toHaveBeenCalledWith(osBase)
   })
 })
 
+describe('OSCard — botões editar e excluir (supervisor)', () => {
+  it('supervisor vê botões editar e excluir em OS aberta', () => {
+    renderCard()
+    expect(screen.getByTestId('btn-editar')).toBeTruthy()
+    expect(screen.getByTestId('btn-excluir')).toBeTruthy()
+  })
+
+  it('mecânico NÃO vê botões editar e excluir', () => {
+    renderCard({}, 'mecanico', 'mec-uuid-1')
+    expect(screen.queryByTestId('btn-editar')).toBeNull()
+    expect(screen.queryByTestId('btn-excluir')).toBeNull()
+  })
+
+  it('supervisor NÃO vê botões editar/excluir em OS fechada', () => {
+    renderCard({ status: 'fechado' })
+    expect(screen.queryByTestId('btn-editar')).toBeNull()
+    expect(screen.queryByTestId('btn-excluir')).toBeNull()
+  })
+
+  it('clique em editar chama onEditar com a OS', () => {
+    const onEditar = vi.fn()
+    render(
+      <OSCard
+        os={osBase}
+        perfil="supervisor"
+        userId="sup-uuid"
+        onFechar={vi.fn()}
+        onEditar={onEditar}
+        onExcluir={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('btn-editar'))
+    expect(onEditar).toHaveBeenCalledWith(osBase)
+  })
+
+  it('clique em excluir chama onExcluir com a OS', () => {
+    const onExcluir = vi.fn()
+    render(
+      <OSCard
+        os={osBase}
+        perfil="supervisor"
+        userId="sup-uuid"
+        onFechar={vi.fn()}
+        onEditar={vi.fn()}
+        onExcluir={onExcluir}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('btn-excluir'))
+    expect(onExcluir).toHaveBeenCalledWith(osBase)
+  })
+})
+
 describe('OSCard — layout responsivo', () => {
   it('tem role de progressbar para barra de SLA', () => {
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+    renderCard()
     expect(screen.getByRole('progressbar')).toBeTruthy()
   })
 
   it('barra de progresso tem valores ARIA', () => {
-    render(<OSCard os={osBase} perfil="supervisor" userId="sup-uuid" onFechar={vi.fn()} />)
+    renderCard()
     const bar = screen.getByRole('progressbar')
     expect(bar.getAttribute('aria-valuemin')).toBe('0')
     expect(bar.getAttribute('aria-valuemax')).toBe('100')

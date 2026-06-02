@@ -87,7 +87,7 @@ export default async function ChamadoDetalhePage({
       <div className={styles.infoGrid}>
         <div className={styles.infoItem}>
           <span className={styles.infoLabel}>Veículo</span>
-          <span className={styles.infoValue}>{os.veiculo_placa} — {os.veiculo_modelo}</span>
+          <span className={styles.infoValue}>{os.veiculo_nome}{os.veiculo_placa ? ` — ${os.veiculo_placa}` : ''}</span>
         </div>
         <div className={styles.infoItem}>
           <span className={styles.infoLabel}>Mecânico</span>
