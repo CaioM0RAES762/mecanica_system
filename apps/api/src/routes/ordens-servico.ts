@@ -22,6 +22,8 @@ import {
   uploadAnexoController,
   removerAnexoController,
 } from '../controllers/anexos.controller.js'
+import { registrarClienteSSE } from '../lib/sse-emitter.js'
+import type { EventoOS } from '../lib/sse-emitter.js'
 
 const AUTH = [authenticate]
 const SUPERVISOR_ADMIN = [
@@ -51,6 +53,50 @@ export async function ordensServicoRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const query = FiltroOSSchema.parse(request.query)
       return contagemOSController({ ...request, query } as Parameters<typeof contagemOSController>[0], reply)
+    },
+  )
+
+  // GET /ordens-servico/stream — Server-Sent Events; deve ficar ANTES de /:id para que a rota
+  // estática tenha precedência explícita no registro (find-my-way já garante isso, mas a ordem
+  // de registro deixa a intenção clara e evita ambiguidade em versões futuras do router).
+  fastify.get(
+    '/ordens-servico/stream',
+    { preHandler: AUTH, config: { compress: false } },
+    (request, reply) => {
+      reply.hijack()
+      const res = reply.raw
+
+      // Mescla headers CORS/helmet que o Fastify acumulou (via onRequest hooks) com os
+      // headers SSE obrigatórios. Os headers SSE ficam por último no spread para garantir
+      // que nenhum plugin (compress, helmet, etc.) possa sobrescrevê-los via reply.getHeaders().
+      const responseHeaders: Record<string, string | string[] | number> = {
+        ...(reply.getHeaders() as Record<string, string | string[] | number>),
+        'content-type':      'text/event-stream; charset=utf-8',
+        'cache-control':     'no-cache, no-transform',
+        'connection':        'keep-alive',
+        'x-accel-buffering': 'no',
+      }
+      // Remover content-encoding — SSE nunca deve ser comprimido (quebraria o framing de eventos)
+      delete (responseHeaders as Record<string, unknown>)['content-encoding']
+
+      res.writeHead(200, responseHeaders)
+
+      const cancelar = registrarClienteSSE((e: EventoOS) => {
+        try { res.write(`data: ${JSON.stringify(e)}\n\n`) } catch { /* cliente desconectou */ }
+      })
+
+      const heartbeat = setInterval(() => {
+        if (!res.writable) { clearInterval(heartbeat); cancelar(); return }
+        try { res.write(': ping\n\n') } catch { clearInterval(heartbeat); cancelar() }
+      }, 25_000)
+
+      const cleanup = () => {
+        clearInterval(heartbeat)
+        cancelar()
+      }
+
+      request.raw.on('close', cleanup)
+      request.raw.on('error', cleanup)
     },
   )
 
@@ -131,4 +177,5 @@ export async function ordensServicoRoutes(fastify: FastifyInstance) {
     async (request, reply) =>
       removerAnexoController(request as Parameters<typeof removerAnexoController>[0], reply),
   )
+
 }

@@ -72,11 +72,9 @@ export function UploadAnexos({
       novos.forEach((p) => enviarAnexo(p))
     } else {
       // Modo criação — acumular para envio posterior
-      setPendentes((prev) => {
-        const todos = [...prev, ...novos]
-        onAnexosChange?.(todos.filter((p) => p.status !== 'erro').map((p) => p.file))
-        return todos
-      })
+      const todos = [...pendentes, ...novos]
+      setPendentes(todos)
+      onAnexosChange?.(todos.filter((p) => p.status !== 'erro').map((p) => p.file))
     }
   }
 
@@ -121,11 +119,9 @@ export function UploadAnexos({
   }
 
   function handleRemoverPendente(id: string) {
-    setPendentes((prev) => {
-      const novos = prev.filter((p) => p.id !== id)
-      onAnexosChange?.(novos.filter((p) => p.status !== 'erro').map((p) => p.file))
-      return novos
-    })
+    const restantes = pendentes.filter((p) => p.id !== id)
+    setPendentes(restantes)
+    onAnexosChange?.(restantes.filter((p) => p.status !== 'erro').map((p) => p.file))
   }
 
   const totalAnexos = anexos.length + pendentes.filter((p) => p.status !== 'erro').length

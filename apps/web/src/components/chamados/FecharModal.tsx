@@ -329,7 +329,7 @@ export function FecharModal({ os, onClose, onConfirm, accessToken }: FecharModal
               </label>
               <UploadAnexos
                 token={accessToken}
-                accept="image/*,application/pdf,.doc,.docx"
+                accept="image/*,.pdf,.xlsx,.xls,.docx,.doc,.csv"
                 onAnexosChange={setAnexoFiles}
               />
             </div>

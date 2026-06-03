@@ -7,20 +7,28 @@ export async function uploadAnexo(
   file: File,
   token: string,
 ): Promise<AnexoDTO> {
-  const form = new FormData()
-  form.append('file', file)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(new Error('Upload timeout (60s)')), 60_000)
 
-  const res = await fetch(`${API_URL}/ordens-servico/${osId}/anexos`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: form,
-  })
+  try {
+    const form = new FormData()
+    form.append('file', file)
 
-  if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { message?: string }
-    throw new Error(err.message ?? 'Falha ao enviar anexo')
+    const res = await fetch(`${API_URL}/ordens-servico/${osId}/anexos`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+      signal: controller.signal,
+    })
+
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { message?: string }
+      throw new Error(err.message ?? 'Falha ao enviar anexo')
+    }
+    return res.json() as Promise<AnexoDTO>
+  } finally {
+    clearTimeout(timeoutId)
   }
-  return res.json() as Promise<AnexoDTO>
 }
 
 export async function removerAnexo(

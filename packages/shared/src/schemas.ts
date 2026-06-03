@@ -87,6 +87,11 @@ export const AlterarPerfilSchema = z.object({
   perfil: z.enum([PerfilUsuario.SUPERVISOR, PerfilUsuario.MECANICO, PerfilUsuario.ADMIN]),
 })
 
+export const AtualizarUsuarioSchema = z.object({
+  nome_completo: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(200).optional(),
+  perfil: z.enum([PerfilUsuario.SUPERVISOR, PerfilUsuario.MECANICO, PerfilUsuario.ADMIN]).optional(),
+})
+
 // ---- Ordens de Serviço ----
 
 export const CriarOSSchema = z.object({
@@ -124,10 +129,10 @@ export const FecharOSSchema = z.object({
 // ---- Veículos ----
 
 export const CriarVeiculoSchema = z.object({
-  veiculo: z.string().min(2).max(100),
-  placa: z.string().min(7).max(10).nullable().optional(),
-  cod_tipo_aplicacao: z.string().max(50).nullable().optional(),
-  descricao_tipo_aplicacao: z.string().max(200).nullable().optional(),
+  veiculo: z.string().min(2, 'Identificação deve ter pelo menos 2 caracteres').max(100, 'Identificação deve ter no máximo 100 caracteres'),
+  placa: z.string().min(7, 'Placa deve ter pelo menos 7 caracteres').max(10, 'Placa deve ter no máximo 10 caracteres').nullable().optional(),
+  cod_tipo_aplicacao: z.string().max(50, 'Código deve ter no máximo 50 caracteres').nullable().optional(),
+  descricao_tipo_aplicacao: z.string().max(200, 'Descrição deve ter no máximo 200 caracteres').nullable().optional(),
 })
 
 export const AtualizarVeiculoSchema = CriarVeiculoSchema.partial()
@@ -166,6 +171,8 @@ export const FiltroOSSchema = PaginacaoSchema.extend({
   fechado_de: z.string().datetime({ offset: true }).optional(),
   fechado_ate: z.string().datetime({ offset: true }).optional(),
   busca: z.string().max(100).optional(),
+  orderBy: z.enum(['prazo', 'criado_em', 'prioridade']).optional(),
+  order: z.enum(['asc', 'desc']).optional(),
 })
 
 // ---- Analytics ----
@@ -195,6 +202,7 @@ export type SolicitarRecuperacaoSenhaDTO = z.infer<typeof SolicitarRecuperacaoSe
 export type RedefinirSenhaDTO = z.infer<typeof RedefinirSenhaSchema>
 export type CriarUsuarioDTO = z.infer<typeof CriarUsuarioSchema>
 export type AlterarPerfilDTO = z.infer<typeof AlterarPerfilSchema>
+export type AtualizarUsuarioDTO = z.infer<typeof AtualizarUsuarioSchema>
 export type CriarOSDTO = z.infer<typeof CriarOSSchema>
 export type AtualizarOSDTO = z.infer<typeof AtualizarOSSchema>
 export type FecharOSDTO = z.infer<typeof FecharOSSchema>

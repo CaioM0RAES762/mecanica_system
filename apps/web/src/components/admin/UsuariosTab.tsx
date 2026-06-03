@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { IconPlus, IconPencil, IconUser, IconTrash } from '@tabler/icons-react'
+import { IconPlus, IconPencil, IconUser, IconTrash, IconInfoCircle } from '@tabler/icons-react'
 import {
   Button,
   Input,
@@ -15,10 +15,11 @@ import type { UsuarioResumo } from '@metalsider/shared'
 import {
   listarUsuarios,
   criarUsuario,
-  alterarPerfil,
+  atualizarUsuario,
   desativarUsuario,
   excluirUsuario,
   type CriarUsuarioInput,
+  type AtualizarUsuarioInput,
 } from '@/lib/api/admin'
 import styles from './UsuariosTab.module.css'
 
@@ -33,6 +34,8 @@ const PERFIL_VARIANT: Record<string, 'red' | 'amber' | 'default'> = {
   supervisor: 'amber',
   mecanico: 'default',
 }
+
+const DOMAIN = '@metalsider.com.br'
 
 interface UsuariosTabProps {
   token: string
@@ -54,9 +57,9 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
     nome_completo: '',
     perfil: 'mecanico',
   })
+  const [formEditar, setFormEditar] = useState<AtualizarUsuarioInput>({})
   const [erroForm, setErroForm] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
-  const [perfilEditar, setPerfilEditar] = useState('')
 
   const recarregar = useCallback(async () => {
     setLoading(true)
@@ -73,6 +76,12 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
   async function handleCriar(e: React.FormEvent) {
     e.preventDefault()
     setErroForm(null)
+
+    if (!formCriar.email.endsWith(DOMAIN)) {
+      setErroForm(`Apenas e-mails corporativos ${DOMAIN} são permitidos`)
+      return
+    }
+
     setSalvando(true)
     try {
       await criarUsuario(formCriar, token)
@@ -87,17 +96,17 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
     }
   }
 
-  async function handleEditarPerfil(e: React.FormEvent) {
+  async function handleEditar(e: React.FormEvent) {
     e.preventDefault()
     if (!showEditar) return
     setErroForm(null)
     setSalvando(true)
     try {
-      await alterarPerfil(showEditar.id, perfilEditar, token)
+      await atualizarUsuario(showEditar.id, formEditar, token)
       setShowEditar(null)
       await recarregar()
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erro ao alterar perfil.'
+      const msg = err instanceof Error ? err.message : 'Erro ao editar usuário.'
       setErroForm(msg)
     } finally {
       setSalvando(false)
@@ -211,13 +220,13 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
                         size="sm"
                         leftIcon={<IconPencil size={14} />}
                         onClick={() => {
-                          setPerfilEditar(u.perfil)
+                          setFormEditar({ nome_completo: u.nome_completo, perfil: u.perfil })
                           setErroForm(null)
                           setShowEditar(u)
                         }}
-                        aria-label={`Editar perfil de ${u.nome_completo}`}
+                        aria-label={`Editar ${u.nome_completo}`}
                       >
-                        Perfil
+                        Editar
                       </Button>
                       <Button
                         variant="ghost"
@@ -243,7 +252,7 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
         open={showCriar}
         onClose={() => setShowCriar(false)}
         title="Novo usuário"
-        description="Um código de ativação será enviado ao e-mail informado."
+        description="O usuário poderá acessar o sistema imediatamente com a senha padrão."
         size="sm"
         footer={
           <div className={styles.modalFooter}>
@@ -251,7 +260,7 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
               Cancelar
             </Button>
             <Button form="form-criar" type="submit" loading={salvando}>
-              Criar e enviar código
+              Criar usuário
             </Button>
           </div>
         }
@@ -270,7 +279,7 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
             required
             value={formCriar.email}
             onChange={(e) => setFormCriar((p) => ({ ...p, email: e.target.value }))}
-            placeholder="nome@metalsider.com.br"
+            placeholder={`nome${DOMAIN}`}
           />
           <Select
             label="Perfil"
@@ -283,15 +292,19 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
               { value: 'admin', label: 'Admin' },
             ]}
           />
+          <div className={styles.senhaInfo}>
+            <IconInfoCircle size={16} aria-hidden="true" />
+            <span>Senha padrão: <strong>metal@10</strong> — o usuário deverá alterar no primeiro acesso</span>
+          </div>
           {erroForm && <p className={styles.erro} role="alert">{erroForm}</p>}
         </form>
       </Modal>
 
-      {/* Modal: Editar perfil */}
+      {/* Modal: Editar usuário */}
       <Modal
         open={!!showEditar}
         onClose={() => setShowEditar(null)}
-        title="Alterar perfil"
+        title="Editar usuário"
         size="sm"
         footer={
           <div className={styles.modalFooter}>
@@ -304,13 +317,18 @@ export function UsuariosTab({ token, initialUsuarios }: UsuariosTabProps) {
           </div>
         }
       >
-        <form id="form-editar" onSubmit={handleEditarPerfil} className={styles.form}>
-          <p className={styles.editarNome}>{showEditar?.nome_completo}</p>
+        <form id="form-editar" onSubmit={handleEditar} className={styles.form}>
+          <Input
+            label="Nome completo"
+            required
+            value={formEditar.nome_completo ?? ''}
+            onChange={(e) => setFormEditar((p) => ({ ...p, nome_completo: e.target.value }))}
+          />
           <Select
             label="Perfil"
             required
-            value={perfilEditar}
-            onChange={(e) => setPerfilEditar(e.target.value)}
+            value={formEditar.perfil ?? 'mecanico'}
+            onChange={(e) => setFormEditar((p) => ({ ...p, perfil: e.target.value as AtualizarUsuarioInput['perfil'] }))}
             options={[
               { value: 'mecanico', label: 'Mecânico' },
               { value: 'supervisor', label: 'Supervisor' },

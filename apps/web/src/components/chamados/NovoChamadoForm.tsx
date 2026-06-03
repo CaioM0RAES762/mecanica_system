@@ -471,6 +471,7 @@ export function NovoChamadoForm({
   const [loading, setLoading] = useState(false)
   const [globalErro, setGlobalErro] = useState<string | null>(null)
   const pendingFilesRef = useRef<File[]>([])
+  const isUploadingRef = useRef(false)
 
   const today = todayISO()
 
@@ -729,12 +730,26 @@ export function NovoChamadoForm({
     try {
       const criado = await criarOS(parsed.data, accessToken)
       const files = pendingFilesRef.current
-      if (files.length > 0) {
-        await Promise.allSettled(files.map(f => uploadAnexo(criado.id, f, accessToken)))
+      const uploadErrors: string[] = []
+      isUploadingRef.current = true
+      for (const file of files) {
+        try {
+          await uploadAnexo(criado.id, file, accessToken)
+        } catch (err) {
+          uploadErrors.push(`"${file.name}": ${err instanceof Error ? err.message : 'Falha ao enviar'}`)
+        }
+      }
+      isUploadingRef.current = false
+      if (uploadErrors.length > 0) {
+        setGlobalErro(
+          `Chamado #${criado.id} criado. Falha ao enviar ${uploadErrors.length === 1 ? 'o anexo' : `${uploadErrors.length} anexos`}: ${uploadErrors.join(' | ')}`,
+        )
+        await new Promise(r => setTimeout(r, 4000))
       }
       router.push('/chamados')
       router.refresh()
     } catch (err) {
+      isUploadingRef.current = false
       setGlobalErro(err instanceof Error ? err.message : 'Erro ao criar chamado')
     } finally {
       setLoading(false)
@@ -880,7 +895,6 @@ export function NovoChamadoForm({
                   type="date"
                   className={`${styles.input} ${styles.inputWithIcon}`}
                   value={form.inicio_previsto}
-                  min={today}
                   onChange={e => dispatch({ type: 'set', field: 'inicio_previsto', value: e.target.value })}
                   data-testid="input-inicio"
                 />

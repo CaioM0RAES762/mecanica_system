@@ -30,6 +30,10 @@ model usuarios {
   fechamentos           registros_fechamento[]
   anexos                anexos[]
   logs                  logs_auditoria[]
+
+  @@index([ativo])
+  @@index([perfil])
+  @@index([ativo, perfil])
 }
 
 model veiculos {
@@ -83,6 +87,9 @@ model ordens_servico {
   @@index([status, mecanico_id])
   @@index([status, prazo])
   @@index([supervisor_id, criado_em(sort: Desc)])
+  @@index([status, criado_em(sort: Desc)])
+  @@index([status, fechado_em(sort: Desc)])
+  @@index([categoria_id])
 }
 
 model registros_fechamento {

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { auth } from '@/lib/auth'
-import { DashboardClient } from '@/components/dashboard/DashboardClient'
+import { DashboardClientWrapper } from '@/components/dashboard/DashboardClientWrapper'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   return (
     <div className={styles.page}>
-      <DashboardClient token={token} />
+      <DashboardClientWrapper token={token} />
     </div>
   )
 }

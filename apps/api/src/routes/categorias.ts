@@ -23,6 +23,7 @@ export async function categoriasRoutes(fastify: FastifyInstance) {
       orderBy: { nome: 'asc' },
       select: SELECT_CATEGORIA,
     })
+    reply.header('Cache-Control', 'private, max-age=60, stale-while-revalidate=300')
     return reply.send({ dados: categorias })
   })
 

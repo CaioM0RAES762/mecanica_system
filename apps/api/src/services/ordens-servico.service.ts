@@ -16,6 +16,8 @@ import {
 import type { JwtPayload } from '../middlewares/authenticate.js'
 import { emailService, type OSEmailData } from '../lib/email.js'
 import { invalidarCacheAnalytics } from './analytics.service.js'
+import { emitirEventoOS } from '../lib/sse-emitter.js'
+import { getStorageAdapter } from '../lib/storage.js'
 
 function buildOSEmailData(os: {
   id: number
@@ -115,10 +117,11 @@ function normalizarAnexos(
     enviado_por: { id: string; nome_completo: string }
   }>,
 ) {
+  const storage = getStorageAdapter()
   return anexos.map((a) => ({
     id:             a.id,
     nome_arquivo:   a.nome_arquivo,
-    url:            a.url,
+    url:            storage.publicUrl(a.url),
     tipo:           a.tipo,
     tamanho_bytes:  a.tamanho_bytes,
     enviado_por_id: a.enviado_por.id,
@@ -171,7 +174,10 @@ function normalizarOS(os: any, perfil: string): any {
     mecanico_nome:   os.mecanico?.nome_completo   ?? null,
     // Campos de OrdemServicoDetalhe
     fechamento: normalizarFechamento(os.fechamento ?? null),
-    anexos:     normalizarAnexos(os.anexos ?? []),
+    // Incluir anexos apenas quando foi buscado via osSelect() (detalhe); na listagem
+    // osListSelect() não traz o campo e os.anexos fica undefined — omitir para que
+    // handleSelecionar em HistoricoClient saiba que precisa buscar o detalhe completo.
+    ...(os.anexos !== undefined ? { anexos: normalizarAnexos(os.anexos) } : {}),
   }
   // Remover notas_internas para mecânicos (SDD § 8.5 / CLAUDE.md)
   if (perfil === PerfilUsuario.MECANICO) {
@@ -201,6 +207,10 @@ export async function contarOSService(params: FiltroOSDTO) {
   })
 }
 
+const PRIORIDADE_NIVEL: Record<string, number> = {
+  critica: 0, alta: 1, media: 2, baixa: 3,
+}
+
 export async function listarOSService(
   params: FiltroOSDTO,
   ator: JwtPayload,
@@ -209,7 +219,12 @@ export async function listarOSService(
     pagina, por_pagina, status, excluir_fechados,
     prioridade, categoria_id, mecanico_id, supervisor_id,
     de, ate, fechado_de, fechado_ate, busca,
+    orderBy, order,
   } = params
+
+  // 'prioridade' não tem suporte nativo de ordenação por severity no Prisma/SQL Server;
+  // busca sem orderBy específico e aplica sort em memória abaixo.
+  const dbOrderBy = orderBy !== 'prioridade' ? orderBy : undefined
 
   const { dados, total } = await findManyOS({
     pagina,
@@ -225,12 +240,24 @@ export async function listarOSService(
     fechado_de:  fechado_de  ? new Date(fechado_de)  : undefined,
     fechado_ate: fechado_ate ? new Date(fechado_ate) : undefined,
     busca,
+    orderBy: dbOrderBy,
+    order,
   })
 
   const paginas = Math.ceil(total / por_pagina)
 
+  const lista = dados.map((os) => normalizarOS(os, ator.perfil))
+
+  if (orderBy === 'prioridade') {
+    lista.sort(
+      (a, b) =>
+        (PRIORIDADE_NIVEL[a.prioridade as string] ?? 99) -
+        (PRIORIDADE_NIVEL[b.prioridade as string] ?? 99),
+    )
+  }
+
   return {
-    dados: dados.map((os) => normalizarOS(os, ator.perfil)),
+    dados: lista,
     paginacao: { pagina, por_pagina, total, paginas },
   }
 }
@@ -284,6 +311,7 @@ export async function criarOSService(dto: CriarOSDTO, atorId: string) {
   }
 
   void invalidarCacheAnalytics()
+  emitirEventoOS({ tipo: 'criado', id: os.id })
   return normalizarOS(os, PerfilUsuario.SUPERVISOR)
 }
 
@@ -367,6 +395,7 @@ export async function atualizarOSService(
   }
 
   void invalidarCacheAnalytics()
+  emitirEventoOS({ tipo: 'atualizado', id })
   return normalizarOS(osAtualizada, ator.perfil)
 }
 
@@ -431,6 +460,7 @@ export async function fecharOSService(
   }
 
   void invalidarCacheAnalytics()
+  emitirEventoOS({ tipo: 'fechado', id })
   return normalizarOS(osAtualizada!, ator.perfil)
 }
 
@@ -445,6 +475,7 @@ export async function excluirOSService(id: number, _ator: JwtPayload) {
   // Hard delete: remove a OS e todos os registros relacionados (logs, fechamento, anexos)
   await deleteOS(id)
   void invalidarCacheAnalytics()
+  emitirEventoOS({ tipo: 'excluido', id })
 }
 
 export async function buscarAuditoriaService(id: number) {

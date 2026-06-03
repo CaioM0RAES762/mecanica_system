@@ -2,8 +2,10 @@ import type { UsuarioResumo, VeiculoResumo, CategoriaResumo } from '@metalsider/
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1'
 
-function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+function authHeaders(token: string, hasBody = false) {
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
+  if (hasBody) headers['Content-Type'] = 'application/json'
+  return headers
 }
 
 async function req<T>(
@@ -12,10 +14,11 @@ async function req<T>(
   token: string,
   body?: unknown,
 ): Promise<T> {
+  const hasBody = body !== undefined
   const res = await fetch(`${API_URL}${path}`, {
     method,
-    headers: authHeaders(token),
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    headers: authHeaders(token, hasBody),
+    ...(hasBody ? { body: JSON.stringify(body) } : {}),
     cache: 'no-store',
   })
   if (!res.ok) {
@@ -56,6 +59,15 @@ export function criarUsuario(body: CriarUsuarioInput, token: string): Promise<{ 
 
 export function alterarPerfil(id: string, perfil: string, token: string): Promise<{ dados: UsuarioResumo }> {
   return req('PATCH', `/usuarios/${id}/perfil`, token, { perfil })
+}
+
+export interface AtualizarUsuarioInput {
+  nome_completo?: string
+  perfil?: 'supervisor' | 'mecanico' | 'admin'
+}
+
+export function atualizarUsuario(id: string, body: AtualizarUsuarioInput, token: string): Promise<{ dados: UsuarioResumo }> {
+  return req('PATCH', `/usuarios/${id}`, token, body)
 }
 
 export function desativarUsuario(id: string, token: string): Promise<void> {

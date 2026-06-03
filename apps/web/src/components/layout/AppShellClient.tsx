@@ -23,23 +23,30 @@ export function AppShellClient({ userPerfil, userName, accessToken, children }: 
     const token = accessToken
     if (!token) return
 
+    const ctrl = new AbortController()
+    const { signal } = ctrl
+
     const fetchCount = async () => {
+      if (signal.aborted) return
       try {
         const res = await fetch(
           `${API_URL}/ordens-servico/contagem?status=aberto`,
-          { headers: { Authorization: `Bearer ${token}` } },
+          { headers: { Authorization: `Bearer ${token}` }, signal },
         )
         if (!res.ok) return
         const data = (await res.json()) as { total?: number }
         setChamadosAbertos(data.total ?? 0)
       } catch {
-        // Redis / network transiente — ignorar silenciosamente
+        // AbortError, Redis ou network transiente — ignorar silenciosamente
       }
     }
 
     void fetchCount()
     const interval = setInterval(() => void fetchCount(), POLL_INTERVAL)
-    return () => clearInterval(interval)
+    return () => {
+      ctrl.abort()
+      clearInterval(interval)
+    }
   }, [accessToken])
 
   return (

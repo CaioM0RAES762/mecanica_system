@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { FilterBar, FILTRO_INICIAL } from '@/components/chamados/FilterBar'
+import type { TabAtiva, PeriodoFechados } from '@/components/chamados/FilterBar'
 import type { CategoriaResumo } from '@metalsider/shared'
 
 const categoriasMock: CategoriaResumo[] = [
@@ -12,6 +13,17 @@ const defaultProps = {
   filtros: FILTRO_INICIAL,
   categorias: categoriasMock,
   perfil: 'supervisor',
+  total: 0,
+  loading: false,
+  tabAtiva: 'abertos' as TabAtiva,
+  periodoFechados: '7d' as PeriodoFechados,
+  dataInicio: '',
+  dataFim: '',
+  onTabChange: vi.fn(),
+  onPeriodoChange: vi.fn(),
+  onDataInicioChange: vi.fn(),
+  onDataFimChange: vi.fn(),
+  onAtualizar: vi.fn(),
   onChange: vi.fn(),
   onReset: vi.fn(),
 }

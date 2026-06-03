@@ -15,6 +15,8 @@ export interface OSListParams {
   fechado_de?: Date
   fechado_ate?: Date
   busca?: string
+  orderBy?: 'prazo' | 'criado_em' | 'prioridade'
+  order?: 'asc' | 'desc'
   pagina: number
   por_pagina: number
 }
@@ -111,7 +113,7 @@ function osSelect() {
   } as const
 }
 
-// Select reduzido para listagem: não carrega fechamento, anexos nem _count (evita 3 queries extras)
+// Select reduzido para listagem: não carrega anexos nem _count (evita 2 queries extras)
 function osListSelect() {
   return {
     id: true,
@@ -130,6 +132,17 @@ function osListSelect() {
     categoria: { select: { id: true, nome: true, cor: true } },
     veiculo: {
       select: { id: true, placa: true, veiculo: true, descricao_tipo_aplicacao: true },
+    },
+    fechamento: {
+      select: {
+        id: true,
+        resultado: true,
+        nota_resolucao: true,
+        horas_trabalhadas: true,
+        obs_adicionais: true,
+        fechado_em: true,
+        fechado_por: { select: { id: true, nome_completo: true } },
+      },
     },
   } as const
 }
@@ -184,13 +197,20 @@ export async function findManyOS(params: OSListParams) {
   const skip  = (pagina - 1) * por_pagina
   const where = buildWhere(filtros)
 
+  const dir: 'asc' | 'desc' = params.order ?? 'desc'
+  // 'prioridade' sort é tratado no service (in-memory); aqui cai no default
+  const orderBy: Prisma.ordens_servicoOrderByWithRelationInput =
+    params.orderBy === 'prazo'     ? { prazo: dir }      :
+    params.orderBy === 'criado_em' ? { criado_em: dir }  :
+                                     { criado_em: 'desc' }
+
   const [dados, total] = await Promise.all([
     prisma.ordens_servico.findMany({
       where,
       select: osListSelect(),
       skip,
       take: por_pagina,
-      orderBy: { criado_em: 'desc' },
+      orderBy,
     }),
     prisma.ordens_servico.count({ where }),
   ])

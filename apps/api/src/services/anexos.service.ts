@@ -59,7 +59,7 @@ export async function uploadAnexoService(
 
   return {
     ...anexo,
-    url_publica: storage.publicUrl(anexo.url),
+    url: storage.publicUrl(anexo.url),
   }
 }
 

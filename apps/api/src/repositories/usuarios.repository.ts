@@ -47,18 +47,30 @@ export async function createUsuario(data: {
   email: string
   nome_completo: string
   perfil: string
-  codigoHash: string
-  expiraEm: Date
+  senhaHash: string
 }): Promise<UsuarioPublico> {
   return prisma.usuarios.create({
     data: {
       email: data.email,
       nome_completo: data.nome_completo,
       perfil: data.perfil,
-      codigo_verificacao: data.codigoHash,
-      codigo_expira_em: data.expiraEm,
-      verificado: false,
+      senha_hash: data.senhaHash,
+      verificado: true,
       ativo: true,
+    },
+    select: SELECT_PUBLICO,
+  })
+}
+
+export async function updateUsuario(id: string, data: {
+  nome_completo?: string
+  perfil?: string
+}): Promise<UsuarioPublico> {
+  return prisma.usuarios.update({
+    where: { id },
+    data: {
+      ...(data.nome_completo !== undefined ? { nome_completo: data.nome_completo } : {}),
+      ...(data.perfil !== undefined ? { perfil: data.perfil } : {}),
     },
     select: SELECT_PUBLICO,
   })

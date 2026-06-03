@@ -1,19 +1,19 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import bcrypt from 'bcrypt'
 import { prisma } from '../lib/prisma.js'
 import { authenticate } from '../middlewares/authenticate.js'
 import { roleGuard } from '../middlewares/role-guard.js'
-import { PerfilUsuario, AcaoAuditoria, CriarUsuarioSchema, AlterarPerfilSchema } from '@metalsider/shared'
+import { PerfilUsuario, AcaoAuditoria, CriarUsuarioSchema, AlterarPerfilSchema, AtualizarUsuarioSchema } from '@metalsider/shared'
 import {
   findTodosUsuarios,
   findUsuarioById,
   createUsuario,
+  updateUsuario,
   updatePerfil,
   softDeleteUsuario,
   registrarAuditoriaUsuario,
 } from '../repositories/usuarios.repository.js'
-import { gerarCodigo, hashCodigo, expiracaoCodigo } from '../lib/codigo_verificacao.js'
-import { emailService } from '../lib/email.js'
 
 const DOMAIN = '@metalsider.com.br'
 
@@ -57,7 +57,7 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
     return reply.send({ dados: usuarios })
   })
 
-  // POST /usuarios — criar usuário (somente admin)
+  // POST /usuarios — criar usuário (somente admin); senha padrão metal@10, verificado de imediato
   fastify.post('/usuarios', { preHandler: ONLY_ADMIN }, async (request, reply) => {
     const body = CriarUsuarioSchema.parse(request.body)
 
@@ -66,23 +66,28 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
         type: 'https://metalsider.com.br/erros/dominio',
         title: 'Domínio inválido',
         status: 400,
-        detail: `Acesso restrito a contas corporativas Metalsider (${DOMAIN})`,
+        detail: `Apenas e-mails corporativos @metalsider.com.br são permitidos`,
       })
     }
 
-    const codigo = gerarCodigo()
-    const codigoHash = await hashCodigo(codigo)
-    const expiraEm = expiracaoCodigo()
+    const emailExistente = await prisma.usuarios.findUnique({ where: { email: body.email } })
+    if (emailExistente) {
+      return reply.code(409).send({
+        type: 'https://metalsider.com.br/erros/409',
+        title: 'Conflito',
+        status: 409,
+        detail: `Já existe um usuário com o e-mail ${body.email}`,
+      })
+    }
+
+    const senhaHash = await bcrypt.hash('metal@10', 12)
 
     const novo = await createUsuario({
       email: body.email,
       nome_completo: body.nome_completo,
       perfil: body.perfil,
-      codigoHash,
-      expiraEm,
+      senhaHash,
     })
-
-    await emailService.enviarCodigoVerificacao(body.email, body.nome_completo, codigo)
 
     await registrarAuditoriaUsuario({
       atorId: request.user.sub,
@@ -130,6 +135,33 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
       acao: AcaoAuditoria.USUARIO_PERFIL_ALTERADO,
       valoresAnteriores: { perfil: anterior.perfil },
       novosValores: { id, perfil },
+    })
+
+    return reply.send({ dados: atualizado })
+  })
+
+  // PATCH /usuarios/:id — editar nome e/ou perfil (somente admin)
+  fastify.patch('/usuarios/:id', { preHandler: ONLY_ADMIN }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
+    const body = AtualizarUsuarioSchema.parse(request.body)
+
+    const anterior = await findUsuarioById(id)
+    if (!anterior) {
+      return reply.code(404).send({
+        type: 'https://metalsider.com.br/erros/404',
+        title: 'Não encontrado',
+        status: 404,
+        detail: 'Usuário não encontrado',
+      })
+    }
+
+    const atualizado = await updateUsuario(id, body)
+
+    await registrarAuditoriaUsuario({
+      atorId: request.user.sub,
+      acao: AcaoAuditoria.USUARIO_EDITADO,
+      valoresAnteriores: { nome_completo: anterior.nome_completo, perfil: anterior.perfil },
+      novosValores: { id, ...body },
     })
 
     return reply.send({ dados: atualizado })

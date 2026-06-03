@@ -1,5 +1,6 @@
 'use client'
 
+import { memo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { OrdemServicoResumo } from '@metalsider/shared'
 import { PRIORIDADE_LABEL, StatusOS } from '@metalsider/shared'
@@ -94,7 +95,11 @@ function veiculoLabel(os: OrdemServicoResumo): string {
 
 // ---- Component ----
 
-export function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OSCardProps) {
+function progressColor(p: number, atrasado: boolean): string {
+  return atrasado || p > 90 ? '#d13438' : p > 75 ? '#ca5010' : p > 50 ? '#797775' : '#107c10'
+}
+
+export const OSCard = memo(function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OSCardProps) {
   const isAtrasado = os.status === StatusOS.ATRASADO
   const isFechado = os.status === StatusOS.FECHADO
   const progress = isFechado ? 100 : calcSlaProgress(os.criado_em, os.prazo)
@@ -102,11 +107,26 @@ export function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OS
   const podeFechar = !isFechado
   const isSupervisor = perfil === 'supervisor' || perfil === 'admin'
 
-  const progressColor =
-    isAtrasado || progress > 90 ? '#d13438'
-      : progress > 75 ? '#ca5010'
-        : progress > 50 ? '#797775'
-          : '#107c10'
+  const progressFillRef  = useRef<HTMLDivElement>(null)
+  const progressLabelRef = useRef<HTMLSpanElement>(null)
+  const progressTrackRef = useRef<HTMLDivElement>(null)
+
+  // Atualiza a barra de prazo a cada minuto sem re-renderizar o card inteiro
+  useEffect(() => {
+    if (isFechado) return
+    const tick = () => {
+      const p     = calcSlaProgress(os.criado_em, os.prazo)
+      const color = progressColor(p, isAtrasado)
+      if (progressFillRef.current) {
+        progressFillRef.current.style.width           = `${p}%`
+        progressFillRef.current.style.backgroundColor = color
+      }
+      if (progressLabelRef.current) progressLabelRef.current.textContent = `${Math.round(p)}%`
+      progressTrackRef.current?.setAttribute('aria-valuenow', String(Math.round(p)))
+    }
+    const id = setInterval(tick, 60_000)
+    return () => clearInterval(id)
+  }, [isFechado, isAtrasado, os.criado_em, os.prazo])
 
   const borderColor = isAtrasado ? '#d13438' : (PRIO_BORDER[os.prioridade] ?? '#797775')
 
@@ -194,10 +214,11 @@ export function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OS
         Aberto por {os.supervisor_nome}
       </p>
 
-      {/* Progress bar */}
+      {/* Progress bar — cor e largura atualizadas via ref a cada minuto sem re-render */}
       {progress > 0 && (
         <div className={styles.progressWrap}>
           <div
+            ref={progressTrackRef}
             className={styles.progressTrack}
             role="progressbar"
             aria-valuenow={Math.round(progress)}
@@ -205,11 +226,12 @@ export function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OS
             aria-valuemax={100}
           >
             <div
+              ref={progressFillRef}
               className={styles.progressFill}
-              style={{ width: `${progress}%`, backgroundColor: progressColor }}
+              style={{ width: `${progress}%`, backgroundColor: progressColor(progress, isAtrasado) }}
             />
           </div>
-          <span className={styles.progressLabel}>{Math.round(progress)}%</span>
+          <span ref={progressLabelRef} className={styles.progressLabel}>{Math.round(progress)}%</span>
         </div>
       )}
 
@@ -259,4 +281,4 @@ export function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OS
       </div>
     </article>
   )
-}
+})

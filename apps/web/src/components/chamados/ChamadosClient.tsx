@@ -12,6 +12,7 @@ import { OSCard } from './OSCard'
 import { FecharModal } from './FecharModal'
 import { EditarOSModal } from './EditarOSModal'
 import { ExcluirOSModal } from './ExcluirOSModal'
+import { useOSStream } from '@/hooks/useOSStream'
 import styles from './ChamadosClient.module.css'
 
 interface ChamadosClientProps {
@@ -160,12 +161,23 @@ export function ChamadosClient({
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
+  // Tick incrementado pelo hook SSE/polling para disparar re-fetch sem alterar outros estados
+  const [refreshTick, setRefreshTick] = useState(0)
+
   // Modais
   const [osParaFechar, setOsParaFechar] = useState<OrdemServicoResumo | null>(null)
   const [osParaEditar, setOsParaEditar] = useState<OrdemServicoResumo | null>(null)
   const [osParaExcluir, setOsParaExcluir] = useState<OrdemServicoResumo | null>(null)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fetchAbortRef = useRef<AbortController | null>(null)
+
+  // Atualizações em tempo real — SSE com fallback para polling 30s
+  useOSStream({
+    accessToken,
+    ativo: tabAtiva === 'abertos',
+    onNecessitaAtualizar: () => setRefreshTick(t => t + 1),
+  })
 
   const categoriaCores = useMemo(() => {
     const m = new Map<number, string>()
@@ -181,6 +193,10 @@ export function ChamadosClient({
       inicio: string,
       fim: string,
     ) => {
+      fetchAbortRef.current?.abort()
+      const ctrl = new AbortController()
+      fetchAbortRef.current = ctrl
+
       setLoading(true)
       setErro(null)
       try {
@@ -198,18 +214,23 @@ export function ChamadosClient({
           }
         }
 
-        const res = await listarOS(params, accessToken)
+        const res = await listarOS(params, accessToken, ctrl.signal)
         setDados(res)
       } catch (e) {
+        if (ctrl.signal.aborted) return
         setErro(e instanceof Error ? e.message : 'Erro ao carregar chamados')
       } finally {
-        setLoading(false)
+        if (!ctrl.signal.aborted) setLoading(false)
       }
     },
     [accessToken, perfil, userId],
   )
 
-  // Debounce na busca; imediato nos outros filtros / mudanças de aba ou período
+  useEffect(() => {
+    return () => { fetchAbortRef.current?.abort() }
+  }, [])
+
+  // Debounce na busca; imediato nos outros filtros, mudanças de aba/período e refreshTick (SSE/polling)
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const delay = tabAtiva === 'abertos' && filtros.busca ? 400 : 0
@@ -220,7 +241,7 @@ export function ChamadosClient({
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtros, tabAtiva, periodoFechados, dataInicio, dataFim, fetchOS])
+  }, [filtros, tabAtiva, periodoFechados, dataInicio, dataFim, fetchOS, refreshTick])
 
   async function handleFechar(id: number, data: FecharOSDTO) {
     await fecharOS(id, data, accessToken)

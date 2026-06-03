@@ -25,6 +25,7 @@ export async function veiculosRoutes(fastify: FastifyInstance) {
       orderBy: { placa: 'asc' },
       select: SELECT_VEICULO,
     })
+    reply.header('Cache-Control', 'private, max-age=60, stale-while-revalidate=300')
     return reply.send({ dados: veiculos })
   })
 

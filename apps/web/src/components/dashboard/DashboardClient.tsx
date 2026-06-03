@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import {
   AreaChart, Area,
@@ -21,6 +21,7 @@ import {
   IconTrendingUp,
   IconTrendingDown,
 } from '@tabler/icons-react'
+import { useOSStream } from '@/hooks/useOSStream'
 import { KpiCard } from './KpiCard'
 import { Skeleton } from '@/components/ui'
 import type { AnalyticsParams } from '@/lib/api/analytics'
@@ -138,7 +139,18 @@ export function DashboardClient({ token }: DashboardClientProps) {
   const [customDe,    setCustomDe]    = useState('')
   const [customAte,   setCustomAte]   = useState('')
 
+  const fullFetchAbortRef    = useRef<AbortController | null>(null)
+  const partialFetchAbortRef = useRef<AbortController | null>(null)
+  const paramsRef            = useRef(params)
+  paramsRef.current          = params
+
   const fetchAll = useCallback(async (p: AnalyticsParams) => {
+    fullFetchAbortRef.current?.abort()
+    partialFetchAbortRef.current?.abort()
+    const ctrl = new AbortController()
+    fullFetchAbortRef.current = ctrl
+    const { signal } = ctrl
+
     setLoading(true)
     setError(null)
     try {
@@ -146,23 +158,59 @@ export function DashboardClient({ token }: DashboardClientProps) {
         kpis, porCategoria, tendencia, porPrioridade,
         mecanicos, heatmap, maisLongos, atrasadosPorCategoria,
       ] = await Promise.all([
-        buscarKpis(p, token),
-        buscarPorCategoria(p, token),
-        buscarTendencia(p, token),
-        buscarPorPrioridade(p, token),
-        buscarMecanicos(p, token),
-        buscarHeatmap(p, token),
-        buscarMaisLongos(p, token),
-        buscarAtrasadosPorCategoria(p, token),
+        buscarKpis(p, token, signal),
+        buscarPorCategoria(p, token, signal),
+        buscarTendencia(p, token, signal),
+        buscarPorPrioridade(p, token, signal),
+        buscarMecanicos(p, token, signal),
+        buscarHeatmap(p, token, signal),
+        buscarMaisLongos(p, token, signal),
+        buscarAtrasadosPorCategoria(p, token, signal),
       ])
+      if (signal.aborted) return
       setData({ kpis, porCategoria, tendencia, porPrioridade, mecanicos, heatmap, maisLongos, atrasadosPorCategoria })
       setLastUpdated(new Date())
-    } catch {
-      setError('Falha ao carregar dados do dashboard. Tente novamente.')
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      if (!signal.aborted) setError('Falha ao carregar dados do dashboard. Tente novamente.')
     } finally {
-      setLoading(false)
+      if (!signal.aborted) setLoading(false)
     }
   }, [token])
+
+  const fetchPartial = useCallback(async () => {
+    if (!navigator.onLine || document.hidden) return
+    partialFetchAbortRef.current?.abort()
+    const ctrl = new AbortController()
+    partialFetchAbortRef.current = ctrl
+    const { signal } = ctrl
+    const p = paramsRef.current
+
+    try {
+      const [kpis, tendencia, porCategoria, mecanicos] = await Promise.all([
+        buscarKpis(p, token, signal),
+        buscarTendencia(p, token, signal),
+        buscarPorCategoria(p, token, signal),
+        buscarMecanicos(p, token, signal),
+      ])
+      if (signal.aborted) return
+      setData(prev => prev ? { ...prev, kpis, tendencia, porCategoria, mecanicos } : prev)
+      setLastUpdated(new Date())
+    } catch {
+      // background update — fail silently
+    }
+  }, [token])
+
+  useOSStream({
+    accessToken: token,
+    ativo: true,
+    onNecessitaAtualizar: fetchPartial,
+  })
+
+  useEffect(() => () => {
+    fullFetchAbortRef.current?.abort()
+    partialFetchAbortRef.current?.abort()
+  }, [])
 
   useEffect(() => {
     if (params.periodo !== 'personalizado' || (params.de && params.ate)) {
@@ -179,13 +227,6 @@ export function DashboardClient({ token }: DashboardClientProps) {
     if (!customDe || !customAte) return
     setShowCustom(false)
     setParams({ periodo: 'personalizado', de: `${customDe}T00:00:00Z`, ate: `${customAte}T23:59:59Z` })
-  }
-
-  function getLastUpdatedText(): string {
-    const diff = Math.floor((Date.now() - lastUpdated.getTime()) / 60000)
-    if (diff < 1)  return 'agora mesmo'
-    if (diff === 1) return 'há 1 minuto'
-    return `há ${diff} minutos`
   }
 
   function buildHeatmapMatrix(heatmapData: HeatmapDTO[]) {
@@ -231,7 +272,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
   if (error) {
     return (
       <div className={styles.page}>
-        <PageHead params={params} lastUpdatedText={getLastUpdatedText()} showCustom={showCustom}
+        <PageHead params={params} lastUpdated={lastUpdated} showCustom={showCustom}
           onSelectPeriodo={selectPeriodo} onShowCustom={() => setShowCustom(true)}
           onRefresh={() => void fetchAll(params)}
           customDe={customDe} customAte={customAte}
@@ -277,7 +318,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
     <div className={styles.page} data-testid="dashboard">
       {/* ====== HEADER ====== */}
       <PageHead
-        params={params} lastUpdatedText={getLastUpdatedText()} showCustom={showCustom}
+        params={params} lastUpdated={lastUpdated} showCustom={showCustom}
         onSelectPeriodo={selectPeriodo} onShowCustom={() => setShowCustom(true)}
         onRefresh={() => void fetchAll(params)}
         customDe={customDe} customAte={customAte}
@@ -362,7 +403,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
         </ChartCard>
 
         {/* Aberturas vs fechamentos — área dupla */}
-        <ChartCard title="Aberturas vs fechamentos" subtitle="Evolução diária — últimos 14 dias">
+        <ChartCard title="Aberturas vs fechamentos" subtitle={`Evolução diária — últimos ${params.periodo === '7d' ? '7' : params.periodo === '90d' ? '90' : '30'} dias${params.periodo === 'personalizado' ? ' (período personalizado)' : ''}`}>
           {tendenciaFormatted.length === 0 ? (
             <p className={styles.empty}>Sem dados no período.</p>
           ) : (
@@ -607,23 +648,44 @@ export function DashboardClient({ token }: DashboardClientProps) {
 
 // ---- Sub-components ----
 
+function relativeTime(date: Date): string {
+  const diff = Math.floor((Date.now() - date.getTime()) / 60_000)
+  if (diff < 1)   return 'agora mesmo'
+  if (diff === 1) return 'há 1 minuto'
+  return `há ${diff} minutos`
+}
+
+function LiveTimestamp({ lastUpdated }: { lastUpdated: Date }) {
+  const [text, setText] = useState(() => relativeTime(lastUpdated))
+  const ref = useRef(lastUpdated)
+
+  useEffect(() => {
+    ref.current = lastUpdated
+    setText(relativeTime(lastUpdated))
+    const id = setInterval(() => setText(relativeTime(ref.current)), 60_000)
+    return () => clearInterval(id)
+  }, [lastUpdated])
+
+  return <>{text}</>
+}
+
 interface PageHeadProps {
-  params:           AnalyticsParams
-  lastUpdatedText:  string
-  showCustom:       boolean
-  onSelectPeriodo:  (p: PeriodoFixo) => void
-  onShowCustom:     () => void
-  onRefresh:        () => void
-  customDe:         string
-  customAte:        string
-  setCustomDe:      (v: string) => void
-  setCustomAte:     (v: string) => void
-  onApplyCustom:    () => void
-  onCancelCustom:   () => void
+  params:          AnalyticsParams
+  lastUpdated:     Date
+  showCustom:      boolean
+  onSelectPeriodo: (p: PeriodoFixo) => void
+  onShowCustom:    () => void
+  onRefresh:       () => void
+  customDe:        string
+  customAte:       string
+  setCustomDe:     (v: string) => void
+  setCustomAte:    (v: string) => void
+  onApplyCustom:   () => void
+  onCancelCustom:  () => void
 }
 
 function PageHead({
-  params, lastUpdatedText, showCustom,
+  params, lastUpdated, showCustom,
   onSelectPeriodo, onShowCustom, onRefresh,
   customDe, customAte, setCustomDe, setCustomAte,
   onApplyCustom, onCancelCustom,
@@ -633,7 +695,7 @@ function PageHead({
       <div className={styles.pageHead}>
         <div className={styles.pageHeadLeft}>
           <h1 className={styles.pageTitle}>Dashboard de Análise</h1>
-          <p className={styles.pageSub}>Visão consolidada das operações de oficina · atualizado {lastUpdatedText}</p>
+          <p className={styles.pageSub}>Visão consolidada das operações de oficina · atualizado <LiveTimestamp lastUpdated={lastUpdated} /></p>
         </div>
         <div className={styles.pageHeadRight}>
           <div className={styles.periodBtns}>

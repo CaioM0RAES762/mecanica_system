@@ -103,6 +103,11 @@
 .status_fechado  { background: #f3f2f1; color: #605e5c; border-color: #e0e0e0; }
 .status_atrasado { background: #fdf3f0; color: #ca5010; border-color: #fbd0c0; }
 
+/* Resultado de fechamento */
+.resultado_concluido    { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+.resultado_parcial      { background: #fefce8; color: #ca8a04; border-color: #fde68a; }
+.resultado_nao_resolvido { background: #fdf0f0; color: #d13438; border-color: #f5c2c4; }
+
 /* Skeletons */
 .wrapperLoading {
   display: flex;

@@ -35,23 +35,23 @@ const osMock: OrdemServicoResumo = {
 
 describe('FecharModal — renderização', () => {
   it('renderiza quando os != null', () => {
-    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} accessToken="" />)
     expect(screen.getByTestId('fechar-modal')).toBeTruthy()
   })
 
   it('não renderiza quando os == null', () => {
-    render(<FecharModal os={null} onClose={vi.fn()} onConfirm={vi.fn()} />)
+    render(<FecharModal os={null} onClose={vi.fn()} onConfirm={vi.fn()} accessToken="" />)
     expect(screen.queryByTestId('fechar-modal')).toBeNull()
   })
 
   it('exibe ID e título da OS no cabeçalho', () => {
-    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} accessToken="" />)
     expect(screen.getByText(/Fechar Chamado #7/)).toBeTruthy()
     expect(screen.getByText('Verificação de freios')).toBeTruthy()
   })
 
   it('exibe campos de resultado, nota, horas e observações', () => {
-    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} accessToken="" />)
     expect(screen.getByTestId('select-resultado')).toBeTruthy()
     expect(screen.getByTestId('textarea-nota')).toBeTruthy()
     expect(screen.getByTestId('input-horas')).toBeTruthy()
@@ -61,7 +61,7 @@ describe('FecharModal — renderização', () => {
 
 describe('FecharModal — validação', () => {
   it('submeter sem resultado exibe erro de validação', async () => {
-    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} accessToken="" />)
     fireEvent.click(screen.getByTestId('btn-confirmar'))
     await waitFor(() => {
       // onConfirm não foi chamado (resultado obrigatório faltando)
@@ -70,7 +70,7 @@ describe('FecharModal — validação', () => {
   })
 
   it('nota de resolução aceita até 280 caracteres', () => {
-    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} accessToken="" />)
     const textarea = screen.getByTestId('textarea-nota')
     const texto = 'x'.repeat(290)
     fireEvent.change(textarea, { target: { value: texto } })
@@ -79,7 +79,7 @@ describe('FecharModal — validação', () => {
   })
 
   it('contador de caracteres começa em 0/280', () => {
-    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={vi.fn()} accessToken="" />)
     expect(screen.getByText('0/280')).toBeTruthy()
   })
 })
@@ -88,7 +88,7 @@ describe('FecharModal — submit', () => {
   it('chama onConfirm com os dados corretos quando formulário válido', async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined)
     const onClose = vi.fn()
-    render(<FecharModal os={osMock} onClose={onClose} onConfirm={onConfirm} />)
+    render(<FecharModal os={osMock} onClose={onClose} onConfirm={onConfirm} accessToken="" />)
 
     fireEvent.change(screen.getByTestId('select-resultado'), { target: { value: 'concluido' } })
     fireEvent.change(screen.getByTestId('textarea-nota'), { target: { value: 'Serviço concluído' } })
@@ -107,7 +107,7 @@ describe('FecharModal — submit', () => {
   it('chama onClose após confirmação bem-sucedida', async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined)
     const onClose = vi.fn()
-    render(<FecharModal os={osMock} onClose={onClose} onConfirm={onConfirm} />)
+    render(<FecharModal os={osMock} onClose={onClose} onConfirm={onConfirm} accessToken="" />)
 
     fireEvent.change(screen.getByTestId('select-resultado'), { target: { value: 'parcial' } })
     fireEvent.click(screen.getByTestId('btn-confirmar'))
@@ -119,7 +119,7 @@ describe('FecharModal — submit', () => {
 
   it('exibe erro global quando onConfirm rejeita', async () => {
     const onConfirm = vi.fn().mockRejectedValue(new Error('Erro de rede'))
-    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={onConfirm} />)
+    render(<FecharModal os={osMock} onClose={vi.fn()} onConfirm={onConfirm} accessToken="" />)
 
     fireEvent.change(screen.getByTestId('select-resultado'), { target: { value: 'concluido' } })
     fireEvent.click(screen.getByTestId('btn-confirmar'))
@@ -133,14 +133,14 @@ describe('FecharModal — submit', () => {
 describe('FecharModal — fechar', () => {
   it('botão X chama onClose', () => {
     const onClose = vi.fn()
-    render(<FecharModal os={osMock} onClose={onClose} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={onClose} onConfirm={vi.fn()} accessToken="" />)
     fireEvent.click(screen.getByLabelText('Fechar modal'))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it('botão Cancelar chama onClose', () => {
     const onClose = vi.fn()
-    render(<FecharModal os={osMock} onClose={onClose} onConfirm={vi.fn()} />)
+    render(<FecharModal os={osMock} onClose={onClose} onConfirm={vi.fn()} accessToken="" />)
     fireEvent.click(screen.getByText('Cancelar'))
     expect(onClose).toHaveBeenCalledTimes(1)
   })

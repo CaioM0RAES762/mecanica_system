@@ -1,6 +1,7 @@
 'use client'
 
-import { PRIORIDADE_LABEL } from '@metalsider/shared'
+import { memo } from 'react'
+import { PRIORIDADE_LABEL, RESULTADO_LABEL } from '@metalsider/shared'
 import type { OrdemServicoDetalhe } from '@metalsider/shared'
 import type { Paginacao } from '@metalsider/shared'
 import styles from './TabelaHistorico.module.css'
@@ -13,10 +14,17 @@ interface Props {
   onPagina: (pagina: number) => void
 }
 
-function formatData(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  })
+function formatDataHora(iso: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  const data = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  return `${data} - ${hora}`
+}
+
+function formatVeiculo(nome: string, desc: string | null | undefined): string {
+  if (!nome) return '—'
+  return desc ? `${nome} - ${desc}` : nome
 }
 
 function formatDuracao(criado_em: string, fechado_em: string | null): string {
@@ -37,7 +45,7 @@ const STATUS_LABEL: Record<string, string> = {
   atrasado: 'Atrasado',
 }
 
-export function TabelaHistorico({ dados, paginacao, loading, onSelecionar, onPagina }: Props) {
+export const TabelaHistorico = memo(function TabelaHistorico({ dados, paginacao, loading, onSelecionar, onPagina }: Props) {
   if (loading) {
     return (
       <div className={styles.card}>
@@ -72,9 +80,11 @@ export function TabelaHistorico({ dados, paginacao, loading, onSelecionar, onPag
                 <th className={styles.th} style={{ minWidth: 110 }}>CATEGORIA</th>
                 <th className={styles.th} style={{ minWidth: 90 }}>PRIORIDADE</th>
                 <th className={styles.th} style={{ minWidth: 80 }}>STATUS</th>
-                <th className={styles.th} style={{ minWidth: 110 }}>VEÍCULO</th>
+                <th className={styles.th} style={{ minWidth: 120 }}>RESULTADO</th>
+                <th className={styles.th} style={{ minWidth: 200 }}>VEÍCULO</th>
                 <th className={styles.th} style={{ minWidth: 140 }}>MECÂNICO</th>
-                <th className={styles.th} style={{ minWidth: 120 }}>DATA ABERTURA</th>
+                <th className={styles.th} style={{ minWidth: 155 }}>DATA ABERTURA</th>
+                <th className={styles.th} style={{ minWidth: 155 }}>PRAZO</th>
                 <th className={styles.th} style={{ minWidth: 90 }}>DURAÇÃO</th>
               </tr>
             </thead>
@@ -106,9 +116,22 @@ export function TabelaHistorico({ dados, paginacao, loading, onSelecionar, onPag
                       {STATUS_LABEL[os.status] ?? os.status}
                     </span>
                   </td>
-                  <td className={`${styles.td} ${styles.meta}`}>{os.veiculo_placa ?? '—'}</td>
+                  <td className={styles.td}>
+                    {os.fechamento?.resultado
+                      ? (
+                        <span className={`${styles.badge} ${styles[`resultado_${os.fechamento.resultado}`] ?? ''}`}>
+                          {RESULTADO_LABEL[os.fechamento.resultado] ?? os.fechamento.resultado}
+                        </span>
+                      )
+                      : <span className={styles.meta}>—</span>
+                    }
+                  </td>
+                  <td className={`${styles.td} ${styles.meta}`}>
+                    {formatVeiculo(os.veiculo_nome, os.veiculo_descricao_tipo_aplicacao)}
+                  </td>
                   <td className={`${styles.td} ${styles.meta}`}>{os.mecanico_nome ?? '—'}</td>
-                  <td className={`${styles.td} ${styles.meta}`}>{formatData(os.criado_em)}</td>
+                  <td className={`${styles.td} ${styles.meta}`}>{formatDataHora(os.criado_em)}</td>
+                  <td className={`${styles.td} ${styles.meta}`}>{formatDataHora(os.prazo)}</td>
                   <td className={`${styles.td} ${styles.meta}`}>{formatDuracao(os.criado_em, os.fechado_em ?? null)}</td>
                 </tr>
               ))}
@@ -146,4 +169,4 @@ export function TabelaHistorico({ dados, paginacao, loading, onSelecionar, onPag
       )}
     </div>
   )
-}
+})

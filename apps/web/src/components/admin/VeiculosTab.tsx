@@ -48,12 +48,21 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
     }
   }, [token])
 
+  function normalizarVeiculo(v: Partial<CriarVeiculoInput>): Partial<CriarVeiculoInput> {
+    return {
+      ...v,
+      placa: v.placa || null,
+      cod_tipo_aplicacao: v.cod_tipo_aplicacao || null,
+      descricao_tipo_aplicacao: v.descricao_tipo_aplicacao || null,
+    }
+  }
+
   async function handleCriar(e: React.FormEvent) {
     e.preventDefault()
     setErroForm(null)
     setSalvando(true)
     try {
-      await criarVeiculo(form, token)
+      await criarVeiculo(normalizarVeiculo(form) as CriarVeiculoInput, token)
       setShowCriar(false)
       setForm(VAZIO)
       await recarregar()
@@ -70,7 +79,7 @@ export function VeiculosTab({ token, initialVeiculos }: VeiculosTabProps) {
     setErroForm(null)
     setSalvando(true)
     try {
-      await editarVeiculo(showEditar.id, formEditar, token)
+      await editarVeiculo(showEditar.id, normalizarVeiculo(formEditar), token)
       setShowEditar(null)
       await recarregar()
     } catch (err: unknown) {

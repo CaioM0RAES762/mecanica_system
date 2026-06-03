@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import {
@@ -108,10 +109,13 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
       {/* Brand */}
       <div className={styles.brand}>
         <div className={styles.brandTop}>
-          <img
+          <Image
             src="/images/logo.png"
             alt="Metalsider"
+            width={160}
+            height={52}
             className={styles.logoImg}
+            priority
           />
           <button
             className={styles.closeBtn}
