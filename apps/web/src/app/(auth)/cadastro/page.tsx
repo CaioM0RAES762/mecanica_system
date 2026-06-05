@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { IconClipboardList, IconShieldCheck, IconUserCheck } from '@tabler/icons-react'
 import { RegistrarSchema, VerificarCodigoCadastroSchema, FinalizarCadastroSchema } from '@metalsider/shared'
 import styles from './page.module.css'
 
@@ -34,7 +36,7 @@ export default function CadastroPage() {
 
   // Etapa 2
   const [codigo, setCodigo] = useState('')
-  const [countdown, setCountdown] = useState(30 * 60) // 30 min
+  const [countdown, setCountdown] = useState(30 * 60)
   const [reenvioDisabled, setReenvioDisabled] = useState(false)
   const [reenvioTimer, setReenvioTimer] = useState(0)
 
@@ -45,7 +47,6 @@ export default function CadastroPage() {
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
-  // Countdown de expiração (Etapa 2 e 3)
   useEffect(() => {
     if (etapa !== 2 && etapa !== 3) return
     if (countdown <= 0) return
@@ -53,7 +54,6 @@ export default function CadastroPage() {
     return () => clearInterval(t)
   }, [etapa, countdown])
 
-  // Countdown de reenvio
   useEffect(() => {
     if (reenvioTimer <= 0) return
     const t = setInterval(() => setReenvioTimer((c) => c - 1), 1000)
@@ -193,195 +193,245 @@ export default function CadastroPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <img src="/images/logo.png" alt="Metalsider" className={styles.logo} />
-          <h1 className={styles.title}>Criar conta</h1>
-          <p className={styles.subtitle}>Acesso restrito a contas @metalsider.com.br</p>
-        </div>
+      <aside className={styles.panel}>
+        <svg
+          className={styles.panelDecoration}
+          viewBox="0 0 440 760"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <circle cx="400" cy="-80" r="320" stroke="white" strokeOpacity="0.06" strokeWidth="1" />
+          <circle cx="400" cy="-80" r="230" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
+          <circle cx="400" cy="-80" r="145" stroke="white" strokeOpacity="0.04" strokeWidth="1" />
+          <circle cx="20" cy="840" r="300" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
+          <circle cx="20" cy="840" r="200" stroke="white" strokeOpacity="0.04" strokeWidth="1" />
+          <line x1="-30" y1="400" x2="470" y2="180" stroke="white" strokeOpacity="0.025" strokeWidth="1" />
+          <line x1="-30" y1="460" x2="470" y2="240" stroke="white" strokeOpacity="0.02" strokeWidth="1" />
+          <line x1="-30" y1="520" x2="470" y2="300" stroke="white" strokeOpacity="0.015" strokeWidth="1" />
+          <rect x="170" y="340" width="100" height="100" rx="4" stroke="white" strokeOpacity="0.045" strokeWidth="1" />
+          <rect x="186" y="356" width="68" height="68" rx="2" stroke="white" strokeOpacity="0.03" strokeWidth="1" />
+        </svg>
 
-        {/* Stepper */}
-        <div className={styles.stepper}>
-          {([1, 2, 3] as const).map((n) => (
-            <div key={n} className={styles.stepItem}>
-              <div className={`${styles.stepCircle} ${etapa >= n ? styles.stepActive : ''}`}>
-                {etapa > n ? '✓' : n}
-              </div>
-              {n < 3 && <div className={`${styles.stepLine} ${etapa > n ? styles.stepLineActive : ''}`} />}
+        <div className={styles.brand}>
+          <img src="/images/logo.png" alt="Metalsider" className={styles.logoImg} />
+          <p className={styles.brandTagline}>Gestão de Ordens de Serviço</p>
+          <div className={styles.brandDivider} />
+          <div className={styles.brandFeatures}>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureIcon}><IconClipboardList size={14} stroke={1.5} /></span>
+              Processo simples em 3 etapas
             </div>
-          ))}
-        </div>
-
-        {erro && (
-          <div className={styles.toast} role="alert">
-            {erro}
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureIcon}><IconShieldCheck size={14} stroke={1.5} /></span>
+              Verificação segura por e-mail
+            </div>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureIcon}><IconUserCheck size={14} stroke={1.5} /></span>
+              Acesso liberado após ativação
+            </div>
           </div>
-        )}
+        </div>
+        <p className={styles.panelFooter}>© {new Date().getFullYear()} Metalsider</p>
+      </aside>
 
-        {/* Etapa 1 */}
-        {etapa === 1 && (
-          <form className={styles.form} onSubmit={handleEtapa1} noValidate>
-            <div className={styles.field}>
-              <label className={styles.label}>Nome completo</label>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="Seu nome completo"
-                value={nomeCompleto}
-                onChange={(e) => setNomeCompleto(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
+      <main className={styles.formArea}>
+        <div className={styles.formWrapper}>
+          <div className={styles.mobileLogo}>
+            <img src="/images/logo.png" alt="Metalsider" className={styles.mobileLogoImg} />
+          </div>
 
-            <div className={styles.field}>
-              <label className={styles.label}>Cargo</label>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="Ex.: Mecânico Sênior"
-                value={cargo}
-                onChange={(e) => setCargo(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
+          <div className={styles.eyebrow}>
+            <span className={styles.eyebrowDot} />
+            Novo Cadastro
+          </div>
+          <h1 className={styles.title}>Criar sua conta</h1>
+          <p className={styles.subtitle}>Acesso restrito a @metalsider.com.br</p>
 
-            <div className={styles.field}>
-              <label className={styles.label}>Perfil</label>
-              <select
-                className={styles.input}
-                value={perfil}
-                onChange={(e) => setPerfil(e.target.value as 'supervisor' | 'mecanico')}
-                disabled={loading}
-              >
-                <option value="mecanico">Mecânico</option>
-                <option value="supervisor">Supervisor</option>
-              </select>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label}>E-mail corporativo</label>
-              <input
-                type="email"
-                className={styles.input}
-                placeholder="seu@metalsider.com.br"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className={styles.submit}
-              disabled={loading || !nomeCompleto || !cargo || !email}
-            >
-              {loading ? 'Registrando…' : 'Registrar'}
-            </button>
-          </form>
-        )}
-
-        {/* Etapa 2 */}
-        {etapa === 2 && (
-          <form className={styles.form} onSubmit={handleEtapa2} noValidate>
-            <p className={styles.infoText}>
-              Código enviado para <strong>{email}</strong>. Verifique sua caixa de entrada.
-            </p>
-
-            {countdown > 0 ? (
-              <p className={styles.countdown}>Expira em {formatTime(countdown)}</p>
-            ) : (
-              <p className={styles.countdownExpired}>Código expirado. Reenvie um novo.</p>
-            )}
-
-            <div className={styles.field}>
-              <label className={styles.label}>Código de 6 dígitos</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="000000"
-                className={`${styles.input} ${styles.codeInput}`}
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className={styles.submit}
-              disabled={loading || codigo.length !== 6}
-            >
-              {loading ? 'Validando…' : 'Validar código'}
-            </button>
-
-            <button
-              type="button"
-              className={styles.secondary}
-              onClick={handleReenviar}
-              disabled={reenvioDisabled}
-            >
-              {reenvioDisabled ? `Reenviar em ${reenvioTimer}s` : 'Reenviar código'}
-            </button>
-          </form>
-        )}
-
-        {/* Etapa 3 */}
-        {etapa === 3 && (
-          <form className={styles.form} onSubmit={handleEtapa3} noValidate>
-            <div className={styles.field}>
-              <label className={styles.label}>Nova senha</label>
-              <input
-                type="password"
-                placeholder="Mínimo 8 caracteres"
-                className={styles.input}
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                disabled={loading}
-                required
-              />
-              {senha.length > 0 && (
-                <div className={styles.strengthBar}>
-                  <div className={`${styles.strengthFill} ${styles[`strength_${forca.replace('é', 'e')}`]}`} />
-                  <span className={styles.strengthLabel}>Força: {forca}</span>
+          <div className={styles.stepper}>
+            {([1, 2, 3] as const).map((n) => (
+              <div key={n} className={styles.stepItem}>
+                <div className={`${styles.stepCircle} ${etapa >= n ? styles.stepActive : ''}`}>
+                  {etapa > n ? '✓' : n}
                 </div>
+                {n < 3 && <div className={`${styles.stepLine} ${etapa > n ? styles.stepLineActive : ''}`} />}
+              </div>
+            ))}
+          </div>
+
+          {erro && (
+            <div className={styles.toast} role="alert">
+              {erro}
+            </div>
+          )}
+
+          {etapa === 1 && (
+            <form className={styles.form} onSubmit={handleEtapa1} noValidate>
+              <div className={styles.field}>
+                <label className={styles.label}>Nome completo</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="Seu nome completo"
+                  value={nomeCompleto}
+                  onChange={(e) => setNomeCompleto(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Cargo</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="Ex.: Mecânico Sênior"
+                  value={cargo}
+                  onChange={(e) => setCargo(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Perfil</label>
+                <select
+                  className={styles.input}
+                  value={perfil}
+                  onChange={(e) => setPerfil(e.target.value as 'supervisor' | 'mecanico')}
+                  disabled={loading}
+                >
+                  <option value="mecanico">Mecânico</option>
+                  <option value="supervisor">Supervisor</option>
+                </select>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>E-mail corporativo</label>
+                <input
+                  type="email"
+                  className={styles.input}
+                  placeholder="seu@metalsider.com.br"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className={styles.submit}
+                disabled={loading || !nomeCompleto || !cargo || !email}
+              >
+                {loading ? 'Registrando…' : 'Continuar'}
+              </button>
+            </form>
+          )}
+
+          {etapa === 2 && (
+            <form className={styles.form} onSubmit={handleEtapa2} noValidate>
+              <p className={styles.infoText}>
+                Código enviado para <strong>{email}</strong>. Verifique sua caixa de entrada.
+              </p>
+
+              {countdown > 0 ? (
+                <p className={styles.countdown}>Expira em {formatTime(countdown)}</p>
+              ) : (
+                <p className={styles.countdownExpired}>Código expirado. Reenvie um novo.</p>
               )}
-            </div>
 
-            <div className={styles.field}>
-              <label className={styles.label}>Confirmar senha</label>
-              <input
-                type="password"
-                placeholder="Repita a senha"
-                className={styles.input}
-                value={confirmarSenha}
-                onChange={(e) => setConfirmarSenha(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Código de 6 dígitos</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  className={`${styles.input} ${styles.codeInput}`}
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  disabled={loading}
+                  required
+                />
+              </div>
 
-            <button
-              type="submit"
-              className={styles.submit}
-              disabled={loading || !senha || !confirmarSenha}
-            >
-              {loading ? 'Finalizando…' : 'Finalizar cadastro'}
-            </button>
-          </form>
-        )}
+              <button
+                type="submit"
+                className={styles.submit}
+                disabled={loading || codigo.length !== 6}
+              >
+                {loading ? 'Validando…' : 'Validar código'}
+              </button>
 
-        <p className={styles.loginLink}>
-          Já tem conta?{' '}
-          <a href="/login" className={styles.link}>
-            Fazer login
-          </a>
-        </p>
-      </div>
+              <button
+                type="button"
+                className={styles.secondary}
+                onClick={handleReenviar}
+                disabled={reenvioDisabled}
+              >
+                {reenvioDisabled ? `Reenviar em ${reenvioTimer}s` : 'Reenviar código'}
+              </button>
+            </form>
+          )}
+
+          {etapa === 3 && (
+            <form className={styles.form} onSubmit={handleEtapa3} noValidate>
+              <div className={styles.field}>
+                <label className={styles.label}>Nova senha</label>
+                <input
+                  type="password"
+                  placeholder="Mínimo 8 caracteres"
+                  className={styles.input}
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                {senha.length > 0 && (
+                  <div className={styles.strengthBar}>
+                    <div className={`${styles.strengthFill} ${styles[`strength_${forca.replace('é', 'e')}`]}`} />
+                    <span className={styles.strengthLabel}>Força: {forca}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Confirmar senha</label>
+                <input
+                  type="password"
+                  placeholder="Repita a senha"
+                  className={styles.input}
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className={styles.submit}
+                disabled={loading || !senha || !confirmarSenha}
+              >
+                {loading ? 'Finalizando…' : 'Finalizar cadastro'}
+              </button>
+            </form>
+          )}
+
+          <div className={styles.divider}>
+            <span className={styles.dividerLine} />
+            <span className={styles.dividerText}>ou</span>
+            <span className={styles.dividerLine} />
+          </div>
+          <p className={styles.loginLink}>
+            Já tem conta?{' '}
+            <Link href="/login" className={styles.link}>
+              Fazer login
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

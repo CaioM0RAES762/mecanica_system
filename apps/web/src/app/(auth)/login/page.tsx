@@ -4,6 +4,7 @@ import React, { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { IconEye, IconEyeOff, IconClipboardList, IconChartBar, IconBell } from '@tabler/icons-react'
 import { LoginSchema } from '@metalsider/shared'
 import styles from './page.module.css'
 
@@ -17,6 +18,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [erroTipo, setErroTipo] = useState<'error' | 'warning'>('error')
+  const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
@@ -63,8 +65,12 @@ function LoginForm() {
         <img src="/images/logo.png" alt="Metalsider" className={styles.mobileLogoImg} />
       </div>
 
+      <div className={styles.eyebrow}>
+        <span className={styles.eyebrowDot} />
+        Acesso Corporativo
+      </div>
       <h2 className={styles.title}>Bem-vindo de volta</h2>
-      <p className={styles.subtitle}>Acesse sua conta corporativa</p>
+      <p className={styles.subtitle}>Acesse sua conta Metalsider</p>
 
       {erro && (
         <div
@@ -108,18 +114,29 @@ function LoginForm() {
               Esqueceu a senha?
             </Link>
           </div>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            className={styles.input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-            required
-          />
+          <div className={styles.passwordWrapper}>
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className={styles.input}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              required
+            />
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword((v) => !v)}
+              tabIndex={-1}
+              aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+            >
+              {showPassword ? <IconEyeOff size={18} stroke={1.5} /> : <IconEye size={18} stroke={1.5} />}
+            </button>
+          </div>
         </div>
 
         <button type="submit" className={styles.submit} disabled={loading || !email || !password}>
@@ -127,6 +144,11 @@ function LoginForm() {
         </button>
       </form>
 
+      <div className={styles.divider}>
+        <span className={styles.dividerLine} />
+        <span className={styles.dividerText}>ou</span>
+        <span className={styles.dividerLine} />
+      </div>
       <p className={styles.activateLink}>
         Primeira vez?{' '}
         <Link href="/cadastro" className={styles.link}>
@@ -170,15 +192,15 @@ export default function LoginPage() {
           <div className={styles.brandDivider} />
           <div className={styles.brandFeatures}>
             <div className={styles.brandFeature}>
-              <span className={styles.brandFeatureDot} />
+              <span className={styles.brandFeatureIcon}><IconClipboardList size={14} stroke={1.5} /></span>
               Controle total de ordens de serviço
             </div>
             <div className={styles.brandFeature}>
-              <span className={styles.brandFeatureDot} />
+              <span className={styles.brandFeatureIcon}><IconChartBar size={14} stroke={1.5} /></span>
               Analytics e relatórios em tempo real
             </div>
             <div className={styles.brandFeature}>
-              <span className={styles.brandFeatureDot} />
+              <span className={styles.brandFeatureIcon}><IconBell size={14} stroke={1.5} /></span>
               Notificações automáticas por e-mail
             </div>
           </div>

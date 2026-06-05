@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { IconMenu2, IconBell, IconHelp } from '@tabler/icons-react'
+import { IconMenu2, IconBell, IconHelp, IconLayoutSidebar } from '@tabler/icons-react'
 import type { UserPerfil } from './Sidebar'
 import styles from './Topbar.module.css'
 
@@ -10,6 +10,8 @@ interface TopbarProps {
   userPerfil: UserPerfil
   onMenuToggle: () => void
   chamadosAbertos?: number
+  sidebarCollapsed?: boolean
+  onSidebarToggle?: () => void
 }
 
 function getInitials(name: string): string {
@@ -42,7 +44,7 @@ function BellWithBadge({ count }: { count: number }) {
   )
 }
 
-export function Topbar({ userName, userPerfil, onMenuToggle, chamadosAbertos = 0 }: TopbarProps) {
+export function Topbar({ userName, userPerfil, onMenuToggle, chamadosAbertos = 0, sidebarCollapsed, onSidebarToggle }: TopbarProps) {
   const pathname = usePathname()
   const routeInfo = ROUTE_LABELS[pathname] ?? { section: 'Metalsider', title: 'Painel' }
   const initials = getInitials(userName)
@@ -84,6 +86,17 @@ export function Topbar({ userName, userPerfil, onMenuToggle, chamadosAbertos = 0
 
       {/* Desktop: breadcrumb + título + ações */}
       <div className={styles.desktopContent}>
+        {onSidebarToggle && (
+          <button
+            className={styles.sidebarToggleBtn}
+            onClick={onSidebarToggle}
+            aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            title={sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+          >
+            <IconLayoutSidebar size={18} />
+          </button>
+        )}
+
         <div className={styles.breadcrumb} aria-label="Navegação breadcrumb">
           <span className={styles.breadcrumbSection}>{routeInfo.section}</span>
           <span className={styles.breadcrumbSep} aria-hidden="true">/</span>

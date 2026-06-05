@@ -67,6 +67,7 @@ interface SidebarProps {
   isOpen: boolean
   onClose: () => void
   chamadosAbertos?: number
+  collapsed?: boolean
 }
 
 function getInitials(name: string): string {
@@ -93,7 +94,7 @@ function NavBadge({ count }: { count: number }) {
   )
 }
 
-export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos = 0 }: SidebarProps) {
+export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos = 0, collapsed = false }: SidebarProps) {
   const pathname = usePathname()
 
   const visibleItems = NAV_ITEMS.filter((item) =>
@@ -105,32 +106,41 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
   const hasExactMatch = visibleItems.some((item) => pathname === item.href)
 
   const sidebarContent = (
-    <nav className={styles.sidebar} aria-label="Navegação principal">
+    <nav
+      className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}
+      aria-label="Navegação principal"
+    >
       {/* Brand */}
       <div className={styles.brand}>
-        <div className={styles.brandTop}>
-          <Image
-            src="/images/logo.png"
-            alt="Metalsider"
-            width={160}
-            height={52}
-            className={styles.logoImg}
-            priority
-          />
-          <button
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label="Fechar menu"
-          >
-            <IconX size={18} />
-          </button>
-        </div>
-        <span className={styles.brandTag}>GESTÃO DE CHAMADOS</span>
+        {collapsed ? (
+          <div className={styles.brandMark}>MS</div>
+        ) : (
+          <>
+            <div className={styles.brandTop}>
+              <Image
+                src="/images/logo.png"
+                alt="Metalsider"
+                width={160}
+                height={52}
+                className={styles.logoImg}
+                priority
+              />
+              <button
+                className={styles.closeBtn}
+                onClick={onClose}
+                aria-label="Fechar menu"
+              >
+                <IconX size={18} />
+              </button>
+            </div>
+            <span className={styles.brandTag}>GESTÃO DE CHAMADOS</span>
+          </>
+        )}
       </div>
 
       {/* Nav */}
       <ul className={styles.nav} role="list">
-        <li className={styles.navSection}>Principal</li>
+        {!collapsed && <li className={styles.navSection}>Principal</li>}
         {visibleItems.map((item) => {
           const isActive = hasExactMatch
             ? pathname === item.href
@@ -143,12 +153,16 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
                 className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
                 onClick={onClose}
                 aria-current={isActive ? 'page' : undefined}
+                title={collapsed ? item.label : undefined}
               >
                 <span className={styles.navIcon} aria-hidden="true">
                   {item.icon}
                 </span>
-                <span className={styles.navLabel}>{item.label}</span>
-                <NavBadge count={badgeCount} />
+                {!collapsed && <span className={styles.navLabel}>{item.label}</span>}
+                {!collapsed && <NavBadge count={badgeCount} />}
+                {collapsed && badgeCount > 0 && (
+                  <span className={styles.navBadgeDot} aria-label={`${badgeCount} chamados abertos`} />
+                )}
               </Link>
             </li>
           )
@@ -160,22 +174,27 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
         <div
           className={`${styles.userAvatar} ${styles[`avatarPerfil${userPerfil.charAt(0).toUpperCase() + userPerfil.slice(1)}`]}`}
           aria-hidden="true"
+          title={collapsed ? userName : undefined}
         >
           {getInitials(userName)}
         </div>
-        <div className={styles.userMeta}>
-          <span className={styles.userName}>{userName}</span>
-          <span className={`${styles.rolePill} ${styles[`rolePill${userPerfil.charAt(0).toUpperCase() + userPerfil.slice(1)}`]}`}>
-            {getRoleLabel(userPerfil)}
-          </span>
-        </div>
-        <button
-          className={styles.logoutBtn}
-          aria-label="Sair"
-          onClick={() => signOut({ callbackUrl: '/login' })}
-        >
-          <IconLogout size={16} />
-        </button>
+        {!collapsed && (
+          <>
+            <div className={styles.userMeta}>
+              <span className={styles.userName}>{userName}</span>
+              <span className={`${styles.rolePill} ${styles[`rolePill${userPerfil.charAt(0).toUpperCase() + userPerfil.slice(1)}`]}`}>
+                {getRoleLabel(userPerfil)}
+              </span>
+            </div>
+            <button
+              className={styles.logoutBtn}
+              aria-label="Sair"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+            >
+              <IconLogout size={16} />
+            </button>
+          </>
+        )}
       </div>
     </nav>
   )
@@ -183,7 +202,9 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
   return (
     <>
       {/* Desktop: sidebar fixa */}
-      <div className={styles.desktopSidebar}>{sidebarContent}</div>
+      <div className={`${styles.desktopSidebar} ${collapsed ? styles.desktopSidebarCollapsed : ''}`}>
+        {sidebarContent}
+      </div>
 
       {/* Mobile/Tablet: drawer overlay */}
       {isOpen && (

@@ -84,10 +84,20 @@ function formatHoras(h: number | null): string {
 }
 
 function formatDuracao(horas: number): string {
-  if (horas < 24) return `${horas}h`
-  const d = Math.floor(horas / 24)
-  const h = horas % 24
-  return h > 0 ? `${d}d ${h}h` : `${d}d`
+  const totalMin = Math.round(horas * 60)
+  const days     = Math.floor(totalMin / (60 * 24))
+  const remMin   = totalMin % (60 * 24)
+  const hours    = Math.floor(remMin / 60)
+  const mins     = remMin % 60
+
+  const timePart =
+    hours === 0 && mins > 0 ? `${mins}min` :
+    mins   === 0             ? `${hours}h`  :
+                               `${hours}h ${mins}min`
+
+  if (days === 0) return timePart
+  if (hours === 0 && mins === 0) return `${days}d`
+  return `${days}d ${timePart}`
 }
 
 function getInitials(name: string): string {

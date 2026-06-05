@@ -1,65 +1,187 @@
 .container {
-  min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-  background: linear-gradient(140deg, #edf1f9 0%, #dfe6f5 100%);
+  min-height: 100vh;
 }
 
-.card {
+/* ── Painel esquerdo ── */
+.panel {
+  display: none;
   position: relative;
-  width: 100%;
-  max-width: 464px;
-  background-color: var(--color-white);
-  border-radius: 14px;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 8px 28px rgba(12, 27, 80, 0.10),
-    0 24px 52px rgba(12, 27, 80, 0.07);
-  padding: var(--space-10) var(--space-8);
-  border: 1px solid rgba(0, 0, 0, 0.04);
   overflow: hidden;
+  background: linear-gradient(165deg, #0a1628 0%, #0f2252 45%, #172b6e 75%, #0d1e4a 100%);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 52px 48px 40px;
 }
 
-/* Stripe azul no topo do card */
-.card::before {
-  content: '';
+@media (min-width: 1024px) {
+  .panel {
+    display: flex;
+    width: 460px;
+    flex-shrink: 0;
+  }
+}
+
+.panelDecoration {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #0a1628 0%, #1e4bb8 50%, #12276a 100%);
-  border-radius: 14px 14px 0 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-/* ── Cabeçalho ── */
-.header {
-  text-align: center;
+.brand {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.logoImg {
+  height: 124px;
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
+  opacity: 0.88;
   margin-bottom: var(--space-6);
 }
 
-.logo {
-  height: 38px;
-  width: auto;
-  display: block;
-  margin: 0 auto var(--space-5);
+.brandTagline {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+  margin-bottom: var(--space-6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
+.brandDivider {
+  width: 36px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+  margin-bottom: var(--space-6);
+}
+
+.brandFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  align-items: flex-start;
+  width: 100%;
+  max-width: 280px;
+}
+
+.brandFeature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.52);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.brandFeatureIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.panelFooter {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 1;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.02em;
+}
+
+/* ── Área do formulário (sem card) ── */
+.formArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  background-color: var(--color-white);
+  overflow-y: auto;
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-4) 0;
+}
+
+/* Logo visível apenas no mobile */
+.mobileLogo {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: var(--space-8);
+}
+
+.mobileLogoImg {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .mobileLogo {
+    display: none;
+  }
+}
+
+/* ── Eyebrow ── */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #1e4bb8;
+  margin-bottom: var(--space-3);
+}
+
+.eyebrowDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #1e4bb8;
+  flex-shrink: 0;
+}
+
+/* ── Tipografia ── */
 .title {
   font-family: var(--font-heading, 'Inter', sans-serif);
-  font-size: 1.375rem;
+  font-size: 1.625rem;
   font-weight: 700;
   color: #0a1628;
   margin-bottom: var(--space-1);
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
 .subtitle {
   font-size: var(--text-sm);
   color: var(--color-gray-500);
+  margin-bottom: var(--space-6);
   letter-spacing: 0.005em;
 }
 
@@ -67,7 +189,6 @@
 .stepper {
   display: flex;
   align-items: center;
-  justify-content: center;
   margin-bottom: var(--space-6);
   gap: 0;
 }
@@ -94,8 +215,8 @@
 }
 
 .stepActive {
-  border-color: #12276a;
-  background-color: #12276a;
+  border-color: #0e1e5e;
+  background: linear-gradient(155deg, #1d3d9c 0%, #0e1e5e 100%);
   color: var(--color-white);
 }
 
@@ -184,21 +305,21 @@
 
 /* ── Botões ── */
 .submit {
-  height: 42px;
-  background-color: #12276a;
+  height: 44px;
+  background: linear-gradient(155deg, #1d3d9c 0%, #0e1e5e 100%);
   color: var(--color-white);
   font-size: var(--text-base);
   font-weight: 600;
   border-radius: 7px;
   margin-top: var(--space-2);
-  transition: background-color 160ms ease, box-shadow 160ms ease, transform 100ms ease;
+  transition: background 160ms ease, box-shadow 160ms ease, transform 100ms ease;
   width: 100%;
-  letter-spacing: 0.015em;
+  letter-spacing: 0.02em;
 }
 
 .submit:hover:not(:disabled) {
-  background-color: #0a1b52;
-  box-shadow: 0 3px 12px rgba(18, 39, 106, 0.32);
+  background: linear-gradient(155deg, #162f7a 0%, #091550 100%);
+  box-shadow: 0 4px 18px rgba(12, 28, 90, 0.38);
 }
 
 .submit:active:not(:disabled) {
@@ -272,9 +393,9 @@
   transition: background-color 200ms ease;
 }
 
-.strength_fraca  { background-color: var(--color-red-500); width: 33%; }
-.strength_media  { background-color: var(--color-amber-500); width: 66%; }
-.strength_forte  { background-color: #1d9e75; width: 100%; }
+.strength_fraca { background-color: var(--color-red-500); width: 33%; }
+.strength_media { background-color: var(--color-amber-500); width: 66%; }
+.strength_forte { background-color: #1d9e75; width: 100%; }
 
 .strengthLabel {
   font-size: var(--text-xs);
@@ -282,9 +403,28 @@
   white-space: nowrap;
 }
 
-/* ── Link de navegação ── */
-.loginLink {
+/* ── Divider e navegação ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin-top: var(--space-6);
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: var(--color-gray-100);
+}
+
+.dividerText {
+  font-size: 11px;
+  color: var(--color-gray-300);
+  letter-spacing: 0.04em;
+}
+
+.loginLink {
+  margin-top: var(--space-4);
   text-align: center;
   font-size: var(--text-sm);
   color: var(--color-gray-400);

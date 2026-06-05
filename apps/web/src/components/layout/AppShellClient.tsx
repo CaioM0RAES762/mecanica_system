@@ -17,6 +17,7 @@ interface AppShellClientProps {
 
 export function AppShellClient({ userPerfil, userName, accessToken, children }: AppShellClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [chamadosAbertos, setChamadosAbertos] = useState(0)
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export function AppShellClient({ userPerfil, userName, accessToken, children }: 
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         chamadosAbertos={chamadosAbertos}
+        collapsed={sidebarCollapsed}
       />
       <div className={styles.main}>
         <Topbar
@@ -64,6 +66,8 @@ export function AppShellClient({ userPerfil, userName, accessToken, children }: 
           userPerfil={userPerfil}
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
           chamadosAbertos={chamadosAbertos}
+          sidebarCollapsed={sidebarCollapsed}
+          onSidebarToggle={() => setSidebarCollapsed((prev) => !prev)}
         />
         <main className={styles.content} id="main-content" tabIndex={-1}>
           {children}

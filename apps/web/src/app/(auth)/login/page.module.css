@@ -37,40 +37,42 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .logoImg {
-  height: 88px;
+  height: 124px;
   width: auto;
   display: block;
   filter: brightness(0) invert(1);
-  opacity: 0.82;
-  margin-bottom: var(--space-8);
+  opacity: 0.88;
+  margin-bottom: var(--space-6);
 }
 
 .brandTagline {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.38);
   margin-bottom: var(--space-6);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 600;
 }
 
 .brandDivider {
-  width: 28px;
+  width: 36px;
   height: 1px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.18);
   margin-bottom: var(--space-6);
 }
 
 .brandFeatures {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  align-items: center;
+  gap: var(--space-5);
+  align-items: flex-start;
+  width: 100%;
+  max-width: 280px;
 }
 
 .brandFeature {
@@ -78,17 +80,22 @@
   align-items: center;
   gap: 12px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.52);
+  line-height: 1.5;
   letter-spacing: 0.01em;
 }
 
-.brandFeatureDot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.25);
+.brandFeatureIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .panelFooter {
@@ -208,22 +215,53 @@
   cursor: not-allowed;
 }
 
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper .input {
+  padding-right: 42px;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-gray-400);
+  cursor: pointer;
+  transition: color 150ms ease;
+  border-radius: 0 7px 7px 0;
+}
+
+.passwordToggle:hover {
+  color: var(--color-gray-600);
+}
+
 .submit {
-  height: 42px;
-  background-color: #12276a;
+  height: 44px;
+  background: linear-gradient(155deg, #1d3d9c 0%, #0e1e5e 100%);
   color: var(--color-white);
   font-size: var(--text-base);
   font-weight: 600;
   border-radius: 7px;
   margin-top: var(--space-2);
-  transition: background-color 160ms ease, box-shadow 160ms ease, transform 100ms ease;
+  transition: background 160ms ease, box-shadow 160ms ease, transform 100ms ease;
   width: 100%;
-  letter-spacing: 0.015em;
+  letter-spacing: 0.02em;
 }
 
 .submit:hover:not(:disabled) {
-  background-color: #0a1b52;
-  box-shadow: 0 3px 12px rgba(18, 39, 106, 0.32);
+  background: linear-gradient(155deg, #162f7a 0%, #091550 100%);
+  box-shadow: 0 4px 18px rgba(12, 28, 90, 0.38);
 }
 
 .submit:active:not(:disabled) {
@@ -253,11 +291,51 @@
   color: #0a1b52;
 }
 
-.activateLink {
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin-top: var(--space-6);
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: var(--color-gray-100);
+}
+
+.dividerText {
+  font-size: 11px;
+  color: var(--color-gray-300);
+  letter-spacing: 0.04em;
+}
+
+.activateLink {
+  margin-top: var(--space-4);
   text-align: center;
   font-size: var(--text-sm);
   color: var(--color-gray-400);
+}
+
+/* ── Eyebrow ── */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #1e4bb8;
+  margin-bottom: var(--space-3);
+}
+
+.eyebrowDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #1e4bb8;
+  flex-shrink: 0;
 }
 
 .link {
