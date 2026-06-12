@@ -31,6 +31,13 @@ interface Props {
 
 const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
 
+function gerarId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -62,7 +69,7 @@ export function UploadAnexos({
         setErro(`"${file.name}" excede o limite de 10 MB e foi ignorado.`)
         continue
       }
-      novos.push({ id: crypto.randomUUID(), file, status: 'pendente' })
+      novos.push({ id: gerarId(), file, status: 'pendente' })
     }
 
     if (novos.length === 0) return

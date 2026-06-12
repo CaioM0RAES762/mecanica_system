@@ -30,6 +30,7 @@ model usuarios {
   fechamentos           registros_fechamento[]
   anexos                anexos[]
   logs                  logs_auditoria[]
+  analises_checklists   checklist_analises[]
 
   @@index([ativo])
   @@index([perfil])
@@ -67,7 +68,7 @@ model ordens_servico {
   status                     String    @default("aberto") @db.NVarChar(20)
   descricao                  String?   @db.NVarChar(Max)
   notas_internas             String?   @db.NVarChar(Max)
-  inicio_previsto            DateTime  @db.Date
+  inicio_previsto            DateTime  @db.DateTime2
   prazo                      DateTime  @db.DateTime2
   fechado_em                 DateTime? @db.DateTime2
   alerta_proximo_enviado_em  DateTime? @db.DateTime2         // D-17: idempotência de alerta
@@ -79,9 +80,10 @@ model ordens_servico {
   mecanico    usuarios?             @relation("mecanico", fields: [mecanico_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
   categoria   categorias            @relation(fields: [categoria_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
   veiculo     veiculos              @relation(fields: [veiculo_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  fechamento  registros_fechamento?
-  anexos      anexos[]
-  logs        logs_auditoria[]
+  fechamento         registros_fechamento?
+  anexos             anexos[]
+  logs               logs_auditoria[]
+  checklist_analise  checklist_analises?
 
   // Índices de performance (SDD § 4.3)
   @@index([status, mecanico_id])
@@ -135,4 +137,105 @@ model logs_auditoria {
 
   // Índice de performance (SDD § 4.3)
   @@index([ordem_servico_id, ocorrido_em(sort: Desc)])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Módulo: Checklists Cobli (D-C01..D-C10 — ver docs/checklists-cobli-implementation-plan.md)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Histórico de cada execução de sincronização com a API Cobli
+model cobli_checklists_sync {
+  id             String    @id @default(uuid()) @db.UniqueIdentifier
+  synced_at      DateTime  @default(now()) @db.DateTime2
+  period_start   DateTime? @db.DateTime2
+  period_end     DateTime? @db.DateTime2
+  total_imported Int       @default(0)
+  total_skipped  Int       @default(0)
+  total_failed   Int       @default(0)
+  status         String    @db.NVarChar(20)
+  error_message  String?   @db.NVarChar(Max)
+  created_at     DateTime  @default(now()) @db.DateTime2
+  updated_at     DateTime  @updatedAt @db.DateTime2
+}
+
+// Cada checklist preenchido importado da Cobli
+model checklist_resultados {
+  id                      String    @id @default(uuid()) @db.UniqueIdentifier
+  cobli_checklist_id      String    @unique @db.NVarChar(100)
+  cobli_template_id       String?   @db.NVarChar(100)
+  nome_checklist          String    @db.NVarChar(300)
+  versao                  Int?
+  veiculo_device_id       String?   @db.NVarChar(50)
+  veiculo_placa           String?   @db.NVarChar(20)
+  veiculo_marca           String?   @db.NVarChar(100)
+  veiculo_modelo          String?   @db.NVarChar(200)
+  veiculo_group_id        String?   @db.NVarChar(100)
+  motorista_nome          String?   @db.NVarChar(200)
+  endereco_preenchimento  String?   @db.NVarChar(500)
+  preenchido_em           DateTime? @db.DateTime2
+  criado_em_cobli         DateTime? @db.DateTime2
+  importado_em            DateTime  @default(now()) @db.DateTime2
+  status                  String    @default("CONFORME") @db.NVarChar(20)
+  pontuacao_criticidade   Int       @default(0)
+  prioridade              String?   @db.NVarChar(20)
+  payload_original        String    @db.NVarChar(Max)
+  created_at              DateTime  @default(now()) @db.DateTime2
+  updated_at              DateTime  @updatedAt @db.DateTime2
+
+  itens_nao_conformes checklist_itens_nao_conformes[]
+  analise             checklist_analises?
+
+  @@index([status])
+  @@index([prioridade])
+  @@index([preenchido_em])
+  @@index([veiculo_placa])
+  @@index([motorista_nome])
+}
+
+// Itens específicos que causaram não conformidade em um checklist
+model checklist_itens_nao_conformes {
+  id                     String   @id @default(uuid()) @db.UniqueIdentifier
+  checklist_resultado_id String   @db.UniqueIdentifier
+  field_id               String?  @db.NVarChar(100)
+  field_title            String   @db.NVarChar(500)
+  field_type             String   @db.NVarChar(20)
+  valor_respondido       String   @db.NVarChar(500)
+  peso_criticidade       Int      @default(1)
+  photos_urls            String?  @db.NVarChar(Max)
+  created_at             DateTime @default(now()) @db.DateTime2
+  updated_at             DateTime @updatedAt @db.DateTime2
+
+  checklist_resultado checklist_resultados @relation(fields: [checklist_resultado_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+  @@index([checklist_resultado_id])
+}
+
+// Registro da decisão do supervisor/admin sobre um checklist não conforme
+model checklist_analises {
+  id                     String    @id @default(uuid()) @db.UniqueIdentifier
+  checklist_resultado_id String    @unique @db.UniqueIdentifier
+  analisado_por_id       String    @db.UniqueIdentifier
+  analisado_em           DateTime  @db.DateTime2
+  decisao                String    @db.NVarChar(20)
+  observacao             String?   @db.NVarChar(Max)
+  os_gerada_id           Int?      @unique
+  created_at             DateTime  @default(now()) @db.DateTime2
+  updated_at             DateTime  @updatedAt @db.DateTime2
+
+  checklist_resultado checklist_resultados @relation(fields: [checklist_resultado_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  analisado_por       usuarios             @relation(fields: [analisado_por_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  os_gerada           ordens_servico?      @relation(fields: [os_gerada_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+}
+
+// Configuração de peso por padrão de título de campo (configurável por admin)
+model checklist_item_weights {
+  id                  String   @id @default(uuid()) @db.UniqueIdentifier
+  field_title_pattern String   @db.NVarChar(200)
+  field_title         String   @default("") @db.NVarChar(300)
+  field_type          String   @default("SINGLE_SELECT") @db.NVarChar(50)
+  peso                Int      @default(1)
+  descricao           String?  @db.NVarChar(500)
+  ativo               Boolean  @default(true)
+  created_at          DateTime @default(now()) @db.DateTime2
+  updated_at          DateTime @updatedAt @db.DateTime2
 }

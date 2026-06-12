@@ -261,7 +261,6 @@ export async function countOS(params: Omit<OSListParams, 'pagina' | 'por_pagina'
 
 export async function deleteOS(id: number) {
   return prisma.$transaction([
-    prisma.logs_auditoria.deleteMany({ where: { ordem_servico_id: id } }),
     prisma.registros_fechamento.deleteMany({ where: { ordem_servico_id: id } }),
     prisma.anexos.deleteMany({ where: { ordem_servico_id: id } }),
     prisma.ordens_servico.delete({ where: { id } }),

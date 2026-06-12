@@ -15,6 +15,7 @@ import { categoriasRoutes } from './routes/categorias.js'
 import { veiculosRoutes } from './routes/veiculos.js'
 import { usuariosRoutes } from './routes/usuarios.js'
 import { analyticsRoutes } from './routes/analytics.js'
+import { checklistsRoutes } from './routes/checklists.js'
 import { zodErrorHandler } from './plugins/zod-error-handler.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,7 +49,7 @@ export async function buildApp() {
   })
 
   await app.register(rateLimit, {
-    global: false,
+    global: true,
     max: 100,
     timeWindow: '1 minute',
   })
@@ -76,6 +77,7 @@ export async function buildApp() {
   await app.register(veiculosRoutes, { prefix: '/api/v1' })
   await app.register(usuariosRoutes, { prefix: '/api/v1' })
   await app.register(analyticsRoutes, { prefix: '/api/v1' })
+  await app.register(checklistsRoutes, { prefix: '/api/v1' })
 
   return app
 }

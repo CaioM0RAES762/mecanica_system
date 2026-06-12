@@ -701,6 +701,12 @@ export function NovoChamadoForm({
         ? duration + durationMin / 60
         : duration
 
+    const ih = inicioHora !== '' ? clamp(parseInt(inicioHora, 10), 0, 23) : null
+    const im = inicioMin  !== '' ? clamp(parseInt(inicioMin,  10), 0, 59) : 0
+    const inicioPrevisto = ih !== null
+      ? `${form.inicio_previsto}T${pad2(ih)}:${pad2(im)}:00`
+      : form.inicio_previsto
+
     const payload = {
       titulo: form.titulo,
       categoria_id: Number(form.categoria_id),
@@ -710,7 +716,7 @@ export function NovoChamadoForm({
       descricao: form.descricao || undefined,
       notas_internas:
         perfil !== 'mecanico' && form.notas_internas ? form.notas_internas : undefined,
-      inicio_previsto: form.inicio_previsto,
+      inicio_previsto: inicioPrevisto,
       duracao_valor,
       duracao_tipo: (durationUnit === 'hours' ? 'horas' : 'dias_uteis') as 'horas' | 'dias_uteis',
     }

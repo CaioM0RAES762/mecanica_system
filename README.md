@@ -61,6 +61,56 @@ Acesse:
 
 ---
 
+## Rodando em segundo plano (PM2)
+
+O PM2 mantém a API e o frontend rodando mesmo com o terminal fechado ou o notebook suspenso.
+
+### Instalação única
+
+```bash
+npm install -g pm2
+```
+
+### Uso diário
+
+| Arquivo | O que faz |
+|---|---|
+| `start-bg.bat` | Inicia API e frontend como processos PM2 persistentes |
+| `stop-bg.bat` | Para e remove todos os processos PM2 |
+| `logs.bat` | Abre os logs em tempo real (Ctrl+C para sair) |
+
+```bat
+# Iniciar em segundo plano
+start-bg.bat
+
+# Ver status dos processos
+pm2 status
+
+# Ver logs de um processo específico
+pm2 logs mecanica-api
+pm2 logs mecanica-web
+
+# Parar tudo
+stop-bg.bat
+```
+
+### Iniciar automaticamente com o Windows
+
+```bash
+# Instalar o utilitário de startup para Windows
+npm install -g pm2-windows-startup
+
+# Registrar o PM2 no startup do Windows (executar uma vez como Administrador)
+pm2-startup install
+
+# Salvar o estado atual dos processos para restaurar no boot
+pm2 save
+```
+
+> **Nota:** Se os processos ainda não estiverem rodando, execute `start-bg.bat` antes de `pm2 save`.
+
+---
+
 ## Comandos úteis
 
 ```bash

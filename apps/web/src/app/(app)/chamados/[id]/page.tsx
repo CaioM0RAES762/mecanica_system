@@ -6,7 +6,6 @@ import { buscarOS, buscarAuditoria } from '@/lib/api/ordens-servico'
 import {
   PRIORIDADE_LABEL,
   RESULTADO_LABEL,
-  StatusOS,
 } from '@metalsider/shared'
 import {
   IconArrowLeft,
@@ -45,8 +44,6 @@ export default async function ChamadoDetalhePage({
   } catch {
     notFound()
   }
-
-  const isFechado = os.status === StatusOS.FECHADO
 
   function fmt(iso: string) {
     return new Date(iso).toLocaleString('pt-BR', {

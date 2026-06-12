@@ -107,7 +107,7 @@ export const CriarOSSchema = z.object({
   mecanico_id: z.string().uuid().nullable().optional(),
   descricao: z.string().max(10000).nullable().optional(),
   notas_internas: z.string().max(10000).nullable().optional(),
-  inicio_previsto: z.string().date(),
+  inicio_previsto: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/, 'Formato inválido: use YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SS'),
   duracao_valor: z.number().positive().optional(),
   duracao_tipo: z.enum(['horas', 'dias_uteis']).optional(),
 })

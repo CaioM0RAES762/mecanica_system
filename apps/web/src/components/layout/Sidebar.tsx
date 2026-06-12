@@ -7,9 +7,11 @@ import { signOut } from 'next-auth/react'
 import {
   IconLayoutDashboard,
   IconClipboardList,
+  IconClipboardCheck,
   IconPlus,
   IconArchive,
   IconSettings,
+  IconAdjustments,
   IconX,
   IconLogout,
 } from '@tabler/icons-react'
@@ -24,6 +26,7 @@ interface NavItem {
   roles: UserPerfil[]
   badgeKey?: string
   exact?: boolean
+  subItem?: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -46,6 +49,20 @@ const NAV_ITEMS: NavItem[] = [
     icon: <IconPlus size={20} />,
     roles: ['supervisor', 'admin'],
     exact: true,
+  },
+  {
+    label: 'Checklists',
+    href: '/checklists',
+    icon: <IconClipboardCheck size={20} />,
+    roles: ['supervisor', 'admin'],
+  },
+  {
+    label: 'Config. de Pesos',
+    href: '/checklists/config',
+    icon: <IconAdjustments size={16} />,
+    roles: ['admin'],
+    exact: true,
+    subItem: true,
   },
   {
     label: 'Histórico',
@@ -107,13 +124,19 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
 
   const sidebarContent = (
     <nav
-      className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}
+      className={`${styles.sidebar}${collapsed ? ` ${styles.collapsed}` : ''}`}
       aria-label="Navegação principal"
     >
       {/* Brand */}
       <div className={styles.brand}>
         {collapsed ? (
-          <div className={styles.brandMark}>MS</div>
+          <Image
+            src="/images/logo2.png"
+            alt="Metalsider"
+            width={38}
+            height={38}
+            className={styles.logoImgCollapsed}
+          />
         ) : (
           <>
             <div className={styles.brandTop}>
@@ -146,11 +169,13 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
             ? pathname === item.href
             : !item.exact && (pathname === item.href || pathname.startsWith(item.href + '/'))
           const badgeCount = item.badgeKey === 'chamados' ? chamadosAbertos : 0
+          // Sub-items ficam ocultos quando a sidebar está colapsada
+          if (collapsed && item.subItem) return null
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
-                className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
+                className={`${styles.navItem}${isActive ? ` ${styles.navItemActive}` : ''}${item.subItem ? ` ${styles.navItemSub}` : ''}`}
                 onClick={onClose}
                 aria-current={isActive ? 'page' : undefined}
                 title={collapsed ? item.label : undefined}
@@ -202,7 +227,7 @@ export function Sidebar({ userPerfil, userName, isOpen, onClose, chamadosAbertos
   return (
     <>
       {/* Desktop: sidebar fixa */}
-      <div className={`${styles.desktopSidebar} ${collapsed ? styles.desktopSidebarCollapsed : ''}`}>
+      <div className={`${styles.desktopSidebar}${collapsed ? ` ${styles.desktopSidebarCollapsed}` : ''}`}>
         {sidebarContent}
       </div>
 

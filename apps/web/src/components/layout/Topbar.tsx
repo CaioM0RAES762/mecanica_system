@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { IconMenu2, IconBell, IconHelp, IconLayoutSidebar } from '@tabler/icons-react'
 import type { UserPerfil } from './Sidebar'
@@ -64,10 +65,14 @@ export function Topbar({ userName, userPerfil, onMenuToggle, chamadosAbertos = 0
         </button>
 
         <div className={styles.mobileLogo} aria-label="Metalsider">
-          <div className={styles.logoMark} aria-hidden="true">
-            MS
-          </div>
-          <span className={styles.logoText}>Metalsider</span>
+          <Image
+            src="/images/logo2.png"
+            alt="Metalsider"
+            width={32}
+            height={32}
+            className={styles.mobileLogoImg}
+            priority
+          />
         </div>
 
         <div className={styles.mobileActions}>

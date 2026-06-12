@@ -2,7 +2,6 @@
 
 **Sprint 1 — Auditoria do SDD e Planejamento Final**
 **Data:** 2026-05-27
-**Auditor:** Claude Code (automático)
 **Fonte auditada:** `SDD.md` v2.0 · Maio 2026
 
 ---

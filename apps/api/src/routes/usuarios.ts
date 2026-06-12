@@ -80,7 +80,7 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
       })
     }
 
-    const senhaHash = await bcrypt.hash('metal@10', 12)
+    const senhaHash = await bcrypt.hash(process.env['DEFAULT_USER_PASSWORD'] ?? 'metal@10', 12)
 
     const novo = await createUsuario({
       email: body.email,

@@ -1,0 +1,13 @@
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: calc(var(--content-py) * -1) calc(var(--content-px) * -1);
+}
+
+@media (min-width: 1920px) {
+  .page {
+    margin: calc(clamp(2rem, 2.5vw, 3rem) * -1) calc(clamp(2rem, 3vw, 4rem) * -1);
+  }
+}

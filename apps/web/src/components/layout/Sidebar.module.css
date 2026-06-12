@@ -132,6 +132,17 @@
   letter-spacing: 0.02em;
 }
 
+/* ── Logo colapsada (substituiu o brandMark) ── */
+.logoImgCollapsed {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+  filter: grayscale(1) brightness(2.2) contrast(1.1);
+  opacity: 0.88;
+}
+
 /* ── Badge dot (collapsed, chamados) ── */
 .navBadgeDot {
   position: absolute;
@@ -272,6 +283,12 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.navItemSub {
+  padding-left: 2.5rem;
+  font-size: 0.8125rem;
+  opacity: 0.9;
 }
 
 .navLabel {

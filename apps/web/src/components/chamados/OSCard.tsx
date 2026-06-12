@@ -55,10 +55,13 @@ function initials(name: string): string {
   return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase()
 }
 
-function calcSlaProgress(criadoEm: string, prazo: string): number {
-  const inicio = new Date(criadoEm).getTime()
+function calcSlaProgress(criadoEm: string, prazo: string, inicioPrevisto?: string | null): number {
+  const inicio = inicioPrevisto
+    ? new Date(inicioPrevisto).getTime()
+    : new Date(criadoEm).getTime()
   const fim = new Date(prazo).getTime()
   const agora = Date.now()
+  if (agora < inicio) return 0
   if (fim <= inicio) return 100
   return Math.min(100, ((agora - inicio) / (fim - inicio)) * 100)
 }
@@ -99,10 +102,10 @@ function progressColor(p: number, atrasado: boolean): string {
   return atrasado || p > 90 ? '#d13438' : p > 75 ? '#ca5010' : p > 50 ? '#797775' : '#107c10'
 }
 
-export const OSCard = memo(function OSCard({ os, perfil, userId, onFechar, onEditar, onExcluir }: OSCardProps) {
+export const OSCard = memo(function OSCard({ os, perfil, userId: _userId, onFechar, onEditar, onExcluir }: OSCardProps) {
   const isAtrasado = os.status === StatusOS.ATRASADO
   const isFechado = os.status === StatusOS.FECHADO
-  const progress = isFechado ? 100 : calcSlaProgress(os.criado_em, os.prazo)
+  const progress = isFechado ? 100 : calcSlaProgress(os.criado_em, os.prazo, os.inicio_previsto)
 
   const podeFechar = !isFechado
   const isSupervisor = perfil === 'supervisor' || perfil === 'admin'
@@ -115,7 +118,7 @@ export const OSCard = memo(function OSCard({ os, perfil, userId, onFechar, onEdi
   useEffect(() => {
     if (isFechado) return
     const tick = () => {
-      const p     = calcSlaProgress(os.criado_em, os.prazo)
+      const p     = calcSlaProgress(os.criado_em, os.prazo, os.inicio_previsto)
       const color = progressColor(p, isAtrasado)
       if (progressFillRef.current) {
         progressFillRef.current.style.width           = `${p}%`
@@ -126,7 +129,7 @@ export const OSCard = memo(function OSCard({ os, perfil, userId, onFechar, onEdi
     }
     const id = setInterval(tick, 60_000)
     return () => clearInterval(id)
-  }, [isFechado, isAtrasado, os.criado_em, os.prazo])
+  }, [isFechado, isAtrasado, os.criado_em, os.prazo, os.inicio_previsto])
 
   const borderColor = isAtrasado ? '#d13438' : (PRIO_BORDER[os.prioridade] ?? '#797775')
 
@@ -159,7 +162,7 @@ export const OSCard = memo(function OSCard({ os, perfil, userId, onFechar, onEdi
         <div className={styles.datesRight}>
           <p className={styles.dateItem}>
             <IconCalendar size={13} aria-hidden="true" />
-            <span>Aberto em: {formatDataHora(os.criado_em)}</span>
+            <span>Início: {formatDataHora(os.inicio_previsto)}</span>
           </p>
           {(() => {
             const urgencia = isFechado ? 'normal' : prazoUrgencia(os.prazo)
@@ -215,7 +218,7 @@ export const OSCard = memo(function OSCard({ os, perfil, userId, onFechar, onEdi
       </p>
 
       {/* Progress bar — cor e largura atualizadas via ref a cada minuto sem re-render */}
-      {progress > 0 && (
+      {(progress > 0 || !isFechado) && (
         <div className={styles.progressWrap}>
           <div
             ref={progressTrackRef}

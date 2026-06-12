@@ -4,12 +4,14 @@ import { buildApp } from '../app.js'
 
 jest.mock('../lib/prisma.js', () => ({
   prisma: {
+    $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     ordens_servico: {
-      findMany:   jest.fn(),
-      findUnique: jest.fn(),
-      create:     jest.fn(),
-      update:     jest.fn(),
-      count:      jest.fn(),
+      findMany:    jest.fn(),
+      findUnique:  jest.fn(),
+      create:      jest.fn(),
+      update:      jest.fn(),
+      updateMany:  jest.fn(),
+      count:       jest.fn(),
     },
     registros_fechamento: {
       create: jest.fn(),
@@ -23,11 +25,12 @@ jest.mock('../lib/prisma.js', () => ({
 
 import { prisma } from '../lib/prisma.js'
 
-const mockFindMany   = prisma.ordens_servico.findMany  as jest.Mock
-const mockFindUnique = prisma.ordens_servico.findUnique as jest.Mock
-const mockCreate     = prisma.ordens_servico.create    as jest.Mock
-const mockUpdate     = prisma.ordens_servico.update    as jest.Mock
-const mockCount      = prisma.ordens_servico.count     as jest.Mock
+const mockFindMany    = prisma.ordens_servico.findMany   as jest.Mock
+const mockFindUnique  = prisma.ordens_servico.findUnique as jest.Mock
+const mockCreate      = prisma.ordens_servico.create     as jest.Mock
+const mockUpdate      = prisma.ordens_servico.update     as jest.Mock
+const mockUpdateMany  = prisma.ordens_servico.updateMany as jest.Mock
+const mockCount       = prisma.ordens_servico.count      as jest.Mock
 const mockFechCreate = prisma.registros_fechamento.create as jest.Mock
 const mockLogCreate  = prisma.logs_auditoria.create    as jest.Mock
 const mockLogFindMany = prisma.logs_auditoria.findMany as jest.Mock
@@ -86,6 +89,7 @@ describe('Ordens de Serviço routes', () => {
   afterEach(() => {
     jest.clearAllMocks()
     mockUpdate.mockResolvedValue({})
+    mockUpdateMany.mockResolvedValue({ count: 1 })
     mockLogCreate.mockResolvedValue({ id: BigInt(1), acao: '', ocorrido_em: new Date() })
     mockFechCreate.mockResolvedValue({})
   })
@@ -231,8 +235,8 @@ describe('Ordens de Serviço routes', () => {
       expect(res.statusCode).toBe(200)
       const body = JSON.parse(res.body)
       expect(body.status).toBe('fechado')
-      expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 1 }, data: expect.objectContaining({ status: 'fechado' }) }),
+      expect(mockUpdateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: 1 }), data: expect.objectContaining({ status: 'fechado' }) }),
       )
       expect(mockFechCreate).toHaveBeenCalled()
       expect(mockLogCreate).toHaveBeenCalledWith(

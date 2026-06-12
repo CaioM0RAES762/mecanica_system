@@ -6,13 +6,12 @@ import {
   findOSById,
   createOS,
   updateOS,
-  updateOSStatus,
   deleteOS,
-  createFechamento,
   criarAuditoria,
   findAuditoriaByOS,
   type AtualizarOSData,
 } from '../repositories/ordens-servico.repository.js'
+import { prisma } from '../lib/prisma.js'
 import type { JwtPayload } from '../middlewares/authenticate.js'
 import { emailService, type OSEmailData } from '../lib/email.js'
 import { invalidarCacheAnalytics } from './analytics.service.js'
@@ -65,14 +64,13 @@ export function calcularPrazo(prioridade: PrioridadeOS, inicio: Date): Date {
   }
 }
 
-// Quando inicio_previsto é hoje usa o momento exato (now()); para datas futuras usa 08:00
-// Isso evita o bug de meia-noite UTC ao parsear strings ISO de data sem hora
+// Se source já inclui horário (T), usa diretamente como hora local.
+// Se é só data e é hoje, usa o momento exato; para datas futuras usa 08:00.
 function resolveStartDateTime(source: string | Date): Date {
-  const dateStr = source instanceof Date
-    ? (source.toISOString().split('T')[0] ?? '')
-    : source
+  if (source instanceof Date) return source
+  if (source.includes('T')) return new Date(source)
   const todayStr = new Date().toISOString().split('T')[0] ?? ''
-  return dateStr === todayStr ? new Date() : new Date(dateStr + 'T08:00:00')
+  return source === todayStr ? new Date() : new Date(source + 'T08:00:00')
 }
 
 // ---- Helpers de serialização ----
@@ -424,16 +422,27 @@ export async function fecharOSService(
   }
 
   const agora = new Date()
-  await updateOSStatus(id, 'fechado', agora)
-  await createFechamento({
-    ordem_servico_id:  id,
-    fechado_por_id:    ator.sub,
-    resultado:         dto.resultado,
-    nota_resolucao:    dto.nota_resolucao   ?? null,
-    horas_trabalhadas: dto.horas_trabalhadas ?? null,
-    obs_adicionais:    dto.obs_adicionais   ?? null,
-    fechado_em:        agora,
-  })
+  const [updateResult] = await prisma.$transaction([
+    prisma.ordens_servico.updateMany({
+      where: { id, status: { not: 'fechado' } },
+      data: { status: 'fechado', fechado_em: agora },
+    }),
+    prisma.registros_fechamento.create({
+      data: {
+        ordem_servico_id:  id,
+        fechado_por_id:    ator.sub,
+        resultado:         dto.resultado,
+        nota_resolucao:    dto.nota_resolucao   ?? null,
+        horas_trabalhadas: dto.horas_trabalhadas ?? null,
+        obs_adicionais:    dto.obs_adicionais   ?? null,
+        fechado_em:        agora,
+      },
+    }),
+  ])
+
+  if (updateResult.count === 0) {
+    throw httpError(422, 'OS já está fechada')
+  }
 
   await criarAuditoria({
     ordem_servico_id:  id,

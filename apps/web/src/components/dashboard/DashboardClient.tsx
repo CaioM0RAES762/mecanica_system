@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useTransition, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
   AreaChart, Area,
@@ -149,6 +149,8 @@ export function DashboardClient({ token }: DashboardClientProps) {
   const [customDe,    setCustomDe]    = useState('')
   const [customAte,   setCustomAte]   = useState('')
 
+  const [isPending, startTransition] = useTransition()
+
   const fullFetchAbortRef    = useRef<AbortController | null>(null)
   const partialFetchAbortRef = useRef<AbortController | null>(null)
   const paramsRef            = useRef(params)
@@ -230,13 +232,15 @@ export function DashboardClient({ token }: DashboardClientProps) {
 
   function selectPeriodo(p: PeriodoFixo) {
     setShowCustom(false)
-    setParams({ periodo: p })
+    startTransition(() => { setParams({ periodo: p }) })
   }
 
   function applyCustom() {
     if (!customDe || !customAte) return
     setShowCustom(false)
-    setParams({ periodo: 'personalizado', de: `${customDe}T00:00:00Z`, ate: `${customAte}T23:59:59Z` })
+    startTransition(() => {
+      setParams({ periodo: 'personalizado', de: `${customDe}T00:00:00Z`, ate: `${customAte}T23:59:59Z` })
+    })
   }
 
   function buildHeatmapMatrix(heatmapData: HeatmapDTO[]) {
@@ -250,6 +254,12 @@ export function DashboardClient({ token }: DashboardClientProps) {
     const maxVal = Math.max(1, ...heatmapData.map(h => h.total))
     return { semanas, matrix, maxVal }
   }
+
+  // useMemo deve ficar antes de qualquer return condicional (Rules of Hooks)
+  const { semanas, matrix, maxVal } = useMemo(
+    () => buildHeatmapMatrix(data?.heatmap ?? []),
+    [data],
+  )
 
   // ---- Loading ----
   if (loading) {
@@ -306,8 +316,6 @@ export function DashboardClient({ token }: DashboardClientProps) {
     mecanicos, heatmap, maisLongos, atrasadosPorCategoria,
   } = data
 
-  const { semanas, matrix, maxVal } = buildHeatmapMatrix(heatmap)
-
   const tendenciaFormatted = tendencia.map(t => ({ ...t, data: t.data.slice(5) }))
 
   const prioridadeTotal = porPrioridade.reduce((s, p) => s + p.total, 0)
@@ -325,7 +333,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
   const catSlice = porCategoria.slice(0, 8)
 
   return (
-    <div className={styles.page} data-testid="dashboard">
+    <div className={styles.page} data-testid="dashboard" style={isPending ? { opacity: 0.7, pointerEvents: 'none' } : undefined}>
       {/* ====== HEADER ====== */}
       <PageHead
         params={params} lastUpdated={lastUpdated} showCustom={showCustom}

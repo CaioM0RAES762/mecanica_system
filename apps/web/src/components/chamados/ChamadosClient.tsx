@@ -240,7 +240,6 @@ export function ChamadosClient({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtros, tabAtiva, periodoFechados, dataInicio, dataFim, fetchOS, refreshTick])
 
   async function handleFechar(id: number, data: FecharOSDTO) {

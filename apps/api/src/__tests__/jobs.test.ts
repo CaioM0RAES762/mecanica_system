@@ -4,6 +4,7 @@ import { buildApp } from '../app.js'
 
 jest.mock('../lib/prisma.js', () => ({
   prisma: {
+    $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     ordens_servico: {
       findMany:    jest.fn(),
       findUnique:  jest.fn(),
@@ -244,6 +245,7 @@ describe('OS criada/fechada dispara e-mails via service', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockOSUpdate.mockResolvedValue({})
+    mockOSUpdateMany.mockResolvedValue({ count: 1 })
     mockLogCreate.mockResolvedValue({ id: BigInt(1) })
     mockFechCreate.mockResolvedValue({})
     mockOSCount.mockResolvedValue(0)
@@ -321,7 +323,7 @@ describe('OS criada/fechada dispara e-mails via service', () => {
 
   it('13 — POST /fechar envia e-mail ao supervisor', async () => {
     mockOSFindUnique.mockResolvedValue(osCompleta)
-    mockOSUpdate.mockResolvedValue({})
+    mockOSUpdateMany.mockResolvedValue({ count: 1 })
     mockFechCreate.mockResolvedValue({})
     mockLogCreate.mockResolvedValue({ id: BigInt(1) })
 
@@ -367,7 +369,7 @@ describe('OS criada/fechada dispara e-mails via service', () => {
 
   it('15 — falha no e-mail não quebra fechamento de OS', async () => {
     mockOSFindUnique.mockResolvedValue(osCompleta)
-    mockOSUpdate.mockResolvedValue({})
+    mockOSUpdateMany.mockResolvedValue({ count: 1 })
     mockFechCreate.mockResolvedValue({})
     mockLogCreate.mockResolvedValue({ id: BigInt(1) })
     mockEnviarFechada.mockRejectedValueOnce(new Error('SMTP timeout'))
