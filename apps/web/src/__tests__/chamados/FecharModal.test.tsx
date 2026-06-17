@@ -18,6 +18,8 @@ const osMock: OrdemServicoResumo = {
   status: 'aberto',
   categoria_id: 4,
   categoria_nome: 'Freios',
+  categoria_ids: [4],
+  categoria_nomes: ['Freios'],
   veiculo_id: 1,
   veiculo_placa: 'XYZ-9999',
   veiculo_nome: 'Ford Ranger',

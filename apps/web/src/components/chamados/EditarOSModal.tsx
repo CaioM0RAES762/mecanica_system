@@ -22,7 +22,7 @@ export function EditarOSModal({ os, categorias, accessToken, onClose, onSuccess 
   // Form fields
   const [titulo, setTitulo] = useState('')
   const [prioridade, setPrioridade] = useState('')
-  const [categoriaId, setCategoriaId] = useState('')
+  const [categoriaIds, setCategoriaIds] = useState<string[]>([])
   const [veiculoId, setVeiculoId] = useState('')
   const [mecanicoId, setMecanicoId] = useState('')
   const [descricao, setDescricao] = useState('')
@@ -65,7 +65,7 @@ export function EditarOSModal({ os, categorias, accessToken, onClose, onSuccess 
   // Carregar detalhes da OS e recursos ao abrir
   useEffect(() => {
     if (!os) {
-      setTitulo(''); setPrioridade(''); setCategoriaId(''); setVeiculoId('')
+      setTitulo(''); setPrioridade(''); setCategoriaIds([]); setVeiculoId('')
       setMecanicoId(''); setDescricao(''); setNotasInternas('')
       setVeiculos([]); setMecanicos([])
       setDetalhesCarregados(false)
@@ -79,7 +79,7 @@ export function EditarOSModal({ os, categorias, accessToken, onClose, onSuccess 
       .then((detalhe) => {
         setTitulo(detalhe.titulo)
         setPrioridade(detalhe.prioridade)
-        setCategoriaId(String(detalhe.categoria_id))
+        setCategoriaIds((detalhe.categoria_ids ?? [detalhe.categoria_id]).map(String))
         setVeiculoId(String(detalhe.veiculo_id))
         setMecanicoId(detalhe.mecanico_id ?? '')
         setDescricao(detalhe.descricao ?? '')
@@ -90,7 +90,7 @@ export function EditarOSModal({ os, categorias, accessToken, onClose, onSuccess 
         // Fallback: usar apenas dados do resumo; não incluir descricao/notas no PATCH
         setTitulo(os.titulo)
         setPrioridade(os.prioridade)
-        setCategoriaId(String(os.categoria_id))
+        setCategoriaIds((os.categoria_ids ?? [os.categoria_id]).map(String))
         setVeiculoId(String(os.veiculo_id))
         setMecanicoId(os.mecanico_id ?? '')
         setDetalhesCarregados(false)
@@ -119,7 +119,9 @@ export function EditarOSModal({ os, categorias, accessToken, onClose, onSuccess 
 
       if (titulo.trim() !== os.titulo) payload.titulo = titulo.trim()
       if (prioridade !== os.prioridade) payload.prioridade = prioridade
-      if (Number(categoriaId) !== os.categoria_id) payload.categoria_id = Number(categoriaId)
+      const osCatIds = (os.categoria_ids ?? [os.categoria_id]).map(String).sort().join(',')
+      const newCatIds = [...categoriaIds].sort().join(',')
+      if (newCatIds !== osCatIds) payload.categoria_ids = categoriaIds.map(Number)
       if (Number(veiculoId) !== os.veiculo_id) payload.veiculo_id = Number(veiculoId)
 
       const mecAtual = os.mecanico_id ?? ''
@@ -208,17 +210,27 @@ export function EditarOSModal({ os, categorias, accessToken, onClose, onSuccess 
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label} htmlFor="edit-categoria">Categoria</label>
-                  <select
-                    id="edit-categoria"
-                    className={styles.select}
-                    value={categoriaId}
-                    onChange={e => setCategoriaId(e.target.value)}
-                  >
-                    {categorias.filter(c => c.ativo).map(c => (
-                      <option key={c.id} value={c.id}>{c.nome}</option>
-                    ))}
-                  </select>
+                  <label className={styles.label}>Categoria</label>
+                  <div className={styles.multiCatWrap}>
+                    {categorias.filter(c => c.ativo).map(c => {
+                      const sid = String(c.id)
+                      const ativo = categoriaIds.includes(sid)
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className={`${styles.catPill} ${ativo ? styles.catPillActive : ''}`}
+                          style={ativo && c.cor ? { background: c.cor + '22', borderColor: c.cor, color: c.cor } : undefined}
+                          onClick={() => setCategoriaIds(prev =>
+                            prev.includes(sid) ? prev.filter(id => id !== sid) : [...prev, sid]
+                          )}
+                        >
+                          {ativo && <span className={styles.catPillCheck}>✓</span>}
+                          {c.nome}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 

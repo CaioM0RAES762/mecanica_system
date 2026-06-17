@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 // ─── Debounce hook ─────────────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ interface Filtros {
   nomeChecklist: string
   prioridade: string
   templateId: string
+  statusFiltro: string
   startDate: string
   endDate: string
 }
@@ -55,8 +57,35 @@ const FILTROS_INICIAIS: Filtros = {
   nomeChecklist: '',
   prioridade: '',
   templateId: '',
+  statusFiltro: '',
   startDate: '',
   endDate: '',
+}
+
+const DATAS_RAPIDAS = [
+  { value: '0',      label: 'Hoje' },
+  { value: 'ontem',  label: 'Ontem' },
+  { value: '3',      label: 'Últimos 3 dias' },
+  { value: '5',      label: 'Últimos 5 dias' },
+  { value: '7',      label: 'Últimos 7 dias' },
+  { value: '15',     label: 'Últimos 15 dias' },
+  { value: '30',     label: 'Últimos 30 dias' },
+]
+
+function computeDateRange(value: string): { startDate: string; endDate: string } {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const fmt = (d: Date) => d.toISOString().slice(0, 10)
+
+  if (value === 'ontem') {
+    const ontem = new Date(hoje)
+    ontem.setDate(ontem.getDate() - 1)
+    return { startDate: fmt(ontem), endDate: fmt(ontem) }
+  }
+  const days = parseInt(value, 10)
+  const start = new Date(hoje)
+  start.setDate(start.getDate() - days)
+  return { startDate: fmt(start), endDate: fmt(hoje) }
 }
 
 function formatarSyncAge(syncAt: string): {
@@ -140,6 +169,8 @@ interface ChecklistsClientProps {
   initialDados: PaginacaoChecklists | null
   initialTab?: TabAtiva
   initialPagina?: number
+  initialFiltros?: Partial<Filtros>
+  initialDataRapida?: string
 }
 
 export function ChecklistsClient({
@@ -148,10 +179,26 @@ export function ChecklistsClient({
   initialDados,
   initialTab = 'NAO_CONFORME',
   initialPagina = 1,
+  initialFiltros,
+  initialDataRapida = '',
 }: ChecklistsClientProps) {
+  const router = useRouter()
+
   const [tabAtiva, setTabAtiva] = useState<TabAtiva>(initialTab)
-  const [filtros, setFiltros] = useState<Filtros>(FILTROS_INICIAIS)
-  const [filtrosAplicados, setFiltrosAplicados] = useState<Filtros>(FILTROS_INICIAIS)
+
+  // Computa o estado inicial já com as datas resolvidas (evita double-fetch ao restaurar `rapida`)
+  const filtrosInicio: Filtros = (() => {
+    const base = { ...FILTROS_INICIAIS, ...initialFiltros }
+    if (initialDataRapida) {
+      const dates = computeDateRange(initialDataRapida)
+      return { ...base, ...dates }
+    }
+    return base
+  })()
+
+  const [filtros, setFiltros] = useState<Filtros>(filtrosInicio)
+  const [filtrosAplicados, setFiltrosAplicados] = useState<Filtros>(filtrosInicio)
+  const [dataRapida, setDataRapida] = useState(initialDataRapida)
   const [pagina, setPagina] = useState(initialPagina)
 
   // Debounce para campos de texto (400 ms)
@@ -169,6 +216,8 @@ export function ChecklistsClient({
     tipo: 'success' | 'error'
     msg: string
   } | null>(null)
+  const [novosSyncInfo, setNovosSyncInfo] = useState<{ count: number } | null>(null)
+  const lastSyncAtRef = useRef<string | null>(initialSyncStatus?.ultimo_sync?.synced_at ?? null)
 
   const [templates, setTemplates] = useState<TemplateDisponivel[]>([])
 
@@ -207,7 +256,9 @@ export function ChecklistsClient({
       setErro(null)
       try {
         const params: Parameters<typeof listarChecklists>[0] = {
-          status: tab,
+          status: tab === 'NAO_CONFORME'
+            ? (f.statusFiltro || 'NAO_CONFORME,APROVADO,OS_GERADA')
+            : tab,
           pagina: pg,
           porPagina: 20,
         }
@@ -244,15 +295,16 @@ export function ChecklistsClient({
   useEffect(() => {
     async function fetchTotals() {
       try {
-        const [conf, rec] = await Promise.all([
+        const [naoConf, conf, rec] = await Promise.all([
+          listarChecklists({ status: 'NAO_CONFORME,APROVADO,OS_GERADA', pagina: 1, porPagina: 1 }, token),
           listarChecklists({ status: 'CONFORME', pagina: 1, porPagina: 1 }, token),
           listarChecklists({ status: 'RECUSADO', pagina: 1, porPagina: 1 }, token),
         ])
-        setTotais(prev => ({
-          ...prev,
-          CONFORME: conf.paginacao.total,
-          RECUSADO: rec.paginacao.total,
-        }))
+        setTotais({
+          NAO_CONFORME: naoConf.paginacao.total,
+          CONFORME:     conf.paginacao.total,
+          RECUSADO:     rec.paginacao.total,
+        })
       } catch { /* silencioso */ }
     }
     void fetchTotals()
@@ -267,10 +319,61 @@ export function ChecklistsClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Sincroniza filtros aplicados → URL (router.replace não adiciona ao histórico)
+  const isMountedRef = useRef(false)
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true
+      return
+    }
+    const params = new URLSearchParams()
+    if (tabAtiva !== 'NAO_CONFORME') params.set('tab', tabAtiva)
+    if (pagina > 1) params.set('pagina', String(pagina))
+    if (filtrosAplicados.veiculoPlaca)  params.set('placa',     filtrosAplicados.veiculoPlaca)
+    if (filtrosAplicados.motoristaNome) params.set('motorista', filtrosAplicados.motoristaNome)
+    if (filtrosAplicados.nomeChecklist) params.set('checklist', filtrosAplicados.nomeChecklist)
+    if (filtrosAplicados.prioridade)    params.set('prioridade', filtrosAplicados.prioridade)
+    if (filtrosAplicados.templateId)    params.set('template',  filtrosAplicados.templateId)
+    if (filtrosAplicados.statusFiltro)  params.set('statusFiltro', filtrosAplicados.statusFiltro)
+    if (dataRapida) {
+      params.set('rapida', dataRapida)
+    } else {
+      if (filtrosAplicados.startDate) params.set('de',  filtrosAplicados.startDate)
+      if (filtrosAplicados.endDate)   params.set('ate', filtrosAplicados.endDate)
+    }
+    const qs = params.toString()
+    router.replace(`/checklists${qs ? `?${qs}` : ''}`, { scroll: false })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabAtiva, filtrosAplicados, pagina, dataRapida])
+
+  // Polling leve a cada 30s: detecta novos syncs sem consultar a Cobli diretamente
+  useEffect(() => {
+    const id = setInterval(() => {
+      buscarSyncStatus(token)
+        .then(status => {
+          const ultimo = status.ultimo_sync
+          if (!ultimo) return
+          if (ultimo.synced_at === lastSyncAtRef.current) return
+          lastSyncAtRef.current = ultimo.synced_at
+          setSyncStatus(status)
+          if (ultimo.total_imported > 0) {
+            setNovosSyncInfo({ count: ultimo.total_imported })
+          }
+        })
+        .catch(() => { /* silencioso — polling é best-effort */ })
+    }, 30_000)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
+
   function handleTabChange(tab: TabAtiva) {
     setTabAtiva(tab)
     setPagina(1)
     setDados(null)
+    if (filtros.statusFiltro) {
+      setFiltros(f => ({ ...f, statusFiltro: '' }))
+      setFiltrosAplicados(prev => ({ ...prev, statusFiltro: '' }))
+    }
   }
 
   function handleFiltrar(e: React.FormEvent) {
@@ -282,13 +385,28 @@ export function ChecklistsClient({
   function handleLimpar() {
     setFiltros(FILTROS_INICIAIS)
     setFiltrosAplicados(FILTROS_INICIAIS)
+    setDataRapida('')
     setPagina(1)
   }
 
   // Selects e datas aplicam imediatamente (sem debounce)
-  function handleInstantChange(key: 'prioridade' | 'templateId' | 'startDate' | 'endDate', value: string) {
+  function handleInstantChange(key: 'prioridade' | 'templateId' | 'startDate' | 'endDate' | 'statusFiltro', value: string) {
     setFiltros(f => ({ ...f, [key]: value }))
     setFiltrosAplicados(prev => ({ ...prev, [key]: value }))
+    setPagina(1)
+  }
+
+  function handleDateManualChange(key: 'startDate' | 'endDate', value: string) {
+    setDataRapida('')
+    handleInstantChange(key, value)
+  }
+
+  function handleDataRapida(value: string) {
+    setDataRapida(value)
+    if (!value) return
+    const { startDate, endDate } = computeDateRange(value)
+    setFiltros(f => ({ ...f, startDate, endDate }))
+    setFiltrosAplicados(prev => ({ ...prev, startDate, endDate }))
     setPagina(1)
   }
 
@@ -296,14 +414,25 @@ export function ChecklistsClient({
     setSyncando(true)
     setSyncFeedback(null)
     try {
-      const res = await dispararSync(token)
+      // Sincroniza desde o último sync conhecido (com 5 min de buffer) ou as últimas 24h
+      const lastAt = syncStatus?.ultimo_sync?.synced_at
+      const startMillis = lastAt
+        ? new Date(lastAt).getTime() - 5 * 60 * 1000
+        : Date.now() - 24 * 60 * 60 * 1000
+
+      const res = await dispararSync(token, { startMillis, endMillis: Date.now() })
+
+      if (res.already_running) {
+        setSyncFeedback({ tipo: 'success', msg: 'Sincronização já em andamento pelo sistema — aguarde.' })
+        return
+      }
+
       setSyncFeedback({
         tipo: 'success',
         msg: `${res.total_imported} importados, ${res.total_skipped} ignorados`,
       })
       const status = await buscarSyncStatus(token)
       setSyncStatus(status)
-      // Recarregar dados da aba atual
       void fetchData(tabAtiva, filtrosAplicados, pagina)
     } catch (e) {
       setSyncFeedback({
@@ -337,6 +466,27 @@ export function ChecklistsClient({
   const lista = dados?.dados ?? []
   const totalPaginas = dados?.paginacao.paginas ?? 1
   const mostraNaoConformes = tabAtiva === 'NAO_CONFORME' || tabAtiva === 'RECUSADO'
+
+  // URL de volta com todos os filtros ativos — passada para a tela de detalhe
+  const backUrl = (() => {
+    const p = new URLSearchParams()
+    if (tabAtiva !== 'NAO_CONFORME') p.set('tab', tabAtiva)
+    if (pagina > 1) p.set('pagina', String(pagina))
+    if (filtrosAplicados.veiculoPlaca)  p.set('placa',       filtrosAplicados.veiculoPlaca)
+    if (filtrosAplicados.motoristaNome) p.set('motorista',   filtrosAplicados.motoristaNome)
+    if (filtrosAplicados.nomeChecklist) p.set('checklist',   filtrosAplicados.nomeChecklist)
+    if (filtrosAplicados.prioridade)    p.set('prioridade',  filtrosAplicados.prioridade)
+    if (filtrosAplicados.templateId)    p.set('template',    filtrosAplicados.templateId)
+    if (filtrosAplicados.statusFiltro)  p.set('statusFiltro', filtrosAplicados.statusFiltro)
+    if (dataRapida) {
+      p.set('rapida', dataRapida)
+    } else {
+      if (filtrosAplicados.startDate) p.set('de',  filtrosAplicados.startDate)
+      if (filtrosAplicados.endDate)   p.set('ate', filtrosAplicados.endDate)
+    }
+    const qs = p.toString()
+    return `/checklists${qs ? `?${qs}` : ''}`
+  })()
 
   // Sync indicator
   let syncIndicator: { texto: string; variante: 'green' | 'yellow' | 'red' | 'gray' } = {
@@ -410,6 +560,34 @@ export function ChecklistsClient({
           </div>
         )}
 
+        {/* Banner de novos checklists detectados pelo cron */}
+        {novosSyncInfo && (
+          <div className={styles.newSyncBanner} role="status" aria-live="polite">
+            <span>
+              {novosSyncInfo.count} novo{novosSyncInfo.count !== 1 ? 's' : ''}{' '}
+              checklist{novosSyncInfo.count !== 1 ? 's' : ''} sincronizado{novosSyncInfo.count !== 1 ? 's' : ''}
+            </span>
+            <button
+              type="button"
+              className={styles.newSyncBtn}
+              onClick={() => {
+                setNovosSyncInfo(null)
+                void fetchData(tabAtiva, filtrosAplicados, pagina)
+              }}
+            >
+              Atualizar lista
+            </button>
+            <button
+              type="button"
+              className={styles.newSyncDismiss}
+              onClick={() => setNovosSyncInfo(null)}
+              aria-label="Dispensar notificação"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className={styles.tabRow} role="tablist" aria-label="Status dos checklists">
           {(
@@ -434,8 +612,9 @@ export function ChecklistsClient({
         </div>
 
         {/* Filtros */}
-        <form onSubmit={handleFiltrar}>
-          <div className={styles.filterRow}>
+        <form onSubmit={handleFiltrar} className={styles.filterWrapper}>
+          {/* Linha 1: textos + selects */}
+          <div className={styles.filterMain}>
             <input
               className={styles.filterInput}
               placeholder="Placa do veículo"
@@ -452,6 +631,19 @@ export function ChecklistsClient({
               aria-label="Filtrar por motorista"
               autoComplete="off"
             />
+            {tabAtiva === 'NAO_CONFORME' && (
+              <select
+                className={styles.filterSelect}
+                value={filtros.statusFiltro}
+                onChange={e => handleInstantChange('statusFiltro', e.target.value)}
+                aria-label="Filtrar por status"
+              >
+                <option value="">Todos os status</option>
+                <option value="NAO_CONFORME">Não conforme</option>
+                <option value="APROVADO">Aprovado</option>
+                <option value="OS_GERADA">OS Gerada</option>
+              </select>
+            )}
             <select
               className={styles.filterSelect}
               value={filtros.prioridade}
@@ -477,24 +669,37 @@ export function ChecklistsClient({
                 </option>
               ))}
             </select>
-            <div className={styles.filterDateRow}>
-              <input
-                type="date"
-                className={styles.filterInput}
-                value={filtros.startDate}
-                onChange={e => handleInstantChange('startDate', e.target.value)}
-                aria-label="Data inicial"
-                title="De"
-              />
-              <input
-                type="date"
-                className={styles.filterInput}
-                value={filtros.endDate}
-                onChange={e => handleInstantChange('endDate', e.target.value)}
-                aria-label="Data final"
-                title="Até"
-              />
-            </div>
+          </div>
+
+          {/* Linha 2: data rápida + inputs de data + botões */}
+          <div className={styles.filterDateArea}>
+            <select
+              className={`${styles.filterSelect} ${dataRapida ? styles.filterSelectActive : ''}`}
+              value={dataRapida}
+              onChange={e => handleDataRapida(e.target.value)}
+              aria-label="Período rápido"
+            >
+              <option value="">Período rápido</option>
+              {DATAS_RAPIDAS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <input
+              type="date"
+              className={styles.filterInput}
+              value={filtros.startDate}
+              onChange={e => handleDateManualChange('startDate', e.target.value)}
+              aria-label="Data inicial"
+              title="De"
+            />
+            <input
+              type="date"
+              className={styles.filterInput}
+              value={filtros.endDate}
+              onChange={e => handleDateManualChange('endDate', e.target.value)}
+              aria-label="Data final"
+              title="Até"
+            />
             <button type="submit" className={`${styles.filterBtn} ${styles.filterBtnPrimary}`}>
               Filtrar
             </button>
@@ -584,8 +789,7 @@ export function ChecklistsClient({
                       key={cl.id}
                       checklist={cl}
                       mostraNaoConformes={mostraNaoConformes}
-                      backTab={tabAtiva}
-                      backPagina={pagina}
+                      backUrl={backUrl}
                     />
                   ))}
                 </tbody>
@@ -659,13 +863,11 @@ export function ChecklistsClient({
 function ChecklistRow({
   checklist: cl,
   mostraNaoConformes,
-  backTab,
-  backPagina,
+  backUrl,
 }: {
   checklist: ChecklistResumo
   mostraNaoConformes: boolean
-  backTab: string
-  backPagina: number
+  backUrl: string
 }) {
   const veiculoPartes = [cl.veiculo_marca, cl.veiculo_modelo].filter(Boolean).join(' ')
 
@@ -718,7 +920,7 @@ function ChecklistRow({
         </span>
       </td>
       <td>
-        <Link href={`/checklists/${cl.id}?tab=${backTab}&pagina=${backPagina}`} className={styles.actionBtn}>
+        <Link href={`/checklists/${cl.id}?back=${encodeURIComponent(backUrl)}`} className={styles.actionBtn}>
           <IconEye size={13} aria-hidden="true" />
           Ver detalhes
         </Link>

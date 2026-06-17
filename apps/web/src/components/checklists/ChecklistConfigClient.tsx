@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { IconChevronDown } from '@tabler/icons-react'
-import type { CampoComPeso, TemplateComCampos } from '@/lib/api/checklists'
-import { listarCamposPorTemplate, salvarPesoCampo } from '@/lib/api/checklists'
+import { IconChevronDown, IconRefresh } from '@tabler/icons-react'
+import type { CampoComPeso, TemplateComCampos, RecalcularResult } from '@/lib/api/checklists'
+import { listarCamposPorTemplate, salvarPesoCampo, recalcularPontuacoes } from '@/lib/api/checklists'
 import styles from './ChecklistConfigClient.module.css'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -36,10 +36,13 @@ function pesoColorClass(peso: number): string {
 interface CampoRowProps {
   campo: CampoComPeso
   token: string
+  cobliTemplateId: string
+  nomeChecklist: string
   onUpdate: (fieldId: string, novoPesoId: string | null, novoPeso: number) => void
+  onEdit: () => void
 }
 
-function CampoRow({ campo, token, onUpdate }: CampoRowProps) {
+function CampoRow({ campo, token, cobliTemplateId, nomeChecklist, onUpdate, onEdit }: CampoRowProps) {
   const [pesoLocal, setPesoLocal]   = useState(campo.peso)
   const [pesoIdLocal, setPesoIdLocal] = useState(campo.peso_id)
   const [salvando, setSalvando]     = useState(false)
@@ -51,14 +54,17 @@ function CampoRow({ campo, token, onUpdate }: CampoRowProps) {
     setSavedAck(false)
     try {
       const res = await salvarPesoCampo(campo.field_id, token, {
-        peso:        novoPeso,
-        peso_id:     pesoIdLocal,
-        field_title: campo.field_title,
-        field_type:  campo.field_type,
+        peso:               novoPeso,
+        peso_id:            pesoIdLocal,
+        field_title:        campo.field_title,
+        field_type:         campo.field_type,
+        cobli_template_id:  cobliTemplateId,
+        nome_checklist:     nomeChecklist,
       })
       setPesoLocal(novoPeso)
       setPesoIdLocal(res.id)
       onUpdate(campo.field_id, res.id, novoPeso)
+      onEdit()
       setSavedAck(true)
       setTimeout(() => setSavedAck(false), 2000)
     } catch {
@@ -122,11 +128,17 @@ interface TemplateSectionProps {
   onToggle: () => void
   token: string
   onUpdate: (fieldId: string, novoPesoId: string | null, novoPeso: number) => void
+  onEditTemplate: (templateId: string) => void
 }
 
-function TemplateSection({ template, expanded, onToggle, token, onUpdate }: TemplateSectionProps) {
+function TemplateSection({ template, expanded, onToggle, token, onUpdate, onEditTemplate }: TemplateSectionProps) {
   const configurados = template.campos.filter(c => c.peso_id !== null).length
   const total        = template.campos.length
+
+  // template_id = "cobli_template_id@@nome_checklist"
+  const sep             = template.template_id.indexOf('@@')
+  const cobliTemplateId = sep !== -1 ? template.template_id.slice(0, sep) : template.template_id
+  const nomeChecklist   = sep !== -1 ? template.template_id.slice(sep + 2) : template.template_nome
 
   return (
     <div className={styles.templateSection}>
@@ -171,7 +183,10 @@ function TemplateSection({ template, expanded, onToggle, token, onUpdate }: Temp
                   key={campo.field_id}
                   campo={campo}
                   token={token}
+                  cobliTemplateId={cobliTemplateId}
+                  nomeChecklist={nomeChecklist}
                   onUpdate={onUpdate}
+                  onEdit={() => onEditTemplate(template.template_id)}
                 />
               ))}
             </tbody>
@@ -213,6 +228,37 @@ export function ChecklistConfigClient({ token, initialTemplates }: Props) {
   const [loading, setLoading]     = useState(false)
   const [erro, setErro]           = useState<string | null>(null)
 
+  const [recalcState, setRecalcState] = useState<
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'success'; result: RecalcularResult }
+    | { status: 'error'; msg: string }
+  >({ status: 'idle' })
+
+  const [editedTemplateIds, setEditedTemplateIds] = useState<Set<string>>(new Set())
+
+  function markTemplateEdited(templateId: string) {
+    setEditedTemplateIds(prev => {
+      if (prev.has(templateId)) return prev
+      return new Set([...prev, templateId])
+    })
+  }
+
+  async function handleRecalcular() {
+    if (recalcState.status === 'loading') return
+    setRecalcState({ status: 'loading' })
+    const ids = editedTemplateIds.size > 0 ? Array.from(editedTemplateIds) : undefined
+    try {
+      const result = await recalcularPontuacoes(token, ids)
+      setRecalcState({ status: 'success', result })
+      setEditedTemplateIds(new Set())
+      setTimeout(() => setRecalcState({ status: 'idle' }), 6000)
+    } catch (e) {
+      setRecalcState({ status: 'error', msg: e instanceof Error ? e.message : 'Erro ao recalcular' })
+      setTimeout(() => setRecalcState({ status: 'idle' }), 5000)
+    }
+  }
+
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => {
       const first = initialTemplates.at(0)
@@ -220,8 +266,8 @@ export function ChecklistConfigClient({ token, initialTemplates }: Props) {
     },
   )
 
-  const fetchTemplates = useCallback(async () => {
-    setLoading(true)
+  const fetchTemplates = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     setErro(null)
     try {
       const res = await listarCamposPorTemplate(token)
@@ -236,12 +282,13 @@ export function ChecklistConfigClient({ token, initialTemplates }: Props) {
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao carregar campos')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [token])
 
   useEffect(() => {
-    if (initialTemplates.length === 0) void fetchTemplates()
+    // Always fetch fresh data on mount; silent (no skeleton) if SSR already gave us data
+    void fetchTemplates(initialTemplates.length > 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -265,6 +312,16 @@ export function ChecklistConfigClient({ token, initialTemplates }: Props) {
     )
   }
 
+  const recalcBtnLabel = (() => {
+    if (recalcState.status === 'loading') return 'Recalculando…'
+    if (recalcState.status === 'success') return `✓ ${recalcState.result.atualizados} recalculados`
+    if (recalcState.status === 'error') return 'Erro ao recalcular'
+    if (editedTemplateIds.size > 0) {
+      return `Recalcular ${editedTemplateIds.size} template${editedTemplateIds.size > 1 ? 's' : ''}`
+    }
+    return 'Recalcular pontuações'
+  })()
+
   const { totalCampos, configurados } = useMemo(() => {
     const todos = templates.flatMap(t => t.campos)
     return {
@@ -279,9 +336,26 @@ export function ChecklistConfigClient({ token, initialTemplates }: Props) {
     <div className={styles.wrapper}>
       {/* ── Header ── */}
       <div className={styles.header}>
-        <h1 className={styles.title}>Pesos de Criticidade</h1>
+        <div className={styles.headerTop}>
+          <h1 className={styles.title}>Pesos de Criticidade</h1>
+          <button
+            type="button"
+            className={`${styles.recalcBtn} ${recalcState.status === 'loading' ? styles.recalcBtnLoading : ''} ${recalcState.status === 'success' ? styles.recalcBtnSuccess : ''} ${recalcState.status === 'error' ? styles.recalcBtnError : ''}`}
+            onClick={() => void handleRecalcular()}
+            disabled={recalcState.status === 'loading'}
+            title="Recalcula pontuação e prioridade de todos os checklists não conformes com os pesos configurados atualmente"
+          >
+            <IconRefresh
+              size={16}
+              stroke={2}
+              className={recalcState.status === 'loading' ? styles.recalcSpinner : undefined}
+            />
+            {recalcBtnLabel}
+          </button>
+        </div>
         <p className={styles.subtitle}>
           Defina a relevância de cada campo do checklist Cobli para o cálculo automático de prioridade de chamados.
+          {' '}Após ajustar os pesos, clique em <strong>Recalcular pontuações</strong> para atualizar os checklists existentes.
         </p>
       </div>
 
@@ -317,7 +391,7 @@ export function ChecklistConfigClient({ token, initialTemplates }: Props) {
         {erro && (
           <div className={styles.erroBox} role="alert">
             {erro}
-            <button type="button" className={styles.reloadBtn} onClick={() => void fetchTemplates()}>
+            <button type="button" className={styles.reloadBtn} onClick={() => void fetchTemplates(false)}>
               Tentar novamente
             </button>
           </div>
@@ -344,6 +418,7 @@ export function ChecklistConfigClient({ token, initialTemplates }: Props) {
                 onToggle={() => toggleTemplate(template.template_id)}
                 token={token}
                 onUpdate={handleUpdate}
+                onEditTemplate={markTemplateEdited}
               />
             ))}
           </div>

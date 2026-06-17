@@ -51,7 +51,7 @@ export async function loginController(
 
 export async function ativarContaController(body: AtivarContaDTO, reply: FastifyReply) {
   await ativarContaService(body)
-  return reply.code(200).send({ message: 'Conta ativada com sucesso' })
+  return reply.code(200).send({ mensagem: 'Conta ativada com sucesso' })
 }
 
 export async function reenviarCodigoController(body: ReenviarCodigoDTO, reply: FastifyReply) {

@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { logger } from './logger.js'
 import {
   templateRecuperacaoSenha,
   templateVerificacaoCadastro,
@@ -28,27 +29,27 @@ export interface IEmailService {
 
 class MockEmailService implements IEmailService {
   async enviarCodigoVerificacao(destinatario: string, _nome: string, _codigo: string): Promise<void> {
-    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: Código de verificação — Metalsider`)
+    logger.info({ mensagem: '[EMAIL MOCK] Código de verificação', destinatario, assunto: 'Código de verificação — Metalsider' })
   }
 
   async enviarCodigoRecuperacaoSenha(destinatario: string, _codigo: string): Promise<void> {
-    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: Recuperação de senha — Metalsider`)
+    logger.info({ mensagem: '[EMAIL MOCK] Recuperação de senha', destinatario, assunto: 'Recuperação de senha — Metalsider' })
   }
 
   async enviarOSAtribuida(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
-    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} atribuída — Metalsider`)
+    logger.info({ mensagem: '[EMAIL MOCK] OS atribuída', destinatario, os_id: os.os_id, assunto: `OS #${os.os_id} atribuída — Metalsider` })
   }
 
   async enviarOSAtrasada(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
-    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} ATRASADA — Metalsider`)
+    logger.info({ mensagem: '[EMAIL MOCK] OS atrasada', destinatario, os_id: os.os_id, assunto: `OS #${os.os_id} ATRASADA — Metalsider` })
   }
 
   async enviarOSProximaPrazo(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
-    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} prazo em 2h — Metalsider`)
+    logger.info({ mensagem: '[EMAIL MOCK] OS com prazo próximo', destinatario, os_id: os.os_id, assunto: `OS #${os.os_id} prazo em 2h — Metalsider` })
   }
 
   async enviarOSFechada(destinatario: string, _nome: string, os: OSEmailData): Promise<void> {
-    console.log(`[EMAIL MOCK] Para: ${destinatario} | Assunto: OS #${os.os_id} fechada — Metalsider`)
+    logger.info({ mensagem: '[EMAIL MOCK] OS fechada', destinatario, os_id: os.os_id, assunto: `OS #${os.os_id} fechada — Metalsider` })
   }
 }
 
@@ -110,7 +111,8 @@ class NodemailerEmailService implements IEmailService {
 export function createEmailService(): IEmailService {
   const emailUser = process.env['EMAIL_USER']
   const emailPassword = process.env['EMAIL_PASSWORD']
-  if (emailUser && emailPassword) {
+  const emailHost = process.env['EMAIL_HOST']
+  if (emailUser && emailPassword && emailHost) {
     return new NodemailerEmailService()
   }
   return new MockEmailService()

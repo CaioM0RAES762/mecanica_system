@@ -1,0 +1,105 @@
+.gallery {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.photoItem {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.photo {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #e5e5e5;
+  display: block;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  cursor: zoom-in;
+}
+
+.photo:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+}
+
+.photoFallback {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #0078d4;
+  border: 1px solid #cddcf6;
+  border-radius: 4px;
+  background: #f0f5ff;
+  white-space: nowrap;
+}
+
+.photoFallback:hover {
+  background: #e0ecff;
+}
+
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lightboxInner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 90vw;
+}
+
+.lightboxImg {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+.lightboxActions {
+  display: flex;
+  gap: 8px;
+}
+
+.lightboxBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.lightboxBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}

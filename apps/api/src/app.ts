@@ -16,10 +16,15 @@ import { veiculosRoutes } from './routes/veiculos.js'
 import { usuariosRoutes } from './routes/usuarios.js'
 import { analyticsRoutes } from './routes/analytics.js'
 import { checklistsRoutes } from './routes/checklists.js'
+import { turnosRoutes } from './routes/turnos.js'
 import { zodErrorHandler } from './plugins/zod-error-handler.js'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildLogger(): any {
+type LoggerOptions = boolean | {
+  level: string
+  transport?: { target: string; options: { colorize: boolean } }
+}
+
+function buildLogger(): LoggerOptions {
   if (process.env['NODE_ENV'] === 'test') return false
   if (process.env['NODE_ENV'] === 'development') {
     return {
@@ -31,6 +36,11 @@ function buildLogger(): any {
 }
 
 export async function buildApp() {
+  const jwtSecret = process.env['JWT_SECRET']
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET não configurado. Defina a variável de ambiente antes de iniciar o servidor.')
+  }
+
   const app = Fastify({ logger: buildLogger() })
 
   await app.register(helmet, { contentSecurityPolicy: false })
@@ -45,7 +55,7 @@ export async function buildApp() {
   })
 
   await app.register(jwt, {
-    secret: process.env['JWT_SECRET'] ?? 'dev-secret-change-in-production',
+    secret: jwtSecret,
   })
 
   await app.register(rateLimit, {
@@ -54,12 +64,10 @@ export async function buildApp() {
     timeWindow: '1 minute',
   })
 
-  // Multipart para upload de arquivos — limite 10 MB por arquivo (CLAUDE.md)
   await app.register(multipart, {
     limits: { fileSize: 10 * 1024 * 1024, files: 1 },
   })
 
-  // Servir arquivos enviados via upload (modo local de desenvolvimento)
   const uploadsDir = join(process.cwd(), 'uploads')
   mkdirSync(uploadsDir, { recursive: true })
   await app.register(fastifyStatic, {
@@ -70,6 +78,15 @@ export async function buildApp() {
 
   app.setErrorHandler(zodErrorHandler)
 
+  app.setNotFoundHandler((request, reply) => {
+    reply.status(404).send({
+      type:   'https://metalsider.com.br/erros/404',
+      title:  'Não encontrado',
+      status: 404,
+      detail: `Rota '${request.method} ${request.url}' não encontrada.`,
+    })
+  })
+
   await app.register(healthRoutes, { prefix: '/api/v1' })
   await app.register(authRoutes, { prefix: '/api/v1' })
   await app.register(ordensServicoRoutes, { prefix: '/api/v1' })
@@ -78,6 +95,7 @@ export async function buildApp() {
   await app.register(usuariosRoutes, { prefix: '/api/v1' })
   await app.register(analyticsRoutes, { prefix: '/api/v1' })
   await app.register(checklistsRoutes, { prefix: '/api/v1' })
+  await app.register(turnosRoutes, { prefix: '/api/v1' })
 
   return app
 }

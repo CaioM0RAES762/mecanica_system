@@ -14,11 +14,71 @@
   padding: 1.5rem 1.75rem 1.25rem;
 }
 
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
 .title {
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary, #201f1e);
-  margin: 0 0 0.25rem;
+  margin: 0;
+}
+
+/* ── Botão Recalcular ── */
+.recalcBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4375rem 0.875rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle, #edebe9);
+  background: #fff;
+  color: var(--text-primary, #201f1e);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.recalcBtn:hover:not(:disabled) {
+  background: var(--surface-hover, #f3f2f1);
+  border-color: #c8c6c4;
+}
+
+.recalcBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.recalcBtnLoading {
+  background: #f3f2f1;
+  color: #605e5c;
+}
+
+.recalcBtnSuccess {
+  background: #e6f4ea;
+  border-color: #b7dfbd;
+  color: #1e7e34;
+}
+
+.recalcBtnError {
+  background: #fde7e9;
+  border-color: #f4b8bc;
+  color: #a4262c;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.recalcSpinner {
+  animation: spin 0.8s linear infinite;
 }
 
 .subtitle {

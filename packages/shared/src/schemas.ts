@@ -96,7 +96,7 @@ export const AtualizarUsuarioSchema = z.object({
 
 export const CriarOSSchema = z.object({
   titulo: z.string().min(3).max(300),
-  categoria_id: z.number().int().positive(),
+  categoria_ids: z.array(z.number().int().positive()).min(1, 'Selecione ao menos uma categoria'),
   prioridade: z.enum([
     PrioridadeOS.BAIXA,
     PrioridadeOS.MEDIA,
@@ -149,6 +149,37 @@ export const CriarCategoriaSchema = z.object({
 })
 
 export const AtualizarCategoriaSchema = CriarCategoriaSchema.partial()
+
+// ---- Turnos ----
+
+const HoraSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Hora inválida (use HH:mm)')
+
+export const TurnoConfigItemSchema = z
+  .object({
+    turno: z.enum(['manha', 'tarde', 'noite']),
+    hora_inicio: HoraSchema,
+    hora_fim: HoraSchema,
+  })
+  .refine((t) => t.hora_inicio !== t.hora_fim, {
+    message: 'Hora de início e fim não podem ser iguais',
+    path: ['hora_fim'],
+  })
+
+export const AtualizarTurnosSchema = z
+  .object({
+    turnos: z.array(TurnoConfigItemSchema).length(3, 'Informe os 3 turnos (manhã, tarde, noite)'),
+  })
+  .refine((d) => {
+    const nomes = new Set(d.turnos.map((t) => t.turno))
+    return nomes.size === 3 && nomes.has('manha') && nomes.has('tarde') && nomes.has('noite')
+  }, {
+    message: 'Os turnos manhã, tarde e noite devem ser informados exatamente uma vez cada',
+    path: ['turnos'],
+  })
+
+export type AtualizarTurnosDTO = z.infer<typeof AtualizarTurnosSchema>
 
 // ---- Paginação ----
 

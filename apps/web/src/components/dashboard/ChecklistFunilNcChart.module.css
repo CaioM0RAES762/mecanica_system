@@ -1,0 +1,388 @@
+/* ── Card wrapper ── */
+.chartCard {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.chartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+  gap: 8px;
+}
+
+.chartTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #323130;
+  margin: 0 0 3px;
+}
+
+.chartSub {
+  font-size: 0.75rem;
+  color: #605e5c;
+  margin: 0;
+}
+
+.headRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.filtroVeiculo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #0078d4;
+  background: #e8f0fe;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filtroVeiculo:hover {
+  background: #d7e7fc;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #a19f9d;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+
+.iconBtn:hover {
+  background: #f3f3f3;
+  color: #323130;
+}
+
+.chartBody {
+  padding: 16px 20px 20px;
+}
+
+/* ── KPI mini-cards ── */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 767px) {
+  .kpiRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.miniKpi {
+  background: #faf9f8;
+  border: 1px solid #e5e5e5;
+  border-top-width: 3px;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.miniKpiValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.miniKpiLabel {
+  font-size: 0.6875rem;
+  color: #605e5c;
+  font-weight: 500;
+}
+
+.miniKpiPct {
+  font-size: 0.625rem;
+  color: #a19f9d;
+}
+
+/* ── Funil visual ── */
+.funilWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.funilRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.funilBranch {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #e5e5e5;
+}
+
+.funilDrop {
+  padding: 0 0 2px 92px;
+}
+
+.funilDropLabel {
+  font-size: 0.6875rem;
+  color: #a19f9d;
+}
+
+.funilBarRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.funilLabel {
+  font-size: 0.75rem;
+  color: #605e5c;
+  width: 84px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.funilBarWrap {
+  flex: 1;
+  height: 18px;
+  background: #f3f3f3;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.funilBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.funilCount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #323130;
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Filter pills ── */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pill {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #605e5c;
+  background: #f3f3f3;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.pill:hover {
+  background: #e5e5e5;
+  color: #323130;
+}
+
+.pillActive {
+  background: #0078d4;
+  color: #fff;
+}
+
+.pillActive:hover {
+  background: #106ebe;
+}
+
+/* ── Tabela de NCs recentes ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.th {
+  padding: 5px 8px;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #a19f9d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #f3f3f3;
+  white-space: nowrap;
+}
+
+.tr {
+  border-bottom: 1px solid #f3f3f3;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover {
+  background: #faf9f8;
+}
+
+.td {
+  padding: 8px 8px;
+  color: #323130;
+  white-space: nowrap;
+}
+
+.tdItem {
+  padding: 8px 8px;
+  color: #323130;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tdDate {
+  padding: 8px 8px;
+  color: #605e5c;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeNeutral {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #a19f9d;
+  background: #f3f3f3;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pageBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #323130;
+  transition: background 0.1s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: #f3f3f3;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 0.75rem;
+  color: #605e5c;
+}
+
+/* ── States ── */
+.empty {
+  font-size: 0.875rem;
+  color: #a19f9d;
+  text-align: center;
+  padding: 24px 0;
+  margin: 0;
+}
+
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 24px;
+  color: #605e5c;
+  text-align: center;
+}
+
+.retryBtn {
+  padding: 6px 18px;
+  background: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.retryBtn:hover {
+  background: #106ebe;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeletonKpi {
+  height: 60px;
+  border-radius: 4px;
+}
+
+.skeletonFunil {
+  height: 80px;
+  border-radius: 4px;
+}
+
+.skeletonTabela {
+  height: 160px;
+  border-radius: 4px;
+}

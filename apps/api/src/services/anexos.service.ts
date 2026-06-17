@@ -68,7 +68,6 @@ export async function removerAnexoService(
   anexoId: number,
   ator: JwtPayload,
 ) {
-  // Somente supervisor/admin podem remover (SDD § 6.3)
   if (ator.perfil === PerfilUsuario.MECANICO) {
     throw httpError(403, 'Mecânico não pode remover anexos')
   }

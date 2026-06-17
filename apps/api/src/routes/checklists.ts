@@ -19,6 +19,10 @@ import {
   converterOSController,
   buscarVeiculoPorPlacaController,
   reverterRecusaController,
+  recalcularPontuacoesController,
+  ncPorItemController,
+  conformidadePorVeiculoController,
+  funilNcController,
 } from '../controllers/checklists.controller.js'
 
 const AUTH = [authenticate]
@@ -180,12 +184,51 @@ export async function checklistsRoutes(fastify: FastifyInstance) {
     ),
   )
 
+  // POST /checklists/recalcular-pontuacoes — recalcula scores de todos os não-conformes com pesos atuais
+  fastify.post(
+    '/checklists/recalcular-pontuacoes',
+    { preHandler: ADMIN_ONLY },
+    async (request, reply) => recalcularPontuacoesController(request, reply),
+  )
+
   // GET /checklists/veiculos/buscar?placa= (auxiliar para o frontend)
   fastify.get(
     '/checklists/veiculos/buscar',
     { preHandler: AUTH },
     async (request, reply) => buscarVeiculoPorPlacaController(
       request as Parameters<typeof buscarVeiculoPorPlacaController>[0],
+      reply,
+    ),
+  )
+
+  // ── Analytics de checklists ────────────────────────────────────────────────
+
+  // GET /checklists/analytics/nc-por-item
+  fastify.get(
+    '/checklists/analytics/nc-por-item',
+    { preHandler: AUTH },
+    async (request, reply) => ncPorItemController(
+      request as Parameters<typeof ncPorItemController>[0],
+      reply,
+    ),
+  )
+
+  // GET /checklists/analytics/conformidade-por-veiculo
+  fastify.get(
+    '/checklists/analytics/conformidade-por-veiculo',
+    { preHandler: AUTH },
+    async (request, reply) => conformidadePorVeiculoController(
+      request as Parameters<typeof conformidadePorVeiculoController>[0],
+      reply,
+    ),
+  )
+
+  // GET /checklists/analytics/funil-nc
+  fastify.get(
+    '/checklists/analytics/funil-nc',
+    { preHandler: AUTH },
+    async (request, reply) => funilNcController(
+      request as Parameters<typeof funilNcController>[0],
       reply,
     ),
   )

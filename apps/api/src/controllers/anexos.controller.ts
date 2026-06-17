@@ -20,7 +20,7 @@ export async function uploadAnexoController(
     data.filename,
     data.mimetype,
     data.file.readableLength > 0 ? data.file.readableLength : undefined,
-    (request as unknown as { user: JwtPayload }).user,
+    request.user,
   )
 
   return reply.code(201).send(result)
@@ -37,7 +37,7 @@ export async function removerAnexoController(
   const result = await removerAnexoService(
     osId,
     anexoId,
-    (request as unknown as { user: JwtPayload }).user,
+    request.user,
   )
   return reply.send(result)
 }

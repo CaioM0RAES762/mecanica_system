@@ -1,0 +1,66 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.arrowBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: #605e5c;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.arrowBtn:hover:not(:disabled) {
+  background: #f3f3f3;
+  color: #323130;
+}
+
+.arrowBtn:disabled {
+  color: #c8c6c4;
+  cursor: not-allowed;
+}
+
+.dateInput {
+  font-size: 0.6875rem;
+  color: #323130;
+  background: #fff;
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+  padding: 2px 4px;
+  line-height: 1.4;
+  max-width: 108px;
+  cursor: pointer;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: #0078d4;
+}
+
+.arrow {
+  font-size: 0.6875rem;
+  color: #a19f9d;
+  flex-shrink: 0;
+}
+
+.dateStatic {
+  font-size: 0.6875rem;
+  color: #605e5c;
+  background: #f3f3f3;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 2px 6px;
+  line-height: 1.4;
+  white-space: nowrap;
+}

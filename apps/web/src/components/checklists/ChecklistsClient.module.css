@@ -104,6 +104,52 @@
   to { transform: rotate(360deg); }
 }
 
+/* ─── Banner de novos checklists ─────────────────────────────────────────── */
+
+.newSyncBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #e8f4fd;
+  border: 1px solid #b3d7f5;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: #1a5f96;
+}
+
+.newSyncBtn {
+  margin-left: auto;
+  padding: 4px 12px;
+  background: #1a5f96;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.newSyncBtn:hover {
+  background: #154f80;
+}
+
+.newSyncDismiss {
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
+  color: #1a5f96;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.newSyncDismiss:hover {
+  color: #0e3d61;
+}
+
 /* ─── Tabs principais ─────────────────────────────────────────────────────── */
 
 .tabRow {
@@ -163,22 +209,43 @@
 
 /* ─── Filtros ─────────────────────────────────────────────────────────────── */
 
-.filterRow {
+.filterWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Linha 1: inputs de texto + selects */
+.filterMain {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-2);
 }
 
 @media (min-width: 640px) {
-  .filterRow {
+  .filterMain {
     grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (min-width: 1024px) {
-  .filterRow {
-    grid-template-columns: 1fr 1fr 1fr 1fr auto auto;
+  .filterMain {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     align-items: end;
+  }
+}
+
+/* Linha 2: data rápida + inputs de data + botões */
+.filterDateArea {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+@media (min-width: 1024px) {
+  .filterDateArea {
+    grid-template-columns: minmax(140px, auto) 1fr 1fr auto auto;
   }
 }
 
@@ -255,17 +322,12 @@
   border-color: #c8c6c4;
 }
 
-.filterDateRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-}
-
-@media (min-width: 1024px) {
-  .filterDateRow {
-    grid-column: span 2;
-    grid-template-columns: 1fr 1fr;
-  }
+.filterSelectActive {
+  border-color: #0078d4;
+  background-color: #e8f0fd;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230078d4' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  color: #0078d4;
+  font-weight: var(--font-medium);
 }
 
 /* ─── Feedback de sync ───────────────────────────────────────────────────── */

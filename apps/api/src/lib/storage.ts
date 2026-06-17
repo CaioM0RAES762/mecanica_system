@@ -77,10 +77,20 @@ class AzureBlobStorageAdapter implements StorageAdapter {
   }
 
   private async getBlobServiceClient() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let azureModule: any
+    type BlockBlobClient = {
+      uploadData(buffer: Buffer, opts?: { blobHTTPHeaders?: { blobContentType?: string } }): Promise<void>
+    }
+    type ContainerClient = {
+      createIfNotExists(opts?: { access?: string }): Promise<unknown>
+      getBlockBlobClient(name: string): BlockBlobClient
+      deleteBlob(name: string): Promise<unknown>
+    }
+    type BlobServiceClient = { getContainerClient(name: string): ContainerClient }
+    type AzureBlobModule = { BlobServiceClient: { fromConnectionString(conn: string): BlobServiceClient } }
+
+    let azureModule: AzureBlobModule
     try {
-      azureModule = await import('@azure/storage-blob' as string)
+      azureModule = await import('@azure/storage-blob' as string) as AzureBlobModule
     } catch {
       throw new Error('Pacote @azure/storage-blob não instalado. Execute: pnpm --filter @metalsider/api add @azure/storage-blob')
     }

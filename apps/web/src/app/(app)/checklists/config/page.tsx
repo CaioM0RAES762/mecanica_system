@@ -6,6 +6,8 @@ import { listarCamposPorTemplate } from '@/lib/api/checklists'
 import type { TemplateComCampos } from '@/lib/api/checklists'
 import styles from './page.module.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Pesos de Criticidade | MetalSider',
 }

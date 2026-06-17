@@ -20,17 +20,24 @@ export default async function ChecklistDetalhePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ tab?: string; pagina?: string }>
+  searchParams: Promise<{ back?: string; tab?: string; pagina?: string }>
 }) {
   const { id } = await params
-  const { tab, pagina } = await searchParams
+  const { back, tab, pagina } = await searchParams
   const session = await auth()
   const token = session?.accessToken ?? ''
   const perfil = (session?.user?.perfil ?? 'mecanico') as UserPerfil
 
-  const backTab = tab ?? 'NAO_CONFORME'
-  const backPagina = pagina && /^\d+$/.test(pagina) ? pagina : '1'
-  const backHref = `/checklists?tab=${backTab}&pagina=${backPagina}`
+  // `back` carrega a URL completa com todos os filtros; fallback para tab+pagina (links legados)
+  let backHref = '/checklists'
+  if (back) {
+    const decoded = decodeURIComponent(back)
+    if (decoded.startsWith('/checklists')) backHref = decoded
+  } else if (tab ?? pagina) {
+    const backTab = tab ?? 'NAO_CONFORME'
+    const backPagina = pagina && /^\d+$/.test(pagina) ? pagina : '1'
+    backHref = `/checklists?tab=${backTab}&pagina=${backPagina}`
+  }
 
   let checklist
   try {

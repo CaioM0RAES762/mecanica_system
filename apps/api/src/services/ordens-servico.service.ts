@@ -1,4 +1,5 @@
 import { AcaoAuditoria, PerfilUsuario, type PrioridadeOS } from '@metalsider/shared'
+import { logger } from '../lib/logger.js'
 import type { CriarOSDTO, AtualizarOSDTO, FecharOSDTO, FiltroOSDTO } from '@metalsider/shared'
 import {
   findManyOS,
@@ -127,7 +128,8 @@ function normalizarAnexos(
   }))
 }
 
-// BigInt em logs_auditoria.id não serializa com JSON.stringify; converter para string
+// BigInt em logs_auditoria.id não serializa com JSON.stringify; converter para string.
+// ator_nome é achatado para compatibilidade com o tipo LogAuditoriaDTO do frontend.
 function normalizarAuditoria(
   logs: Array<{
     id: bigint | number
@@ -141,12 +143,41 @@ function normalizarAuditoria(
   return logs.map((log) => ({
     ...log,
     id: String(log.id),
+    ator_nome: log.ator.nome_completo,
   }))
 }
 
+export type NormalizadoOS = {
+  id: number
+  titulo: string
+  prioridade: string
+  status: string
+  descricao: string | null
+  notas_internas?: string | null
+  inicio_previsto: Date
+  prazo: Date
+  fechado_em: Date | null
+  criado_em: Date
+  atualizado_em: Date
+  categoria_id: number | null
+  categoria_nome: string
+  categoria_ids: number[]
+  categoria_nomes: string[]
+  veiculo_id: number | null
+  veiculo_placa: string | null
+  veiculo_nome: string
+  veiculo_descricao_tipo_aplicacao: string | null
+  supervisor_id: string
+  supervisor_nome: string
+  mecanico_id: string | null
+  mecanico_nome: string | null
+  fechamento: ReturnType<typeof normalizarFechamento>
+  anexos?: ReturnType<typeof normalizarAnexos>
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizarOS(os: any, perfil: string): any {
-  const resultado = {
+function normalizarOS(os: any, perfil: string): NormalizadoOS {
+  const resultado: NormalizadoOS = {
     // Campos diretos da tabela ordens_servico
     id:              os.id,
     titulo:          os.titulo,
@@ -162,6 +193,8 @@ function normalizarOS(os: any, perfil: string): any {
     // Relações achatadas → campos planos exigidos por OrdemServicoResumo
     categoria_id:    os.categoria?.id   ?? null,
     categoria_nome:  os.categoria?.nome ?? '',
+    categoria_ids:   os.categorias_extras?.map((e: { categoria: { id: number } }) => e.categoria.id) ?? (os.categoria?.id ? [os.categoria.id] : []),
+    categoria_nomes: os.categorias_extras?.map((e: { categoria: { nome: string } }) => e.categoria.nome) ?? (os.categoria?.nome ? [os.categoria.nome] : []),
     veiculo_id:                        os.veiculo?.id                        ?? null,
     veiculo_placa:                     os.veiculo?.placa                     ?? null,
     veiculo_nome:                      os.veiculo?.veiculo                   ?? '',
@@ -277,7 +310,8 @@ export async function criarOSService(dto: CriarOSDTO, atorId: string) {
 
   const os = await createOS({
     titulo:          dto.titulo,
-    categoria_id:    dto.categoria_id,
+    categoria_id:    dto.categoria_ids[0]!,
+    categoria_ids:   dto.categoria_ids,
     prioridade:      dto.prioridade,
     veiculo_id:      dto.veiculo_id,
     supervisor_id:   atorId,
@@ -304,7 +338,7 @@ export async function criarOSService(dto: CriarOSDTO, atorId: string) {
         buildOSEmailData(os),
       )
     } catch (err) {
-      console.error(`[email] Falha ao enviar OS #${os.id} atribuída:`, err)
+      logger.error({ mensagem: `Falha ao enviar e-mail de atribuição da OS #${os.id}`, detalhe: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -327,7 +361,10 @@ export async function atualizarOSService(
 
   const dados: AtualizarOSData = {}
   if (dto.titulo         !== undefined) dados.titulo          = dto.titulo
-  if (dto.categoria_id   !== undefined) dados.categoria_id    = dto.categoria_id
+  if (dto.categoria_ids  !== undefined) {
+    dados.categoria_id  = dto.categoria_ids[0]!
+    dados.categoria_ids = dto.categoria_ids
+  }
   if (dto.prioridade     !== undefined) dados.prioridade      = dto.prioridade
   if (dto.veiculo_id     !== undefined) dados.veiculo_id      = dto.veiculo_id
   if (dto.descricao      !== undefined) dados.descricao       = dto.descricao ?? null
@@ -388,7 +425,7 @@ export async function atualizarOSService(
         buildOSEmailData(osAtualizada),
       )
     } catch (err) {
-      console.error(`[email] Falha ao enviar reatribuição OS #${id}:`, err)
+      logger.error({ mensagem: `Falha ao enviar e-mail de reatribuição da OS #${id}`, detalhe: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -464,7 +501,7 @@ export async function fecharOSService(
         buildOSEmailData(osAtualizada ?? os),
       )
     } catch (err) {
-      console.error(`[email] Falha ao enviar fechamento OS #${id}:`, err)
+      logger.error({ mensagem: `Falha ao enviar e-mail de fechamento da OS #${id}`, detalhe: err instanceof Error ? err.message : String(err) })
     }
   }
 

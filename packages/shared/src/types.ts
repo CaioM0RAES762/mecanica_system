@@ -57,6 +57,8 @@ export interface OrdemServicoResumo {
   status: StatusOS
   categoria_id: number
   categoria_nome: string
+  categoria_ids: number[]
+  categoria_nomes: string[]
   veiculo_id: number
   veiculo_placa: string | null
   veiculo_nome: string
@@ -119,6 +121,14 @@ export interface CategoriaResumo {
   nome: string
   cor: string | null
   ativo: boolean
+}
+
+// ---- DTOs de turno ----
+
+export interface TurnoConfigDTO {
+  turno: 'manha' | 'tarde' | 'noite'
+  hora_inicio: string
+  hora_fim: string
 }
 
 // ---- Log de auditoria ----

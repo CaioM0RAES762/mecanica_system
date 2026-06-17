@@ -1,0 +1,118 @@
+/* ── Card wrapper ── */
+.chartCard {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.chartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chartTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #323130;
+  margin: 0 0 3px;
+}
+
+.chartSub {
+  font-size: 0.75rem;
+  color: #605e5c;
+  margin: 0;
+}
+
+.headRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #a19f9d;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+
+.iconBtn:hover {
+  background: #f3f3f3;
+  color: #323130;
+}
+
+.chartBody {
+  padding: 12px 20px 20px;
+}
+
+/* ── Legenda das áreas ── */
+.lineLegend {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: #605e5c;
+  margin-bottom: 8px;
+}
+
+.lineLegend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dotBlue {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0078d4;
+  flex-shrink: 0;
+}
+
+.dotGreen {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #107c10;
+  flex-shrink: 0;
+}
+
+/* ── States ── */
+.empty {
+  font-size: 0.875rem;
+  color: #a19f9d;
+  text-align: center;
+  padding: 48px 0;
+  margin: 0;
+}
+
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 24px;
+  color: #605e5c;
+  text-align: center;
+}
+
+.skeletonChart {
+  height: 234px;
+  border-radius: 6px;
+}

@@ -24,6 +24,7 @@ export interface OSListParams {
 export interface CriarOSData {
   titulo: string
   categoria_id: number
+  categoria_ids: number[]
   prioridade: string
   veiculo_id: number
   supervisor_id: string
@@ -37,6 +38,7 @@ export interface CriarOSData {
 export interface AtualizarOSData {
   titulo?: string
   categoria_id?: number
+  categoria_ids?: number[]
   prioridade?: string
   veiculo_id?: number
   mecanico_id?: string | null
@@ -83,6 +85,9 @@ function osSelect() {
     supervisor: { select: { id: true, nome_completo: true, email: true } },
     mecanico: { select: { id: true, nome_completo: true, email: true } },
     categoria: { select: { id: true, nome: true, cor: true } },
+    categorias_extras: {
+      select: { categoria: { select: { id: true, nome: true, cor: true } } },
+    },
     veiculo: {
       select: { id: true, placa: true, veiculo: true, descricao_tipo_aplicacao: true },
     },
@@ -113,7 +118,7 @@ function osSelect() {
   } as const
 }
 
-// Select reduzido para listagem: não carrega anexos nem _count (evita 2 queries extras)
+// Select reduzido para listagem: não carrega anexos nem _count 
 function osListSelect() {
   return {
     id: true,
@@ -130,6 +135,9 @@ function osListSelect() {
     supervisor: { select: { id: true, nome_completo: true, email: true } },
     mecanico: { select: { id: true, nome_completo: true, email: true } },
     categoria: { select: { id: true, nome: true, cor: true } },
+    categorias_extras: {
+      select: { categoria: { select: { id: true, nome: true, cor: true } } },
+    },
     veiculo: {
       select: { id: true, placa: true, veiculo: true, descricao_tipo_aplicacao: true },
     },
@@ -226,16 +234,31 @@ export async function findOSById(id: number) {
 }
 
 export async function createOS(data: CriarOSData) {
+  const { categoria_ids, ...rest } = data
   return prisma.ordens_servico.create({
-    data,
+    data: {
+      ...rest,
+      categorias_extras: {
+        create: categoria_ids.map(catId => ({ categoria_id: catId })),
+      },
+    },
     select: osSelect(),
   })
 }
 
 export async function updateOS(id: number, data: AtualizarOSData) {
+  const { categoria_ids, ...rest } = data
   return prisma.ordens_servico.update({
     where: { id },
-    data,
+    data: {
+      ...rest,
+      ...(categoria_ids !== undefined ? {
+        categorias_extras: {
+          deleteMany: {},
+          create: categoria_ids.map(catId => ({ categoria_id: catId })),
+        },
+      } : {}),
+    },
     select: osSelect(),
   })
 }
@@ -261,8 +284,10 @@ export async function countOS(params: Omit<OSListParams, 'pagina' | 'por_pagina'
 
 export async function deleteOS(id: number) {
   return prisma.$transaction([
+    prisma.checklist_analises.updateMany({ where: { os_gerada_id: id }, data: { os_gerada_id: null } }),
     prisma.registros_fechamento.deleteMany({ where: { ordem_servico_id: id } }),
     prisma.anexos.deleteMany({ where: { ordem_servico_id: id } }),
+    prisma.ordens_servico_categorias.deleteMany({ where: { os_id: id } }),
     prisma.ordens_servico.delete({ where: { id } }),
   ])
 }

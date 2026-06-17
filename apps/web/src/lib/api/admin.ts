@@ -1,4 +1,4 @@
-import type { UsuarioResumo, VeiculoResumo, CategoriaResumo } from '@metalsider/shared'
+import type { UsuarioResumo, VeiculoResumo, CategoriaResumo, TurnoConfigDTO } from '@metalsider/shared'
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1'
 
@@ -138,4 +138,14 @@ export function desativarCategoria(id: number, token: string): Promise<void> {
 
 export function excluirCategoria(id: number, token: string): Promise<void> {
   return req('DELETE', `/categorias/${id}`, token)
+}
+
+// ---- Turnos ----
+
+export function listarTurnos(token: string): Promise<{ dados: TurnoConfigDTO[] }> {
+  return req('GET', '/configuracoes/turnos', token)
+}
+
+export function atualizarTurnos(turnos: TurnoConfigDTO[], token: string): Promise<{ dados: TurnoConfigDTO[] }> {
+  return req('PUT', '/configuracoes/turnos', token, { turnos })
 }

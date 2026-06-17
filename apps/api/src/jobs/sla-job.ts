@@ -1,16 +1,23 @@
 import { AcaoAuditoria } from '@metalsider/shared'
+import { logger } from '../lib/logger.js'
 import { prisma } from '../lib/prisma.js'
 import { emailService, type OSEmailData } from '../lib/email.js'
 import { criarAuditoria } from '../repositories/ordens-servico.repository.js'
 
-// Cache para não re-consultar o banco a cada execução do job
+// Cache do ator sistema com TTL de 1h para detectar desativação de admin após startup
 let _systemActorId: string | null | undefined
+let _systemActorCachedAt = 0
+const SYSTEM_ACTOR_CACHE_TTL_MS = 60 * 60 * 1000 // 1 hora
 
 async function getSystemActorId(): Promise<string | null> {
-  if (_systemActorId !== undefined) return _systemActorId
+  const now = Date.now()
+  if (_systemActorId !== undefined && now - _systemActorCachedAt < SYSTEM_ACTOR_CACHE_TTL_MS) {
+    return _systemActorId
+  }
   const env = process.env['SYSTEM_USER_ID']
   if (env) {
     _systemActorId = env
+    _systemActorCachedAt = now
     return env
   }
   const admin = await prisma.usuarios.findFirst({
@@ -18,6 +25,7 @@ async function getSystemActorId(): Promise<string | null> {
     select: { id: true },
   })
   _systemActorId = admin?.id ?? null
+  _systemActorCachedAt = now
   return _systemActorId
 }
 
@@ -65,7 +73,7 @@ export async function jobMarcaAtrasadas(): Promise<void> {
 
   const atorId = await getSystemActorId()
   if (!atorId) {
-    console.error('[job:sla] SYSTEM_USER_ID não configurado e nenhum admin ativo encontrado — auditoria ignorada')
+    logger.error({ mensagem: 'SYSTEM_USER_ID não configurado e nenhum admin ativo encontrado — auditoria de SLA ignorada' })
     return
   }
 
@@ -95,11 +103,11 @@ export async function jobMarcaAtrasadas(): Promise<void> {
           )
         } catch (emailErr) {
           // Falha de e-mail nunca cancela a marcação de atraso (D-60)
-          console.error(`[job:sla] Falha ao enviar e-mail OS #${os.id}:`, emailErr)
+          logger.error({ mensagem: `Falha ao enviar e-mail de atraso da OS #${os.id}`, detalhe: emailErr instanceof Error ? emailErr.message : String(emailErr) })
         }
       }
     } catch (err) {
-      console.error(`[job:sla] Erro ao processar OS #${os.id}:`, err)
+      logger.error({ mensagem: `Erro ao processar OS #${os.id} no job de SLA`, detalhe: err instanceof Error ? err.message : String(err) })
     }
   }
 }
@@ -147,7 +155,7 @@ export async function jobAlertaPrazo(): Promise<void> {
         buildOSEmailData(os),
       )
     } catch (err) {
-      console.error(`[job:prazo] Erro ao processar OS #${os.id}:`, err)
+      logger.error({ mensagem: `Erro ao enviar alerta de prazo da OS #${os.id}`, detalhe: err instanceof Error ? err.message : String(err) })
     }
   }
 }

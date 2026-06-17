@@ -149,7 +149,9 @@ export const OSCard = memo(function OSCard({ os, perfil, userId: _userId, onFech
             <span className={styles.prioDot} style={{ background: PRIO_DOT[os.prioridade] }} />
             {PRIORIDADE_LABEL[os.prioridade]}
           </span>
-          <span className={styles.catBadge} data-testid="categoria-badge">{os.categoria_nome}</span>
+          {(os.categoria_nomes?.length ? os.categoria_nomes : [os.categoria_nome]).map((nome, i) => (
+            <span key={i} className={styles.catBadge} data-testid="categoria-badge">{nome}</span>
+          ))}
           {isAtrasado && (
             <span className={styles.atrasadoBadge}>
               <IconAlertTriangle size={13} aria-hidden="true" />

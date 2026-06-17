@@ -1,19 +1,17 @@
 import { criarOSService } from './ordens-servico.service.js'
 import type { PrioridadeOS } from '@metalsider/shared'
+import { prisma } from '../lib/prisma.js'
 import {
   findChecklistParaAnalise,
-  createChecklistAnalise,
-  updateChecklistResultadoStatus,
-  updateChecklistAnaliseOsGerada,
-  deleteChecklistAnalise,
 } from '../repositories/checklists.repository.js'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 export interface DadosConversaoOS {
   veiculo_id: number
-  categoria_id: number
+  categoria_ids: number[]
   inicio_previsto: string
+  prazo?: string
   mecanico_id?: string
   descricao?: string
 }
@@ -82,8 +80,8 @@ function gerarDescricaoAutomatica(checklist: ChecklistParaAnalise): string {
       }
     }
     if (fotos.length > 0) {
-      linhas.push('', 'Fotos:')
-      fotos.forEach((url) => linhas.push(`- ${url}`))
+      linhas.push('[FOTOS_NC]')
+      fotos.forEach((url) => linhas.push(url))
     }
   }
 
@@ -113,15 +111,21 @@ export async function aprovarChecklist(
     throw httpError(422, 'Checklist já foi aprovado.')
   }
 
-  await createChecklistAnalise({
-    checklist_resultado_id: checklistId,
-    analisado_por_id:       atorId,
-    analisado_em:           new Date(),
-    decisao:                'APROVADO',
-    observacao:             observacao ?? null,
-  })
-
-  await updateChecklistResultadoStatus(checklistId, 'APROVADO')
+  await prisma.$transaction([
+    prisma.checklist_analises.create({
+      data: {
+        checklist_resultado_id: checklistId,
+        analisado_por_id:       atorId,
+        analisado_em:           new Date(),
+        decisao:                'APROVADO',
+        observacao:             observacao ?? null,
+      },
+    }),
+    prisma.checklist_resultados.update({
+      where: { id: checklistId },
+      data:  { status: 'APROVADO' },
+    }),
+  ])
 
   return findChecklistParaAnalise(checklistId)
 }
@@ -150,15 +154,21 @@ export async function recusarChecklist(
     throw httpError(422, 'Checklist já aprovado não pode ser recusado. Cancele a OS se necessário.')
   }
 
-  await createChecklistAnalise({
-    checklist_resultado_id: checklistId,
-    analisado_por_id:       atorId,
-    analisado_em:           new Date(),
-    decisao:                'RECUSADO',
-    observacao,
-  })
-
-  await updateChecklistResultadoStatus(checklistId, 'RECUSADO')
+  await prisma.$transaction([
+    prisma.checklist_analises.create({
+      data: {
+        checklist_resultado_id: checklistId,
+        analisado_por_id:       atorId,
+        analisado_em:           new Date(),
+        decisao:                'RECUSADO',
+        observacao,
+      },
+    }),
+    prisma.checklist_resultados.update({
+      where: { id: checklistId },
+      data:  { status: 'RECUSADO' },
+    }),
+  ])
 
   return findChecklistParaAnalise(checklistId)
 }
@@ -173,8 +183,10 @@ export async function reverterRecusaChecklist(checklistId: string) {
     throw httpError(422, 'Apenas checklists recusados podem ter a recusa revertida.')
   }
 
-  await deleteChecklistAnalise(checklistId)
-  await updateChecklistResultadoStatus(checklistId, 'NAO_CONFORME')
+  await prisma.$transaction([
+    prisma.checklist_analises.delete({ where: { checklist_resultado_id: checklistId } }),
+    prisma.checklist_resultados.update({ where: { id: checklistId }, data: { status: 'NAO_CONFORME' } }),
+  ])
 
   return findChecklistParaAnalise(checklistId)
 }
@@ -204,23 +216,42 @@ export async function converterEmOS(
 
   const descricao = dadosOS.descricao ?? gerarDescricaoAutomatica(checklist)
 
+  // Se prazo customizado foi informado, calcula duracao_valor em horas para passar ao criarOSService
+  let duracaoValor: number | undefined
+  let duracaoTipo: 'horas' | 'dias_uteis' | undefined
+  if (dadosOS.prazo) {
+    const inicioStr = dadosOS.inicio_previsto.includes('T') ? dadosOS.inicio_previsto : dadosOS.inicio_previsto + 'T08:00:00'
+    const prazoStr  = dadosOS.prazo.includes('T') ? dadosOS.prazo : dadosOS.prazo + 'T18:00:00'
+    const diffMs = new Date(prazoStr).getTime() - new Date(inicioStr).getTime()
+    duracaoValor = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)))
+    duracaoTipo  = 'horas'
+  }
+
   const os = await criarOSService(
     {
       titulo:          tituloBase.slice(0, 300),
-      categoria_id:    dadosOS.categoria_id,
+      categoria_ids:   dadosOS.categoria_ids,
       prioridade:      mapPrioridade(checklist.prioridade),
       veiculo_id:      dadosOS.veiculo_id,
       inicio_previsto: dadosOS.inicio_previsto,
       mecanico_id:     dadosOS.mecanico_id ?? null,
       descricao,
+      ...(duracaoValor !== undefined ? { duracao_valor: duracaoValor, duracao_tipo: duracaoTipo } : {}),
     },
     atorId,
   )
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const osId = (os as any).id as number
-  await updateChecklistAnaliseOsGerada(checklistId, osId)
-  await updateChecklistResultadoStatus(checklistId, 'OS_GERADA')
+  const osId = (os as { id: number }).id
+  await prisma.$transaction([
+    prisma.checklist_analises.update({
+      where: { checklist_resultado_id: checklistId },
+      data:  { os_gerada_id: osId },
+    }),
+    prisma.checklist_resultados.update({
+      where: { id: checklistId },
+      data:  { status: 'OS_GERADA' },
+    }),
+  ])
 
   const checklistAtualizado = await findChecklistParaAnalise(checklistId)
   return { os, checklist: checklistAtualizado }

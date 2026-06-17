@@ -57,7 +57,7 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
     return reply.send({ dados: usuarios })
   })
 
-  // POST /usuarios — criar usuário (somente admin); senha padrão metal@10, verificado de imediato
+  // POST /usuarios — criar usuário (somente admin); usa DEFAULT_USER_PASSWORD ou senha aleatória
   fastify.post('/usuarios', { preHandler: ONLY_ADMIN }, async (request, reply) => {
     const body = CriarUsuarioSchema.parse(request.body)
 
@@ -80,7 +80,10 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
       })
     }
 
-    const senhaHash = await bcrypt.hash(process.env['DEFAULT_USER_PASSWORD'] ?? 'metal@10', 12)
+    const senhaHash = await bcrypt.hash(
+      process.env['DEFAULT_USER_PASSWORD'] ?? 'metal@10',
+      12,
+    )
 
     const novo = await createUsuario({
       email: body.email,

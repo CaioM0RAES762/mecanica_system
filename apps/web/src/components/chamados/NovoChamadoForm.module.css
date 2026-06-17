@@ -183,6 +183,58 @@
 
 /* ---- Prioridade: 4 botões toggle ---- */
 
+/* ---- Multi-select de categorias ---- */
+
+.multiCatWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  min-height: 44px;
+}
+
+.multiCatWrap.inputError {
+  border-color: var(--color-red-500);
+}
+
+.catPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-gray-200);
+  background: var(--color-gray-50);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-gray-600);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.catPill:hover {
+  border-color: var(--color-blue-400);
+  color: var(--color-blue-600);
+}
+
+.catPillActive {
+  font-weight: var(--font-semibold);
+  border-color: var(--color-blue-500);
+  background: var(--color-blue-50);
+  color: var(--color-blue-600);
+}
+
+.catPillCheck {
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* ---- */
+
 .prioSeg {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -54,7 +54,8 @@ model categorias {
   cor   String? @db.NVarChar(7)
   ativo Boolean @default(true)
 
-  ordens ordens_servico[]
+  ordens          ordens_servico[]
+  ordens_extras   ordens_servico_categorias[]
 }
 
 model ordens_servico {
@@ -83,7 +84,9 @@ model ordens_servico {
   fechamento         registros_fechamento?
   anexos             anexos[]
   logs               logs_auditoria[]
-  checklist_analise  checklist_analises?
+  checklist_analises checklist_analises[]
+
+  categorias_extras ordens_servico_categorias[]
 
   // Índices de performance (SDD § 4.3)
   @@index([status, mecanico_id])
@@ -91,6 +94,18 @@ model ordens_servico {
   @@index([supervisor_id, criado_em(sort: Desc)])
   @@index([status, criado_em(sort: Desc)])
   @@index([status, fechado_em(sort: Desc)])
+  @@index([categoria_id])
+}
+
+model ordens_servico_categorias {
+  os_id        Int
+  categoria_id Int
+
+  ordem_servico ordens_servico @relation(fields: [os_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  categoria     categorias      @relation(fields: [categoria_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+  @@id([os_id, categoria_id])
+  @@index([os_id])
   @@index([categoria_id])
 }
 
@@ -132,7 +147,7 @@ model logs_auditoria {
   novos_valores     String?  @db.NVarChar(Max)
   ocorrido_em       DateTime @default(now()) @db.DateTime2
 
-  ordem_servico ordens_servico? @relation(fields: [ordem_servico_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  ordem_servico ordens_servico? @relation(fields: [ordem_servico_id], references: [id], onUpdate: NoAction, onDelete: SetNull)
   ator          usuarios        @relation(fields: [ator_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
 
   // Índice de performance (SDD § 4.3)
@@ -218,7 +233,7 @@ model checklist_analises {
   analisado_em           DateTime  @db.DateTime2
   decisao                String    @db.NVarChar(20)
   observacao             String?   @db.NVarChar(Max)
-  os_gerada_id           Int?      @unique
+  os_gerada_id           Int?
   created_at             DateTime  @default(now()) @db.DateTime2
   updated_at             DateTime  @updatedAt @db.DateTime2
 
@@ -228,14 +243,31 @@ model checklist_analises {
 }
 
 // Configuração de peso por padrão de título de campo (configurável por admin)
+// cobli_template_id + nome_checklist nullable: NULL = regra global; não-NULL = regra específica do template
 model checklist_item_weights {
   id                  String   @id @default(uuid()) @db.UniqueIdentifier
   field_title_pattern String   @db.NVarChar(200)
   field_title         String   @default("") @db.NVarChar(300)
   field_type          String   @default("SINGLE_SELECT") @db.NVarChar(50)
+  cobli_template_id   String?  @db.NVarChar(200)
+  nome_checklist      String?  @db.NVarChar(300)
   peso                Int      @default(1)
   descricao           String?  @db.NVarChar(500)
   ativo               Boolean  @default(true)
   created_at          DateTime @default(now()) @db.DateTime2
   updated_at          DateTime @updatedAt @db.DateTime2
+
+  @@index([cobli_template_id, nome_checklist])
+  @@index([field_title_pattern, cobli_template_id, nome_checklist])
+}
+
+// Configuração dos horários de início/fim de cada turno de trabalho
+// (manhã, tarde, noite). Usado para classificar checklists por turno
+// no dashboard de análise (gráfico "Itens com mais não conformidades").
+model configuracoes_turno {
+  id          Int      @id @default(autoincrement())
+  turno       String   @unique @db.NVarChar(10)
+  hora_inicio String   @db.NVarChar(5)
+  hora_fim    String   @db.NVarChar(5)
+  updated_at  DateTime @updatedAt @db.DateTime2
 }

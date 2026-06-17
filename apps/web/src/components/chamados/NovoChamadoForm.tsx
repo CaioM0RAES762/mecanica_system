@@ -419,7 +419,7 @@ function TimeInput({ hora, min, onChangeHora, onChangeMin }: TimeInputProps) {
 // ---- Estado do formulário ----
 interface FormState {
   titulo: string
-  categoria_id: string
+  categoria_ids: string[]
   prioridade: string
   veiculo_id: string
   mecanico_id: string
@@ -430,7 +430,7 @@ interface FormState {
 
 const FORM_INICIAL: FormState = {
   titulo: '',
-  categoria_id: '',
+  categoria_ids: [],
   prioridade: 'media',
   veiculo_id: '',
   mecanico_id: '',
@@ -439,10 +439,19 @@ const FORM_INICIAL: FormState = {
   inicio_previsto: todayISO(),
 }
 
-type FormAction = { type: 'set'; field: keyof FormState; value: string } | { type: 'reset' }
+type FormAction =
+  | { type: 'set'; field: Exclude<keyof FormState, 'categoria_ids'>; value: string }
+  | { type: 'toggleCategoria'; id: string }
+  | { type: 'reset' }
 
 function formReducer(state: FormState, action: FormAction): FormState {
   if (action.type === 'reset') return { ...FORM_INICIAL, inicio_previsto: todayISO() }
+  if (action.type === 'toggleCategoria') {
+    const ids = state.categoria_ids.includes(action.id)
+      ? state.categoria_ids.filter(id => id !== action.id)
+      : [...state.categoria_ids, action.id]
+    return { ...state, categoria_ids: ids }
+  }
   return { ...state, [action.field]: action.value }
 }
 
@@ -600,7 +609,7 @@ export function NovoChamadoForm({
     return duration === 1 ? '1 hora' : `${duration} horas`
   }, [duration, durationMin, durationUnit])
 
-  function set(field: keyof FormState) {
+  function set(field: Exclude<keyof FormState, 'categoria_ids'>) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       dispatch({ type: 'set', field, value: e.target.value })
       if (erros[field]) setErros(prev => { const n = { ...prev }; delete n[field]; return n })
@@ -667,7 +676,7 @@ export function NovoChamadoForm({
     setWeekendAck('')
   }
 
-  const categoriaSelecionada = categorias.find(c => String(c.id) === form.categoria_id)
+  const categoriasSelecionadas = categorias.filter(c => form.categoria_ids.includes(String(c.id)))
   const veiculoSelecionado = veiculos.find(v => String(v.id) === form.veiculo_id)
   const mecanicoSelecionado = mecanicos.find(m => m.id === form.mecanico_id)
 
@@ -709,7 +718,7 @@ export function NovoChamadoForm({
 
     const payload = {
       titulo: form.titulo,
-      categoria_id: Number(form.categoria_id),
+      categoria_ids: form.categoria_ids.map(Number),
       prioridade: form.prioridade as z.infer<typeof CriarOSSchema>['prioridade'],
       veiculo_id: Number(form.veiculo_id),
       mecanico_id: form.mecanico_id || undefined,
@@ -798,23 +807,35 @@ export function NovoChamadoForm({
               {erros['titulo'] && <span className={styles.fieldError}>{erros['titulo']}</span>}
             </div>
 
-            <div className={styles.fieldHalf}>
+            <div className={styles.fieldFull}>
               <label className={styles.label}>
                 Categoria <span className={styles.req}>*</span>
               </label>
-              <select
-                className={`${styles.select} ${erros['categoria_id'] ? styles.inputError : ''}`}
-                value={form.categoria_id}
-                onChange={set('categoria_id')}
-                required
+              <div
+                className={`${styles.multiCatWrap} ${erros['categoria_ids'] ? styles.inputError : ''}`}
                 data-testid="select-categoria"
               >
-                <option value="">Selecione…</option>
-                {categorias.map(c => (
-                  <option key={c.id} value={String(c.id)}>{c.nome}</option>
-                ))}
-              </select>
-              {erros['categoria_id'] && <span className={styles.fieldError}>{erros['categoria_id']}</span>}
+                {categorias.map(c => {
+                  const sid = String(c.id)
+                  const ativo = form.categoria_ids.includes(sid)
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`${styles.catPill} ${ativo ? styles.catPillActive : ''}`}
+                      style={ativo && c.cor ? { background: c.cor + '22', borderColor: c.cor, color: c.cor } : undefined}
+                      onClick={() => {
+                        dispatch({ type: 'toggleCategoria', id: sid })
+                        if (erros['categoria_ids']) setErros(prev => { const n = { ...prev }; delete n['categoria_ids']; return n })
+                      }}
+                    >
+                      {ativo && <span className={styles.catPillCheck}>✓</span>}
+                      {c.nome}
+                    </button>
+                  )
+                })}
+              </div>
+              {erros['categoria_ids'] && <span className={styles.fieldError}>{erros['categoria_ids']}</span>}
             </div>
 
             <div className={styles.fieldHalf}>
@@ -1143,15 +1164,16 @@ export function NovoChamadoForm({
             </h3>
 
             <div className={styles.previewCatRow}>
-              {categoriaSelecionada ? (
-                <span
-                  className={styles.previewCatBadge}
-                  style={categoriaSelecionada.cor
-                    ? { background: categoriaSelecionada.cor + '1a', color: categoriaSelecionada.cor }
-                    : undefined}
-                >
-                  {categoriaSelecionada.nome}
-                </span>
+              {categoriasSelecionadas.length > 0 ? (
+                categoriasSelecionadas.map(c => (
+                  <span
+                    key={c.id}
+                    className={styles.previewCatBadge}
+                    style={c.cor ? { background: c.cor + '1a', color: c.cor } : undefined}
+                  >
+                    {c.nome}
+                  </span>
+                ))
               ) : (
                 <span className={`${styles.previewCatBadge} ${styles.previewCatPlaceholder}`}>Categoria</span>
               )}

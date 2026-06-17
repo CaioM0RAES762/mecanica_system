@@ -33,7 +33,6 @@ async function withCache<T>(
     await redis.setex(key, ttl, JSON.stringify(result))
     return result
   } catch {
-    // D-12: Redis não é fonte de verdade; falha silenciosa, busca do banco
     return fn()
   }
 }
@@ -90,12 +89,23 @@ export async function atrasadosPorCategoriaService(dto: AnalyticsPeriodoDTO) {
   return withCache(key, getTtl(dto.periodo), () => queryAtrasadosPorCategoria(period))
 }
 
+async function scanKeys(pattern: string): Promise<string[]> {
+  const redis = getRedis()
+  const keys: string[] = []
+  let cursor = '0'
+  do {
+    const [nextCursor, batch] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100)
+    cursor = nextCursor
+    keys.push(...batch)
+  } while (cursor !== '0')
+  return keys
+}
+
 export async function invalidarCacheAnalytics(): Promise<void> {
   try {
-    const redis = getRedis()
-    const keys = await redis.keys('analytics:*')
+    const keys = await scanKeys('analytics:*')
     if (keys.length > 0) {
-      await redis.del(keys)
+      await getRedis().del(keys)
     }
   } catch {
     // Redis failure is non-critical

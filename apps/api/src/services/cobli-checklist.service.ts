@@ -5,6 +5,7 @@ import type {
 
 const COBLI_API_URL = process.env['COBLI_API_URL'] ?? 'https://api.cobli.co'
 const PAGE_SIZE = 100
+const MAX_PAGES = 500 // safety cap: 500 × 100 = 50 k checklists por sync
 
 function getCobliApiKey(): string {
   const key = process.env['COBLI_API_KEY'] ?? ''
@@ -56,7 +57,7 @@ export async function fetchCompletedChecklists(
   let page = 0
   const all: CobliCompletedChecklist[] = []
 
-  while (true) {
+  while (page < MAX_PAGES) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await requestCobli('/checklists/completed-checklists', {
       start_in_millis:  params.startMillis,

@@ -7,19 +7,22 @@ import {
   IconTag,
   IconSettings,
   IconInfoCircle,
+  IconClock,
 } from '@tabler/icons-react'
 import { UsuariosTab } from './UsuariosTab'
 import { VeiculosTab } from './VeiculosTab'
 import { CategoriasTab } from './CategoriasTab'
-import type { UsuarioResumo, VeiculoResumo, CategoriaResumo } from '@metalsider/shared'
+import { TurnosTab } from './TurnosTab'
+import type { UsuarioResumo, VeiculoResumo, CategoriaResumo, TurnoConfigDTO } from '@metalsider/shared'
 import styles from './ConfiguracoesClient.module.css'
 
-type TabKey = 'usuarios' | 'veiculos' | 'categorias'
+type TabKey = 'usuarios' | 'veiculos' | 'categorias' | 'turnos'
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'usuarios', label: 'Usuários', icon: <IconUsers size={18} /> },
   { key: 'veiculos', label: 'Veículos', icon: <IconCar size={18} /> },
   { key: 'categorias', label: 'Categorias', icon: <IconTag size={18} /> },
+  { key: 'turnos', label: 'Turnos', icon: <IconClock size={18} /> },
 ]
 
 interface ConfiguracoesClientProps {
@@ -28,6 +31,7 @@ interface ConfiguracoesClientProps {
   initialUsuarios: UsuarioResumo[]
   initialVeiculos: VeiculoResumo[]
   initialCategorias: CategoriaResumo[]
+  initialTurnos: TurnoConfigDTO[]
 }
 
 export function ConfiguracoesClient({
@@ -36,6 +40,7 @@ export function ConfiguracoesClient({
   initialUsuarios,
   initialVeiculos,
   initialCategorias,
+  initialTurnos,
 }: ConfiguracoesClientProps) {
   const [tab, setTab] = useState<TabKey>('usuarios')
 
@@ -80,6 +85,9 @@ export function ConfiguracoesClient({
           )}
           {tab === 'categorias' && (
             <CategoriasTab token={token} initialCategorias={initialCategorias} />
+          )}
+          {tab === 'turnos' && (
+            <TurnosTab token={token} isAdmin={isAdmin} initialTurnos={initialTurnos} />
           )}
         </div>
       </div>

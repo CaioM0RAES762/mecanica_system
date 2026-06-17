@@ -83,6 +83,7 @@ export interface SyncResult {
   total_skipped: number
   total_failed: number
   status: string
+  already_running?: boolean
 }
 
 // ─── Listagem ─────────────────────────────────────────────────────────────────
@@ -195,8 +196,9 @@ export async function converterEmOS(
   token: string,
   dados: {
     veiculo_id: number
-    categoria_id: number
+    categoria_ids: number[]
     inicio_previsto: string
+    prazo?: string
     mecanico_id?: string
     descricao?: string
   },
@@ -273,25 +275,26 @@ export async function listarPesos(token: string): Promise<{ dados: ChecklistPeso
   return res.json() as Promise<{ dados: ChecklistPeso[] }>
 }
 
-export async function listarCampos(token: string): Promise<{ dados: CampoComPeso[] }> {
-  const res = await fetch(`${API_URL}/checklists/config/campos`, {
-    headers: authHeaders(token),
-    cache: 'no-store',
-  })
-  if (!res.ok) throw new Error('Falha ao carregar campos dos checklists')
-  return res.json() as Promise<{ dados: CampoComPeso[] }>
-}
 
 export async function salvarPesoCampo(
   fieldId: string,
   token: string,
-  dados: { peso: number; peso_id?: string | null; field_title?: string; field_type?: string },
+  dados: {
+    peso: number
+    peso_id?: string | null
+    field_title?: string
+    field_type?: string
+    cobli_template_id?: string
+    nome_checklist?: string
+  },
 ): Promise<{ id: string; peso: number }> {
   const body = {
-    peso: dados.peso,
-    peso_id: dados.peso_id ?? undefined,
-    field_title: dados.field_title,
-    field_type: dados.field_type,
+    peso:              dados.peso,
+    peso_id:           dados.peso_id ?? undefined,
+    field_title:       dados.field_title,
+    field_type:        dados.field_type,
+    cobli_template_id: dados.cobli_template_id,
+    nome_checklist:    dados.nome_checklist,
   }
   const res = await fetch(
     `${API_URL}/checklists/config/campos/${encodeURIComponent(fieldId)}/peso`,
@@ -352,6 +355,26 @@ export async function atualizarPeso(
     throw new Error(err.detail ?? 'Falha ao atualizar regra de peso')
   }
   return res.json() as Promise<ChecklistPeso>
+}
+
+export interface RecalcularResult {
+  total: number
+  atualizados: number
+  erros: number
+}
+
+export async function recalcularPontuacoes(token: string, templateIds?: string[]): Promise<RecalcularResult> {
+  const body = templateIds && templateIds.length > 0 ? { templateIds } : {}
+  const res = await fetch(`${API_URL}/checklists/recalcular-pontuacoes`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { detail?: string }
+    throw new Error(err.detail ?? 'Falha ao recalcular pontuações')
+  }
+  return res.json() as Promise<RecalcularResult>
 }
 
 export async function removerPeso(id: string, token: string): Promise<void> {

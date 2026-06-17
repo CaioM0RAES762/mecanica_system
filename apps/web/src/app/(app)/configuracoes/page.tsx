@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { ConfiguracoesClient } from '@/components/admin/ConfiguracoesClient'
-import { listarUsuarios, listarVeiculos, listarCategorias } from '@/lib/api/admin'
+import { listarUsuarios, listarVeiculos, listarCategorias, listarTurnos } from '@/lib/api/admin'
 
 export const metadata: Metadata = {
   title: 'Configurações',
@@ -18,10 +18,11 @@ export default async function ConfiguracoesPage() {
 
   const token = session.accessToken ?? ''
 
-  const [usuariosRes, veiculosRes, categoriasRes] = await Promise.all([
+  const [usuariosRes, veiculosRes, categoriasRes, turnosRes] = await Promise.all([
     listarUsuarios(token).catch(() => ({ dados: [] })),
     listarVeiculos(token).catch(() => ({ dados: [] })),
     listarCategorias(token).catch(() => ({ dados: [] })),
+    listarTurnos(token).catch(() => ({ dados: [] })),
   ])
 
   return (
@@ -31,6 +32,7 @@ export default async function ConfiguracoesPage() {
       initialUsuarios={usuariosRes.dados}
       initialVeiculos={veiculosRes.dados}
       initialCategorias={categoriasRes.dados}
+      initialTurnos={turnosRes.dados}
     />
   )
 }

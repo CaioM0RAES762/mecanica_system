@@ -10,7 +10,9 @@ class DominioInvalidoError extends CredentialsSignin {
   override code = 'dominio_invalido'
 }
 
-const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1'
+// API_INTERNAL_URL permite apontar o NextAuth para um endereço interno (ex: container-to-container)
+// sem depender da URL pública exposta ao browser. Fallback para NEXT_PUBLIC_API_URL em dev.
+const API_URL = process.env['API_INTERNAL_URL'] ?? process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [

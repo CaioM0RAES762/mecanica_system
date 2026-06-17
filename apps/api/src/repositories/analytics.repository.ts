@@ -1,5 +1,4 @@
 import { prisma } from '../lib/prisma.js'
-import { Prisma } from '@prisma/client'
 
 export interface PeriodParams {
   de: Date
@@ -49,6 +48,7 @@ export async function queryKpis(p: PeriodParams) {
 export async function queryPorCategoria(p: PeriodParams) {
   const rows = await prisma.ordens_servico.findMany({
     where: { criado_em: { gte: p.de, lte: p.ate } },
+    take: 10000, // cap de segurança; para volumes maiores migrar para groupBy no banco
     select: {
       status: true,
       categoria: { select: { id: true, nome: true, cor: true } },
@@ -202,6 +202,7 @@ export async function queryMecanicos(p: PeriodParams) {
 export async function queryHeatmap(p: PeriodParams) {
   const rows = await prisma.ordens_servico.findMany({
     where: { criado_em: { gte: p.de, lte: p.ate } },
+    take: 10000,
     select: { criado_em: true },
   })
 
@@ -285,6 +286,7 @@ export async function queryMaisLongos(p: PeriodParams) {
 export async function queryAtrasadosPorCategoria(p: PeriodParams) {
   const rows = await prisma.ordens_servico.findMany({
     where: { criado_em: { gte: p.de, lte: p.ate } },
+    take: 10000,
     select: {
       status: true,
       categoria: { select: { id: true, nome: true, cor: true } },
@@ -335,6 +337,3 @@ export function resolvePeriod(
   return { de: de_, ate: ate_ }
 }
 
-// silence unused import warning from Prisma
-const _: typeof Prisma = Prisma
-void _

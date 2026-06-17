@@ -1,4 +1,5 @@
 import { Redis } from 'ioredis'
+import { logger } from './logger.js'
 
 let _redis: Redis | null = null
 
@@ -12,7 +13,7 @@ export function getRedis(): Redis {
 
     _redis.on('error', (err: Error) => {
       // Cache Redis não é fonte de verdade (D-12) — logar e seguir
-      console.error('[Redis] connection error:', err.message)
+      logger.error({ mensagem: 'Erro de conexão com Redis (cache — não bloqueia operação)', detalhe: err.message })
     })
   }
 

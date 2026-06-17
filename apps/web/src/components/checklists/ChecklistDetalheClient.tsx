@@ -105,6 +105,58 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+function todayHM(): string {
+  const n = new Date()
+  return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`
+}
+
+function normalizeText(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
+
+function calcPrazoDefault(prioridade: string | null): { data: string; hora: string } {
+  const base = new Date()
+  if (prioridade === 'CRITICA') {
+    base.setHours(base.getHours() + 2)
+  } else if (prioridade === 'ALTA') {
+    base.setHours(base.getHours() + 8)
+  } else if (prioridade === 'MEDIA') {
+    let d = 2
+    while (d > 0) { base.setDate(base.getDate() + 1); if (base.getDay() !== 0 && base.getDay() !== 6) d-- }
+    base.setHours(18, 0, 0, 0)
+  } else {
+    let d = 5
+    while (d > 0) { base.setDate(base.getDate() + 1); if (base.getDay() !== 0 && base.getDay() !== 6) d-- }
+    base.setHours(18, 0, 0, 0)
+  }
+  return {
+    data: base.toISOString().slice(0, 10),
+    hora: `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`,
+  }
+}
+
+function gerarDescricaoModal(checklist: ChecklistDetalhe): string {
+  const veiculoPartes = [checklist.veiculo_placa, checklist.veiculo_marca, checklist.veiculo_modelo].filter(Boolean)
+  const linhas: string[] = [
+    'OS gerada a partir de checklist não conforme (Cobli).',
+    '',
+    `Checklist: ${checklist.nome_checklist}`,
+    `Motorista: ${checklist.motorista_nome ?? 'Não informado'}`,
+    `Veículo: ${veiculoPartes.join(' ') || 'Não identificado'}`,
+    `Preenchido em: ${fmtDate(checklist.preenchido_em)}`,
+    `Prioridade: ${prioLabel(checklist.prioridade)}`,
+    `Pontuação de criticidade: ${checklist.pontuacao_criticidade} pt(s)`,
+  ]
+  if (checklist.itens_nao_conformes.length > 0) {
+    linhas.push('', `Itens não conformes (${checklist.itens_nao_conformes.length}):`)
+    checklist.itens_nao_conformes.forEach((item, idx) => {
+      linhas.push(`  ${idx + 1}. [Peso ${item.peso_criticidade}] ${item.field_title}`)
+      linhas.push(`     → Resposta: ${item.valor_respondido}`)
+    })
+  }
+  return linhas.join('\n')
+}
+
 // ─── Parser do payload_original ───────────────────────────────────────────────
 
 interface CobliField {
@@ -167,7 +219,6 @@ function renderFieldValue(field: CobliField): { text: string; variant: 'ok' | 'n
   }
 
   const POSITIVAS = ['ok', 'sim', 'yes', 'bom', 'good', 'conforme', 'normal']
-  const NEGATIVAS = ['nok', 'não', 'no', 'ruim', 'bad', 'nao', 'não conforme', 'defeito']
 
   if (type === 'SINGLE_SELECT') {
     const selected = content.options?.find(o => o.checked)
@@ -224,9 +275,15 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
   const [veiculoSelecionado, setVeiculoSelecionado] = useState<{ id: number; veiculo: string; placa: string } | null>(null)
   const [veiculoResultados, setVeiculoResultados] = useState<{ id: number; veiculo: string; placa: string }[]>([])
   const [buscandoVeiculo, setBuscandoVeiculo] = useState(false)
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState('')
+  const [veiculoNaoEncontrado, setVeiculoNaoEncontrado] = useState(false)
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<string[]>([])
   const [mecanicoSelecionado, setMecanicoSelecionado] = useState('')
+  const [mecanicoQuery, setMecanicoQuery] = useState('')
+  const [mecanicoDropdownAberto, setMecanicoDropdownAberto] = useState(false)
   const [inicioPrevisto, setInicioPrevisto] = useState(todayISO())
+  const [inicioHora, setInicioHora] = useState('08:00')
+  const [prazoData, setPrazoData] = useState('')
+  const [prazoHora, setPrazoHora] = useState('18:00')
   const [descricaoOS, setDescricaoOS] = useState('')
   const [loadingConverter, setLoadingConverter] = useState(false)
   const [erroConverter, setErroConverter] = useState<string | null>(null)
@@ -236,12 +293,17 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
   // Busca automática de veículo ao abrir modal
   const buscarVeiculo = useCallback(
     async (placa: string) => {
-      if (!placa.trim()) { setVeiculoResultados([]); return }
+      if (!placa.trim()) { setVeiculoResultados([]); setVeiculoNaoEncontrado(false); return }
       setBuscandoVeiculo(true)
+      setVeiculoNaoEncontrado(false)
       try {
         const res = await buscarVeiculoPorPlaca(placa, token)
         setVeiculoResultados(res.dados)
-        if (res.dados.length === 1) setVeiculoSelecionado(res.dados[0]!)
+        if (res.dados.length === 1) {
+          setVeiculoSelecionado(res.dados[0]!)
+        } else if (res.dados.length === 0) {
+          setVeiculoNaoEncontrado(true)
+        }
       } catch { /* silencioso */ }
       finally { setBuscandoVeiculo(false) }
     },
@@ -252,13 +314,27 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
     if (!modalConverter) return
     void buscarVeiculo(checklist.veiculo_placa ?? '')
     setInicioPrevisto(todayISO())
-    setDescricaoOS('')
+    setInicioHora(todayHM())
+    const prazoDefault = calcPrazoDefault(checklist.prioridade)
+    setPrazoData(prazoDefault.data)
+    setPrazoHora(prazoDefault.hora)
+    setDescricaoOS(gerarDescricaoModal(checklist))
+    setMecanicoQuery('')
+    setMecanicoSelecionado('')
+    setMecanicoDropdownAberto(false)
+    setVeiculoNaoEncontrado(false)
+    setCategoriasSelecionadas([])
     setErroConverter(null)
-  }, [modalConverter, checklist.veiculo_placa, buscarVeiculo])
+    // buscarVeiculo é intencionalmente omitido das deps: a função muda de referência a cada
+    // render, adicioná-la causaria loop infinito. O comportamento está correto — dispara
+    // apenas quando o modal abre/fecha, que é o único momento em que a busca faz sentido.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalConverter])
 
   function handleVeiculoQueryChange(v: string) {
     setVeiculoQuery(v)
     setVeiculoSelecionado(null)
+    setVeiculoNaoEncontrado(false)
     if (veiculoDebounceRef.current) clearTimeout(veiculoDebounceRef.current)
     if (v.length >= 3) {
       veiculoDebounceRef.current = setTimeout(() => void buscarVeiculo(v), 350)
@@ -313,16 +389,35 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
   }
 
   async function handleConverter() {
-    if (!veiculoSelecionado || !categoriaSelecionada || !inicioPrevisto) return
+    if (!veiculoSelecionado || categoriasSelecionadas.length === 0 || !inicioPrevisto) return
     setLoadingConverter(true)
     setErroConverter(null)
     try {
+      const inicioISO = `${inicioPrevisto}T${inicioHora}:00`
+      const prazoISO  = prazoData ? `${prazoData}T${prazoHora}:00` : undefined
+
+      // Coleta URLs de fotos dos itens NC e embute no final da descrição com marcador parseável
+      const fotosNc: string[] = []
+      for (const item of checklist.itens_nao_conformes) {
+        if (item.photos_urls) {
+          try {
+            const urls = JSON.parse(item.photos_urls) as string[]
+            fotosNc.push(...urls.filter(u => typeof u === 'string' && u.startsWith('http')))
+          } catch { /* skip */ }
+        }
+      }
+      const descBase = descricaoOS || undefined
+      const descFinal = fotosNc.length > 0
+        ? `${descBase ?? ''}\n[FOTOS_NC]\n${fotosNc.join('\n')}`
+        : descBase
+
       const res = await converterEmOS(checklist.id, token, {
         veiculo_id: veiculoSelecionado.id,
-        categoria_id: Number(categoriaSelecionada),
-        inicio_previsto: inicioPrevisto,
+        categoria_ids: categoriasSelecionadas.map(Number),
+        inicio_previsto: inicioISO,
+        prazo: prazoISO,
         mecanico_id: mecanicoSelecionado || undefined,
-        descricao: descricaoOS || undefined,
+        descricao: descFinal,
       })
       const novoOsId = (res.os as { id?: number })?.id ?? null
       setOsId(novoOsId)
@@ -636,7 +731,7 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
         open={modalConverter}
         onClose={() => setModalConverter(false)}
         title="Converter em Ordem de Serviço"
-        size="md"
+        size="lg"
         footer={
           <div className={styles.modalFooter}>
             <button
@@ -651,7 +746,7 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
               type="button"
               className={styles.modalConfirmBtn}
               onClick={() => void handleConverter()}
-              disabled={loadingConverter || !veiculoSelecionado || !categoriaSelecionada || !inicioPrevisto}
+              disabled={loadingConverter || !veiculoSelecionado || categoriasSelecionadas.length === 0 || !inicioPrevisto}
             >
               <IconBolt size={14} aria-hidden="true" />
               {loadingConverter ? 'Criando OS…' : 'Criar OS'}
@@ -660,6 +755,43 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
         }
       >
         {erroConverter && <div className={styles.modalError} role="alert">{erroConverter}</div>}
+
+        {/* Preview NC items com fotos */}
+        {checklist.itens_nao_conformes.length > 0 && (() => {
+          const ncFotos: string[] = []
+          for (const item of checklist.itens_nao_conformes) {
+            if (item.photos_urls) {
+              try {
+                const urls = JSON.parse(item.photos_urls) as string[]
+                ncFotos.push(...urls.filter(u => typeof u === 'string' && u.startsWith('http')))
+              } catch { /* skip */ }
+            }
+          }
+          return (
+            <div className={styles.modalNcPreview}>
+              <div className={styles.modalNcPreviewHead}>
+                {checklist.itens_nao_conformes.length} item(ns) não conforme(s) identificado(s)
+              </div>
+              <div className={styles.modalNcList}>
+                {checklist.itens_nao_conformes.map(item => (
+                  <div key={item.id} className={styles.modalNcItem}>
+                    <span className={styles.modalNcItemPeso}>{item.peso_criticidade}</span>
+                    <span className={styles.modalNcItemText}>
+                      <strong>{item.field_title}</strong>
+                      {' → '}
+                      <em>{item.valor_respondido}</em>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {ncFotos.length > 0 && (
+                <div className={styles.modalNcPhotoRow}>
+                  <InlinePhotoGallery photos={ncFotos} titulo="Fotos dos itens não conformes" compact />
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Veículo */}
         <div className={styles.modalField}>
@@ -675,6 +807,11 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
           <span className={styles.fieldHint}>
             {buscandoVeiculo ? 'Buscando…' : 'Digite ≥ 3 caracteres para buscar'}
           </span>
+          {veiculoNaoEncontrado && !buscandoVeiculo && (
+            <div className={styles.veiculoWarning}>
+              Veículo &quot;{checklist.veiculo_placa}&quot; não encontrado no cadastro. Busque manualmente pela placa ou nome do veículo.
+            </div>
+          )}
           {veiculoResultados.length > 0 && (
             <div className={styles.vehicleResults}>
               {veiculoResultados.map(v => (
@@ -697,60 +834,137 @@ export function ChecklistDetalheClient({ checklist: initial, token, perfil, cate
           <label className={styles.modalLabel}>
             Categoria <span className={styles.modalRequired}>*</span>
           </label>
-          <select
-            className={styles.modalSelect}
-            value={categoriaSelecionada}
-            onChange={e => setCategoriaSelecionada(e.target.value)}
-          >
-            <option value="">Selecione uma categoria</option>
-            {categorias.map(c => (
-              <option key={c.id} value={String(c.id)}>{c.nome}</option>
-            ))}
-          </select>
+          <div className={styles.multiCatWrap}>
+            {categorias.map(c => {
+              const sid = String(c.id)
+              const ativo = categoriasSelecionadas.includes(sid)
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`${styles.catPill} ${ativo ? styles.catPillActive : ''}`}
+                  style={ativo && c.cor ? { background: c.cor + '22', borderColor: c.cor, color: c.cor } : undefined}
+                  onClick={() => setCategoriasSelecionadas(prev =>
+                    prev.includes(sid) ? prev.filter(id => id !== sid) : [...prev, sid]
+                  )}
+                >
+                  {ativo && <span className={styles.catPillCheck}>✓</span>}
+                  {c.nome}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Início previsto */}
+        {/* Início previsto (data + hora) */}
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>
             Início previsto <span className={styles.modalRequired}>*</span>
           </label>
-          <input
-            type="date"
-            className={styles.modalInput}
-            value={inicioPrevisto}
-            onChange={e => setInicioPrevisto(e.target.value)}
-          />
+          <div className={styles.modalDateTimeRow}>
+            <input
+              type="date"
+              className={styles.modalInput}
+              value={inicioPrevisto}
+              onChange={e => setInicioPrevisto(e.target.value)}
+            />
+            <input
+              type="time"
+              className={`${styles.modalInput} ${styles.modalTimeInput}`}
+              value={inicioHora}
+              onChange={e => setInicioHora(e.target.value)}
+            />
+          </div>
         </div>
 
-        {/* Mecânico */}
+        {/* Prazo (data + hora) */}
+        <div className={styles.modalField}>
+          <label className={styles.modalLabel}>
+            Prazo final <span className={styles.modalOptional}>(opcional)</span>
+          </label>
+          <div className={styles.modalDateTimeRow}>
+            <input
+              type="date"
+              className={styles.modalInput}
+              value={prazoData}
+              onChange={e => setPrazoData(e.target.value)}
+              min={inicioPrevisto}
+            />
+            <input
+              type="time"
+              className={`${styles.modalInput} ${styles.modalTimeInput}`}
+              value={prazoHora}
+              onChange={e => setPrazoHora(e.target.value)}
+            />
+          </div>
+          <span className={styles.fieldHint}>
+            Pré-calculado pela prioridade ({prioLabel(checklist.prioridade)}). Ajuste se necessário.
+          </span>
+        </div>
+
+        {/* Mecânico (searchable) */}
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>
             Mecânico responsável <span className={styles.modalOptional}>(opcional)</span>
           </label>
-          <select
-            className={styles.modalSelect}
-            value={mecanicoSelecionado}
-            onChange={e => setMecanicoSelecionado(e.target.value)}
-          >
-            <option value="">Sem mecânico atribuído</option>
-            {mecanicos.map(m => (
-              <option key={m.id} value={m.id}>{m.nome_completo}</option>
-            ))}
-          </select>
+          <div className={styles.mecanicoSearch}>
+            <input
+              className={styles.modalInput}
+              placeholder="Buscar por nome…"
+              value={mecanicoQuery}
+              onChange={e => { setMecanicoQuery(e.target.value); setMecanicoSelecionado('') }}
+              onFocus={() => setMecanicoDropdownAberto(true)}
+              onBlur={() => setTimeout(() => setMecanicoDropdownAberto(false), 150)}
+              autoComplete="off"
+            />
+            {mecanicoDropdownAberto && (
+              <div className={styles.mecanicoDropdown}>
+                <button
+                  type="button"
+                  className={`${styles.mecanicoOption} ${!mecanicoSelecionado ? styles.mecanicoOptionSelecionado : ''}`}
+                  onMouseDown={() => { setMecanicoSelecionado(''); setMecanicoQuery(''); setMecanicoDropdownAberto(false) }}
+                >
+                  Sem mecânico atribuído
+                </button>
+                {mecanicos
+                  .filter(m => !mecanicoQuery.trim() || normalizeText(m.nome_completo).includes(normalizeText(mecanicoQuery)))
+                  .map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className={`${styles.mecanicoOption} ${mecanicoSelecionado === m.id ? styles.mecanicoOptionSelecionado : ''}`}
+                      onMouseDown={() => { setMecanicoSelecionado(m.id); setMecanicoQuery(m.nome_completo); setMecanicoDropdownAberto(false) }}
+                    >
+                      {m.nome_completo}
+                    </button>
+                  ))
+                }
+              </div>
+            )}
+          </div>
+          {mecanicoSelecionado && (
+            <span className={styles.fieldHint}>
+              Selecionado: {mecanicos.find(m => m.id === mecanicoSelecionado)?.nome_completo}
+            </span>
+          )}
         </div>
 
-        {/* Descrição */}
+        {/* Descrição (pré-preenchida, editável) */}
         <div className={styles.modalField}>
           <label className={styles.modalLabel}>
-            Descrição <span className={styles.modalOptional}>(opcional)</span>
+            Descrição <span className={styles.modalOptional}>(editável)</span>
           </label>
           <textarea
-            className={styles.modalTextarea}
-            rows={4}
+            className={`${styles.modalTextarea} ${styles.modalTextareaOS}`}
+            rows={9}
             value={descricaoOS}
             onChange={e => setDescricaoOS(e.target.value)}
-            placeholder="Deixe em branco para usar a descrição automática baseada nos itens não conformes."
+            placeholder="Descrição gerada automaticamente a partir do checklist…"
+            spellCheck={false}
           />
+          <span className={styles.fieldHint}>
+            Gerada automaticamente. Edite antes de criar a OS se necessário.
+          </span>
         </div>
       </Modal>
     </div>

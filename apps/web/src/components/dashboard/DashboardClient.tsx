@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, useTransition, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
-  AreaChart, Area,
   BarChart, Bar, Cell, LabelList,
   PieChart, Pie,
   ResponsiveContainer,
@@ -24,6 +23,10 @@ import {
 import { useOSStream } from '@/hooks/useOSStream'
 import { KpiCard } from './KpiCard'
 import { Skeleton } from '@/components/ui'
+import { ChecklistNcPorItemChart } from './ChecklistNcPorItemChart'
+import { ChecklistConformidadeChart } from './ChecklistConformidadeChart'
+import { ChecklistFunilNcChart } from './ChecklistFunilNcChart'
+import { AberturasVsFechamentosChart } from './AberturasVsFechamentosChart'
 import type { AnalyticsParams } from '@/lib/api/analytics'
 import {
   buscarKpis,
@@ -148,6 +151,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
   const [showCustom,  setShowCustom]  = useState(false)
   const [customDe,    setCustomDe]    = useState('')
   const [customAte,   setCustomAte]   = useState('')
+  const [veiculoFiltroFunil, setVeiculoFiltroFunil] = useState<string | null>(null)
 
   const [isPending, startTransition] = useTransition()
 
@@ -316,8 +320,6 @@ export function DashboardClient({ token }: DashboardClientProps) {
     mecanicos, heatmap, maisLongos, atrasadosPorCategoria,
   } = data
 
-  const tendenciaFormatted = tendencia.map(t => ({ ...t, data: t.data.slice(5) }))
-
   const prioridadeTotal = porPrioridade.reduce((s, p) => s + p.total, 0)
   const prioridadeData  = porPrioridade.map(p => ({
     name:  PRIORIDADE_LABELS[p.prioridade] ?? p.prioridade,
@@ -421,54 +423,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
         </ChartCard>
 
         {/* Aberturas vs fechamentos — área dupla */}
-        <ChartCard title="Aberturas vs fechamentos" subtitle={`Evolução diária — últimos ${params.periodo === '7d' ? '7' : params.periodo === '90d' ? '90' : '30'} dias${params.periodo === 'personalizado' ? ' (período personalizado)' : ''}`}>
-          {tendenciaFormatted.length === 0 ? (
-            <p className={styles.empty}>Sem dados no período.</p>
-          ) : (
-            <>
-              <div className={styles.lineLegend}>
-                <span><span className={styles.dotBlue} />Abertos</span>
-                <span><span className={styles.dotGreen} />Fechados</span>
-              </div>
-              <ResponsiveContainer width="100%" height={234}>
-                <AreaChart data={tendenciaFormatted} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradAberto" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#0078d4" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#0078d4" stopOpacity={0}    />
-                    </linearGradient>
-                    <linearGradient id="gradFechado" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#107c10" stopOpacity={0.12} />
-                      <stop offset="95%" stopColor="#107c10" stopOpacity={0}    />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" vertical={false} />
-                  <XAxis
-                    dataKey="data" tick={{ fontSize: 10, fill: '#605e5c' }}
-                    axisLine={false} tickLine={false} interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: '#605e5c' }}
-                    axisLine={false} tickLine={false} allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{ background: '#fff', border: '1px solid #e5e5e5', borderRadius: 4, fontSize: 12 }}
-                  />
-                  <Area
-                    type="monotone" dataKey="aberto" name="Abertos"
-                    stroke="#0078d4" strokeWidth={2} fill="url(#gradAberto)"
-                    dot={{ r: 3, fill: '#fff', stroke: '#0078d4', strokeWidth: 2 }}
-                  />
-                  <Area
-                    type="monotone" dataKey="fechado" name="Fechados"
-                    stroke="#107c10" strokeWidth={2} fill="url(#gradFechado)"
-                    dot={{ r: 3, fill: '#fff', stroke: '#107c10', strokeWidth: 2 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </>
-          )}
-        </ChartCard>
+        <AberturasVsFechamentosChart params={params} tendenciaGlobal={tendencia} token={token} />
       </div>
 
       {/* ====== LINHA 2: Rosca + Mecânicos ====== */}
@@ -605,6 +560,29 @@ export function DashboardClient({ token }: DashboardClientProps) {
           </>
         )}
       </ChartCard>
+
+      {/* ====== SEÇÃO: ANÁLISE DE CHECKLISTS ====== */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Análise de checklists</h2>
+        <p className={styles.sectionSub}>Não conformidades, conformidade por veículo e funil de conversão</p>
+      </div>
+
+      <ChecklistNcPorItemChart params={params} token={token} />
+
+      <div className={styles.grid2}>
+        <ChecklistConformidadeChart
+          params={params}
+          token={token}
+          veiculoSelecionado={veiculoFiltroFunil}
+          onSelectVeiculo={setVeiculoFiltroFunil}
+        />
+        <ChecklistFunilNcChart
+          params={params}
+          token={token}
+          veiculoFiltro={veiculoFiltroFunil}
+          onClearVeiculoFiltro={() => setVeiculoFiltroFunil(null)}
+        />
+      </div>
 
       {/* ====== LINHA 4: Mais longos + Categorias críticas ====== */}
       <div className={styles.grid2}>

@@ -101,12 +101,29 @@ export interface ChecklistWeightRule {
   ativo: boolean
 }
 
-export function getWeightForField(fieldTitle: string, rules: ChecklistWeightRule[]): number {
-  const n = normalizeText(fieldTitle)
+export function getWeightForField(
+  fieldTitle: string,
+  rules: ChecklistWeightRule[],
+  fieldId?: string | null,
+): number {
   const activeRules = rules.filter((r) => r.ativo)
+
+  // Priority 1: exact UUID match (when field has a Cobli UUID and admin configured by UUID)
+  if (fieldId) {
+    const exactById = activeRules.find((r) => r.field_title_pattern === fieldId)
+    if (exactById) return exactById.peso
+  }
+
+  // Priority 2: exact title match (admin configured by title string)
+  const exactByTitle = activeRules.find((r) => r.field_title_pattern === fieldTitle)
+  if (exactByTitle) return exactByTitle.peso
+
+  // Priority 3: substring title match (legacy wildcard behavior)
+  const n = normalizeText(fieldTitle)
   for (const rule of activeRules) {
     if (n.includes(normalizeText(rule.field_title_pattern))) return rule.peso
   }
+
   return getDefaultWeight(fieldTitle)
 }
 
@@ -138,7 +155,7 @@ export function getNonCompliantItems(
 
   // Normalizar CHECKED → CHECK defensivamente
   const type: CobliFieldType = (field.type === 'CHECKED' ? 'CHECK' : field.type)
-  const peso = getWeightForField(field.title, rules)
+  const peso = getWeightForField(field.title, rules, field.id)
   const photos = field.photos_urls ?? []
 
   if (type === 'SINGLE_SELECT' || type === 'MULTI_SELECT') {

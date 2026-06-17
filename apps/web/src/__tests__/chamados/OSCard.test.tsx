@@ -10,6 +10,8 @@ const osBase: OrdemServicoResumo = {
   status: 'aberto',
   categoria_id: 1,
   categoria_nome: 'Motor',
+  categoria_ids: [1],
+  categoria_nomes: ['Motor'],
   veiculo_id: 10,
   veiculo_placa: 'ABC-1234',
   veiculo_nome: 'Fiat Strada',

@@ -11,7 +11,22 @@ import {
   IconArrowLeft,
   IconPaperclip,
 } from '@tabler/icons-react'
+import { PhotoGallery } from '@/components/ui'
 import styles from './page.module.css'
+
+const FOTOS_NC_SENTINEL = '\n[FOTOS_NC]\n'
+
+function parsearDescricao(descricao: string | null | undefined): { texto: string; fotos: string[] } {
+  if (!descricao) return { texto: '', fotos: [] }
+  const idx = descricao.indexOf(FOTOS_NC_SENTINEL)
+  if (idx === -1) return { texto: descricao, fotos: [] }
+  const texto = descricao.slice(0, idx)
+  const fotos = descricao
+    .slice(idx + FOTOS_NC_SENTINEL.length)
+    .split('\n')
+    .filter(l => l.startsWith('https://'))
+  return { texto, fotos }
+}
 
 export async function generateMetadata({
   params,
@@ -59,6 +74,8 @@ export default async function ChamadoDetalhePage({
     fechado: 'Fechado',
   }
 
+  const { texto: descricaoTexto, fotos: fotosNc } = parsearDescricao(os.descricao)
+
   return (
     <div className={styles.page}>
       <Link href="/chamados" className={styles.backLink}>
@@ -77,8 +94,16 @@ export default async function ChamadoDetalhePage({
           <span className={styles.catBadge}>{os.categoria_nome}</span>
         </div>
         <h1 className={styles.titulo}>{os.titulo}</h1>
-        {os.descricao && <p className={styles.descricao}>{os.descricao}</p>}
+        {descricaoTexto && <p className={styles.descricao}>{descricaoTexto}</p>}
       </div>
+
+      {/* Fotos do checklist de origem — exibidas quando a OS foi gerada a partir de checklist NC */}
+      {fotosNc.length > 0 && (
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Fotos do checklist ({fotosNc.length})</h2>
+          <PhotoGallery photos={fotosNc} titulo="Foto do checklist" />
+        </div>
+      )}
 
       {/* Grid de informações */}
       <div className={styles.infoGrid}>

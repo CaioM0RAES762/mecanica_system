@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 import type { NonCompliantItem } from '../lib/checklist-classifier.js'
+import { getDefaultWeight, calculatePriority } from '../lib/checklist-classifier.js'
 
 // ─── checklist_resultados ─────────────────────────────────────────────────────
 
@@ -84,7 +85,10 @@ export async function findManyChecklistResultados(filtro: FiltroChecklistResulta
   const skip = (pagina - 1) * porPagina
 
   const where: Record<string, unknown> = {}
-  if (filtro.status)          where['status']           = filtro.status
+  if (filtro.status) {
+    const statuses = filtro.status.split(',').map(s => s.trim()).filter(Boolean)
+    where['status'] = statuses.length === 1 ? statuses[0] : { in: statuses }
+  }
   if (filtro.prioridade)      where['prioridade']       = filtro.prioridade
   if (filtro.veiculoPlaca)    where['veiculo_placa']    = { contains: normalizarBusca(filtro.veiculoPlaca) }
   if (filtro.motoristaNome)   where['motorista_nome']   = { contains: normalizarBusca(filtro.motoristaNome) }
@@ -107,21 +111,27 @@ export async function findManyChecklistResultados(filtro: FiltroChecklistResulta
     where['preenchido_em'] = range
   }
 
+  // Campos permitidos para orderBy — evita injeção de chave arbitrária no Prisma
+  const ALLOWED_ORDER_BY = new Set([
+    'importado_em', 'preenchido_em', 'pontuacao_criticidade', 'prioridade',
+    'status', 'nome_checklist', 'veiculo_placa', 'motorista_nome',
+  ])
+
   // Ordenação inteligente por status:
   // - CONFORME: mais recente primeiro (preenchido_em desc → importado_em desc)
   // - NAO_CONFORME/APROVADO/RECUSADO: pontuação mais alta primeiro, depois data desc
   // - customizável via filtro.orderBy
   type OrderByInput = Prisma.checklist_resultadosOrderByWithRelationInput
   let orderBy: OrderByInput | OrderByInput[]
+  const statusList = filtro.status ? filtro.status.split(',').map(s => s.trim()) : []
   if (filtro.orderBy) {
+    if (!ALLOWED_ORDER_BY.has(filtro.orderBy)) {
+      throw new Error(`Campo de ordenação inválido: ${filtro.orderBy}`)
+    }
     orderBy = { [filtro.orderBy]: filtro.order ?? 'desc' } as OrderByInput
-  } else if (filtro.status === 'CONFORME') {
+  } else if (statusList.length === 1 && statusList[0] === 'CONFORME') {
     orderBy = [{ preenchido_em: 'desc' }, { importado_em: 'desc' }]
-  } else if (
-    filtro.status === 'NAO_CONFORME' ||
-    filtro.status === 'APROVADO' ||
-    filtro.status === 'RECUSADO'
-  ) {
+  } else if (statusList.some(s => ['NAO_CONFORME', 'APROVADO', 'OS_GERADA', 'RECUSADO'].includes(s))) {
     orderBy = [{ pontuacao_criticidade: 'desc' }, { preenchido_em: 'desc' }]
   } else {
     orderBy = { importado_em: 'desc' }
@@ -218,6 +228,9 @@ interface RawFieldRow {
 
 interface RawPesoRow {
   field_title_pattern: string
+  field_title: string
+  cobli_template_id: string | null
+  nome_checklist: string | null
   id: string
   peso: number
 }
@@ -277,26 +290,84 @@ export async function listarCamposPorTemplate(): Promise<TemplateComCampos[]> {
     }
   }
 
-  // Query 3: pesos — busca por ambas as chaves para compatibilidade com registros antigos
+  // Query 3: pesos — busca por ambas as chaves (UUID + título), incluindo cobli_template_id
+  // e nome_checklist para priorizar regras específicas de template sobre regras globais (NULL).
+  // Também busca por field_title para cobrir regras salvas com field_title_pattern = UUID
+  // quando o campo da Config page tem field_id = null (cai no fallback por título).
   const lookupArray = Array.from(allLookupKeys)
-  const pesos: RawPesoRow[] = lookupArray.length > 0
-    ? await prisma.$queryRaw<RawPesoRow[]>`
-        SELECT field_title_pattern, id, peso
-        FROM checklist_item_weights
-        WHERE field_title_pattern IN (${Prisma.join(lookupArray)})
-      `
-    : []
 
-  const pesoMap = new Map(pesos.map(p => [p.field_title_pattern, { id: p.id, peso: p.peso }]))
+  // Coletar também os field_titles para busca de fallback por display name
+  const allFieldTitles = new Set<string>()
+  for (const fieldMap of camposByGroup.values()) {
+    for (const row of fieldMap.values()) {
+      allFieldTitles.add(row.field_title)
+    }
+  }
+  const titleLookupArray = Array.from(allFieldTitles)
+
+  const [pesosByPattern, pesosByTitle]: [RawPesoRow[], RawPesoRow[]] = await Promise.all([
+    lookupArray.length > 0
+      ? prisma.$queryRaw<RawPesoRow[]>`
+          SELECT field_title_pattern, field_title, cobli_template_id, nome_checklist, id, peso
+          FROM checklist_item_weights
+          WHERE field_title_pattern IN (${Prisma.join(lookupArray)})
+            AND ativo = 1
+        `
+      : Promise.resolve([]),
+    titleLookupArray.length > 0
+      ? prisma.$queryRaw<RawPesoRow[]>`
+          SELECT field_title_pattern, field_title, cobli_template_id, nome_checklist, id, peso
+          FROM checklist_item_weights
+          WHERE field_title IN (${Prisma.join(titleLookupArray)})
+            AND ativo = 1
+        `
+      : Promise.resolve([]),
+  ])
+
+  // Mapa primário: chave = "fieldPattern" (global) ou "tplId@@nomeChecklist@@fieldPattern" (específico)
+  // Mapa secundário: chave = "field_title" ou "tplId@@nomeChecklist@@field_title"
+  // O secundário serve de fallback quando field_title_pattern = UUID mas o campo tem field_id = null
+  const pesoMap        = new Map<string, { id: string; peso: number }>()
+  const pesoMapByTitle = new Map<string, { id: string; peso: number }>()
+
+  const allPesos = [...pesosByPattern, ...pesosByTitle]
+  for (const p of allPesos) {
+    if (p.cobli_template_id && p.nome_checklist) {
+      const specificKey      = `${p.cobli_template_id}@@${p.nome_checklist}@@${p.field_title_pattern}`
+      const specificTitleKey = p.field_title ? `${p.cobli_template_id}@@${p.nome_checklist}@@${p.field_title}` : null
+      if (!pesoMap.has(specificKey)) pesoMap.set(specificKey, { id: p.id, peso: p.peso })
+      if (specificTitleKey && !pesoMapByTitle.has(specificTitleKey)) {
+        pesoMapByTitle.set(specificTitleKey, { id: p.id, peso: p.peso })
+      }
+    } else {
+      if (!pesoMap.has(p.field_title_pattern)) {
+        pesoMap.set(p.field_title_pattern, { id: p.id, peso: p.peso })
+      }
+      if (p.field_title && !pesoMapByTitle.has(p.field_title)) {
+        pesoMapByTitle.set(p.field_title, { id: p.id, peso: p.peso })
+      }
+    }
+  }
 
   return grupos.map(grupo => {
     const groupKey = `${grupo.cobli_template_id}@@${grupo.nome_checklist}`
     const fieldMap = camposByGroup.get(groupKey) ?? new Map()
 
     const campos: CampoComPeso[] = Array.from(fieldMap.values()).map(row => {
-      // Prioriza match por UUID; retrocede para match por título (compatibilidade retroativa)
-      const pesoInfo = (row.field_id ? pesoMap.get(row.field_id) : undefined)
+      // Ordem de prioridade (8 tentativas):
+      // 1) Regra específica do template por field_title_pattern (UUID ou título)
+      // 2) Regra global por field_title_pattern
+      // 3) Regra específica do template por field_title (fallback para UUID-keyed com field_id=null)
+      // 4) Regra global por field_title
+      const tplPrefix = `${grupo.cobli_template_id}@@${grupo.nome_checklist}@@`
+      const pesoInfo = (row.field_id
+        ? (pesoMap.get(`${tplPrefix}${row.field_id}`) ?? pesoMap.get(row.field_id))
+        : undefined)
+        ?? pesoMap.get(`${tplPrefix}${row.field_title}`)
         ?? pesoMap.get(row.field_title)
+        ?? pesoMapByTitle.get(`${tplPrefix}${row.field_title}`)
+        ?? pesoMapByTitle.get(row.field_title)
+
       return {
         field_id: row.field_id ?? row.field_title,
         field_title: row.field_title,
@@ -307,63 +378,20 @@ export async function listarCamposPorTemplate(): Promise<TemplateComCampos[]> {
     })
 
     return {
-      template_id: `${grupo.cobli_template_id}@@${grupo.nome_checklist}`,
+      template_id: groupKey,
       template_nome: grupo.nome_checklist,
       campos,
     }
   })
 }
 
-export async function findCamposComPesos(): Promise<CampoComPeso[]> {
-  const [itensRaw, regras] = await Promise.all([
-    prisma.checklist_itens_nao_conformes.findMany({
-      select: { field_id: true, field_title: true, field_type: true },
-    }),
-    prisma.checklist_item_weights.findMany(),
-  ])
-
-  // Deduplicate by field_id (UUID) or field_title when no id
-  const campoMap = new Map<string, { field_id: string | null; field_title: string; field_type: string }>()
-  for (const item of itensRaw) {
-    const key = item.field_id ?? item.field_title
-    if (!campoMap.has(key)) {
-      campoMap.set(key, { field_id: item.field_id, field_title: item.field_title, field_type: item.field_type })
-    }
-  }
-
-  // Also include weight rules that haven't been seen in results yet (pre-configured)
-  for (const r of regras) {
-    if (!campoMap.has(r.field_title_pattern)) {
-      campoMap.set(r.field_title_pattern, {
-        field_id: r.field_title_pattern,
-        field_title: r.field_title || r.field_title_pattern,
-        field_type: r.field_type || 'SINGLE_SELECT',
-      })
-    }
-  }
-
-  return Array.from(campoMap.values())
-    .sort((a, b) => a.field_title.localeCompare(b.field_title, 'pt'))
-    .map(campo => {
-      const chave = campo.field_id ?? campo.field_title
-      const regra = regras.find(r =>
-        (campo.field_id && r.field_title_pattern === campo.field_id) ||
-        campo.field_title.toLowerCase().includes(r.field_title_pattern.toLowerCase()),
-      )
-      return {
-        field_id: chave,
-        field_title: campo.field_title,
-        field_type: campo.field_type,
-        peso_id: regra?.id ?? null,
-        peso: regra?.peso ?? 1,
-      }
-    })
-}
 
 export async function createWeightRule(data: {
   field_title_pattern: string
   field_title?: string
   field_type?: string
+  cobli_template_id?: string | null
+  nome_checklist?: string | null
   peso: number
   descricao?: string | null
 }) {
@@ -376,6 +404,8 @@ export async function updateWeightRule(
     field_title_pattern?: string
     field_title?: string
     field_type?: string
+    cobli_template_id?: string | null
+    nome_checklist?: string | null
     peso?: number
     descricao?: string | null
     ativo?: boolean
@@ -384,8 +414,176 @@ export async function updateWeightRule(
   return prisma.checklist_item_weights.update({ where: { id }, data })
 }
 
+// Busca regra específica por campo + template — usado no upsert de salvarPesoCampo
+export async function findWeightRuleByFieldAndTemplate(
+  fieldTitlePattern: string,
+  cobliTemplateId: string | null,
+  nomeChecklist: string | null,
+) {
+  return prisma.checklist_item_weights.findFirst({
+    where: {
+      field_title_pattern: fieldTitlePattern,
+      cobli_template_id: cobliTemplateId ?? null,
+      nome_checklist: nomeChecklist ?? null,
+    },
+  })
+}
+
 export async function deleteWeightRule(id: string) {
   return prisma.checklist_item_weights.delete({ where: { id } })
+}
+
+// ─── Recalcular pontuações com pesos atuais ───────────────────────────────────
+
+export interface RecalcularResult {
+  total: number
+  atualizados: number
+  erros: number
+}
+
+export async function recalcularTodasPontuacoes(templateIds?: string[]): Promise<RecalcularResult> {
+  const weightRules = await prisma.checklist_item_weights.findMany({ where: { ativo: true } })
+
+  // Quatro mapas de lookup (field_title_pattern é a chave primária; field_title é o fallback
+  // para itens com field_id = null cujo field_title_pattern da regra é um UUID):
+  //   specificWeights   : "cobliTplId@@nomeChecklist@@field_title_pattern" → peso
+  //   specificByTitle   : "cobliTplId@@nomeChecklist@@field_title"         → peso  (fallback display name)
+  //   globalWeights     : "field_title_pattern"                            → peso
+  //   globalByTitle     : "field_title"                                    → peso  (fallback display name)
+  const specificWeights = new Map<string, number>()
+  const specificByTitle = new Map<string, number>()
+  const globalWeights   = new Map<string, number>()
+  const globalByTitle   = new Map<string, number>()
+
+  for (const r of weightRules) {
+    if (r.cobli_template_id && r.nome_checklist) {
+      const tplKey = `${r.cobli_template_id}@@${r.nome_checklist}@@`
+      specificWeights.set(`${tplKey}${r.field_title_pattern}`, r.peso)
+      if (r.field_title && !specificByTitle.has(`${tplKey}${r.field_title}`)) {
+        specificByTitle.set(`${tplKey}${r.field_title}`, r.peso)
+      }
+    } else {
+      if (!globalWeights.has(r.field_title_pattern)) {
+        globalWeights.set(r.field_title_pattern, r.peso)
+      }
+      if (r.field_title && !globalByTitle.has(r.field_title)) {
+        globalByTitle.set(r.field_title, r.peso)
+      }
+    }
+  }
+
+  // Ordem de resolução (8 tentativas, específico sempre antes de global):
+  // 1) específico por UUID do campo
+  // 2) global por UUID do campo
+  // 3) específico por field_title_pattern (se pattern = título)
+  // 4) específico por field_title (fallback quando UUID-keyed mas item.field_id = null)
+  // 5) global por field_title_pattern (se pattern = título)
+  // 6) global por field_title (fallback quando UUID-keyed mas item.field_id = null)
+  // 7) keyword default (getDefaultWeight) — nunca deveria aplicar se tudo configurado
+  function resolveItemPeso(
+    item: { field_id: string | null; field_title: string },
+    cobliTplId: string | null,
+    nomeChkl: string | null,
+  ): number {
+    const tplPrefix = cobliTplId && nomeChkl ? `${cobliTplId}@@${nomeChkl}@@` : null
+    if (tplPrefix) {
+      if (item.field_id) {
+        const sp = specificWeights.get(`${tplPrefix}${item.field_id}`)
+        if (sp !== undefined) return sp
+        const gl = globalWeights.get(item.field_id)
+        if (gl !== undefined) return gl
+      }
+      const spPattern = specificWeights.get(`${tplPrefix}${item.field_title}`)
+      if (spPattern !== undefined) return spPattern
+      const spTitle = specificByTitle.get(`${tplPrefix}${item.field_title}`)
+      if (spTitle !== undefined) return spTitle
+    }
+    if (item.field_id) {
+      const gl = globalWeights.get(item.field_id)
+      if (gl !== undefined) return gl
+    }
+    return globalWeights.get(item.field_title)
+      ?? globalByTitle.get(item.field_title)
+      ?? getDefaultWeight(item.field_title)
+  }
+
+  // Build WHERE clause — quando templateIds fornecido, recalcula apenas esses templates
+  const statusFilter = { status: { in: ['NAO_CONFORME', 'APROVADO', 'OS_GERADA', 'RECUSADO'] } }
+  const whereClause: Prisma.checklist_resultadosWhereInput =
+    templateIds && templateIds.length > 0
+      ? {
+          ...statusFilter,
+          OR: templateIds.map((tid) => {
+            const sep = tid.indexOf('@@')
+            if (sep === -1) return { cobli_template_id: tid }
+            return { cobli_template_id: tid.slice(0, sep), nome_checklist: tid.slice(sep + 2) }
+          }),
+        }
+      : statusFilter
+
+  const resultados = await prisma.checklist_resultados.findMany({
+    where: whereClause,
+    include: { itens_nao_conformes: true },
+    orderBy: { created_at: 'asc' },
+  })
+
+  const total = resultados.length
+  let atualizados = 0
+  let erros = 0
+
+  const itemsByPeso = new Map<number, string[]>()
+  const resultadoUpdates: Array<{ id: string; pontuacao: number; prioridade: string | null }> = []
+
+  for (const resultado of resultados) {
+    if (resultado.itens_nao_conformes.length === 0) continue
+
+    try {
+      let novaPontuacao = 0
+      for (const item of resultado.itens_nao_conformes) {
+        const peso = resolveItemPeso(item, resultado.cobli_template_id, resultado.nome_checklist)
+        novaPontuacao += peso
+        const arr = itemsByPeso.get(peso) ?? []
+        arr.push(item.id)
+        itemsByPeso.set(peso, arr)
+      }
+      resultadoUpdates.push({ id: resultado.id, pontuacao: novaPontuacao, prioridade: calculatePriority(novaPontuacao) })
+      atualizados++
+    } catch {
+      erros++
+    }
+  }
+
+  // Bulk update items — one updateMany per distinct peso value
+  const CHUNK = 800  // stay well under SQL Server's 2100-param limit
+  for (const [peso, ids] of itemsByPeso) {
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      await prisma.checklist_itens_nao_conformes.updateMany({
+        where: { id: { in: ids.slice(i, i + CHUNK) } },
+        data: { peso_criticidade: peso },
+      })
+    }
+  }
+
+  // Bulk update resultados — group by (pontuacao, prioridade) to minimise queries
+  const resultadosByGroup = new Map<string, { ids: string[]; pontuacao: number; prioridade: string | null }>()
+  for (const r of resultadoUpdates) {
+    const key = `${r.pontuacao}|${String(r.prioridade)}`
+    if (!resultadosByGroup.has(key)) {
+      resultadosByGroup.set(key, { ids: [], pontuacao: r.pontuacao, prioridade: r.prioridade })
+    }
+    resultadosByGroup.get(key)!.ids.push(r.id)
+  }
+
+  for (const { ids, pontuacao, prioridade } of resultadosByGroup.values()) {
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      await prisma.checklist_resultados.updateMany({
+        where: { id: { in: ids.slice(i, i + CHUNK) } },
+        data: { pontuacao_criticidade: pontuacao, prioridade },
+      })
+    }
+  }
+
+  return { total, atualizados, erros }
 }
 
 // ─── cobli_checklists_sync ────────────────────────────────────────────────────
@@ -476,12 +674,15 @@ export async function findChecklistParaAnalise(id: string) {
 }
 
 export async function findVeiculoPorPlaca(placa: string) {
+  // Normaliza: remove espaços em excesso para casar "PCV - 38" com "PCV-38"
+  const placaNorm = placa.replace(/\s+/g, '')
+  const termos = [...new Set([placa.trim(), placaNorm].filter(Boolean))]
   return prisma.veiculos.findMany({
     where: {
-      OR: [
-        { placa: { contains: placa } },
-        { veiculo: { contains: placa } },
-      ],
+      OR: termos.flatMap(t => [
+        { placa: { contains: t } },
+        { veiculo: { contains: t } },
+      ]),
       ativo: true,
     },
     select: { id: true, veiculo: true, placa: true },

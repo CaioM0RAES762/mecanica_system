@@ -267,39 +267,6 @@
   padding: 32px 20px;
 }
 
-/* ---- Legenda linha dupla ---- */
-.lineLegend {
-  display: flex;
-  gap: 16px;
-  font-size: 0.75rem;
-  color: #605e5c;
-  margin-bottom: 8px;
-}
-
-.lineLegend span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dotBlue {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #0078d4;
-  flex-shrink: 0;
-}
-
-.dotGreen {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #107c10;
-  flex-shrink: 0;
-}
-
 /* ---- Rosca / Donut ---- */
 .donutWrap {
   display: flex;
@@ -759,6 +726,28 @@
 .skeletonChartLg {
   height: 220px;
   border-radius: 6px;
+}
+
+/* ---- Seção de Análise de Checklists ---- */
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 8px;
+  border-top: 2px solid #e5e5e5;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #323130;
+  margin: 0;
+}
+
+.sectionSub {
+  font-size: 0.75rem;
+  color: #605e5c;
+  margin: 0;
 }
 
 /* ---- TV (>= 1920px) ---- */
