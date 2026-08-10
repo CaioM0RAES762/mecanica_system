@@ -153,6 +153,7 @@ export function ChecklistFunilNcChart({ params, token, veiculoFiltro, onClearVei
               <p className={styles.empty}>Nenhuma NC encontrada.</p>
             ) : (
               <>
+                <div className={styles.tableScroll}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -170,6 +171,7 @@ export function ChecklistFunilNcChart({ params, token, veiculoFiltro, onClearVei
                     ))}
                   </tbody>
                 </table>
+                </div>
 
                 {totalPaginas > 1 && (
                   <div className={styles.pagination}>

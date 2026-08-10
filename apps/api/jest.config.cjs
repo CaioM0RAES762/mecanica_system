@@ -14,6 +14,7 @@ module.exports = {
         useESM: true,
         tsconfig: {
           module: 'NodeNext',
+          
           moduleResolution: 'NodeNext',
           exactOptionalPropertyTypes: false,
         },

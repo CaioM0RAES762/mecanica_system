@@ -221,8 +221,14 @@
 }
 
 /* ── Tabela de NCs recentes ── */
+.tableScroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 0.8rem;
 }

@@ -476,6 +476,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
           {mecanicos.length === 0 ? (
             <p className={`${styles.empty} ${styles.emptyPad}`}>Sem dados no período.</p>
           ) : (
+            <div className={styles.tableScroll}>
             <table className={styles.mechTable}>
               <thead>
                 <tr>
@@ -518,6 +519,7 @@ export function DashboardClient({ token }: DashboardClientProps) {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </ChartCard>
       </div>

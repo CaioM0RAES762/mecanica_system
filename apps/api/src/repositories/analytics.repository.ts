@@ -48,7 +48,7 @@ export async function queryKpis(p: PeriodParams) {
 export async function queryPorCategoria(p: PeriodParams) {
   const rows = await prisma.ordens_servico.findMany({
     where: { criado_em: { gte: p.de, lte: p.ate } },
-    take: 10000, // cap de segurança; para volumes maiores migrar para groupBy no banco
+    take: 10000,
     select: {
       status: true,
       categoria: { select: { id: true, nome: true, cor: true } },

@@ -4,10 +4,9 @@ import { prisma } from '../lib/prisma.js'
 import { emailService, type OSEmailData } from '../lib/email.js'
 import { criarAuditoria } from '../repositories/ordens-servico.repository.js'
 
-// Cache do ator sistema com TTL de 1h para detectar desativação de admin após startup
 let _systemActorId: string | null | undefined
 let _systemActorCachedAt = 0
-const SYSTEM_ACTOR_CACHE_TTL_MS = 60 * 60 * 1000 // 1 hora
+const SYSTEM_ACTOR_CACHE_TTL_MS = 60 * 60 * 1000 
 
 async function getSystemActorId(): Promise<string | null> {
   const now = Date.now()
@@ -48,30 +47,35 @@ function buildOSEmailData(os: {
   }
 }
 
-/**
- * Marca como 'atrasado' toda OS aberta com prazo < agora.
- * Cria auditoria e envia e-mail ao mecânico atribuído.
- * Usa updateMany com where.status='aberto' para garantir idempotência em execuções concorrentes.
- */
+
 export async function jobMarcaAtrasadas(): Promise<void> {
   const agora = new Date()
 
-  const atrasadas = await prisma.ordens_servico.findMany({
-    where: { status: 'aberto', prazo: { lt: agora } },
-    select: {
-      id: true,
-      titulo: true,
-      prioridade: true,
-      prazo: true,
-      mecanico: { select: { id: true, nome_completo: true, email: true } },
-      veiculo: { select: { placa: true, veiculo: true } },
-      categoria: { select: { nome: true } },
-    },
-  })
+  let atrasadas
+  try {
+    atrasadas = await prisma.ordens_servico.findMany({
+      where: { status: 'aberto', prazo: { lt: agora } },
+      select: {
+        id: true,
+        titulo: true,
+        prioridade: true,
+        prazo: true,
+        mecanico: { select: { id: true, nome_completo: true, email: true } },
+        veiculo: { select: { placa: true, veiculo: true } },
+        categoria: { select: { nome: true } },
+      },
+    })
+  } catch (err) {
+    logger.error({ mensagem: 'Falha ao consultar OSs atrasadas no job de SLA', detalhe: err instanceof Error ? err.message : String(err) })
+    return
+  }
 
   if (atrasadas.length === 0) return
 
-  const atorId = await getSystemActorId()
+  const atorId = await getSystemActorId().catch((err) => {
+    logger.error({ mensagem: 'Falha ao resolver ator do sistema no job de SLA', detalhe: err instanceof Error ? err.message : String(err) })
+    return null
+  })
   if (!atorId) {
     logger.error({ mensagem: 'SYSTEM_USER_ID não configurado e nenhum admin ativo encontrado — auditoria de SLA ignorada' })
     return
@@ -79,7 +83,6 @@ export async function jobMarcaAtrasadas(): Promise<void> {
 
   for (const os of atrasadas) {
     try {
-      // Guarda atômica: só atualiza se ainda 'aberto' (evita dupla marcação)
       const resultado = await prisma.ordens_servico.updateMany({
         where: { id: os.id, status: 'aberto' },
         data: { status: 'atrasado' },
@@ -102,7 +105,6 @@ export async function jobMarcaAtrasadas(): Promise<void> {
             buildOSEmailData(os),
           )
         } catch (emailErr) {
-          // Falha de e-mail nunca cancela a marcação de atraso (D-60)
           logger.error({ mensagem: `Falha ao enviar e-mail de atraso da OS #${os.id}`, detalhe: emailErr instanceof Error ? emailErr.message : String(emailErr) })
         }
       }
@@ -121,28 +123,33 @@ export async function jobAlertaPrazo(): Promise<void> {
   const agora = new Date()
   const em2h = new Date(agora.getTime() + 2 * 60 * 60 * 1000)
 
-  const proximas = await prisma.ordens_servico.findMany({
-    where: {
-      status: 'aberto',
-      prazo: { gte: agora, lte: em2h },
-      alerta_proximo_enviado_em: null,
-    },
-    select: {
-      id: true,
-      titulo: true,
-      prioridade: true,
-      prazo: true,
-      mecanico: { select: { id: true, nome_completo: true, email: true } },
-      veiculo: { select: { placa: true, veiculo: true } },
-      categoria: { select: { nome: true } },
-    },
-  })
+  let proximas
+  try {
+    proximas = await prisma.ordens_servico.findMany({
+      where: {
+        status: 'aberto',
+        prazo: { gte: agora, lte: em2h },
+        alerta_proximo_enviado_em: null,
+      },
+      select: {
+        id: true,
+        titulo: true,
+        prioridade: true,
+        prazo: true,
+        mecanico: { select: { id: true, nome_completo: true, email: true } },
+        veiculo: { select: { placa: true, veiculo: true } },
+        categoria: { select: { nome: true } },
+      },
+    })
+  } catch (err) {
+    logger.error({ mensagem: 'Falha ao consultar OSs com prazo próximo no job de SLA', detalhe: err instanceof Error ? err.message : String(err) })
+    return
+  }
 
   for (const os of proximas) {
     if (!os.mecanico) continue
 
     try {
-      // Marcar antes de enviar: se o e-mail falhar, não reenviar no próximo ciclo (D-59)
       const marcado = await prisma.ordens_servico.updateMany({
         where: { id: os.id, alerta_proximo_enviado_em: null },
         data: { alerta_proximo_enviado_em: agora },
@@ -160,10 +167,9 @@ export async function jobAlertaPrazo(): Promise<void> {
   }
 }
 
-const INTERVALO_MS = 15 * 60 * 1000 // 15 minutos
+const INTERVALO_MS = 15 * 60 * 1000 
 
 export function iniciarJobs(): void {
-  // Execução imediata no startup, depois a cada 15 min
   setImmediate(() => {
     void jobMarcaAtrasadas()
     void jobAlertaPrazo()

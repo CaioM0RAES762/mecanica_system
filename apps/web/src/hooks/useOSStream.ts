@@ -7,19 +7,13 @@ const RECONNECT_DELAY  = 5_000
 const POLL_INTERVAL    = 30_000
 const DEBOUNCE_REFRESH = 500
 
-/**
- * Conecta ao endpoint SSE /ordens-servico/stream para receber atualizações em tempo real.
- * Se a conexão SSE falhar, cai automaticamente em polling de 30s.
- * Pausa quando a aba está oculta e retoma quando fica visível.
- * Faz cleanup completo (sem memory leak) ao desmontar.
- */
+
 export function useOSStream({
   accessToken,
   ativo,
   onNecessitaAtualizar,
 }: {
   accessToken: string
-  /** false quando a aba ativa é "fechados" — desativa completamente a conexão */
   ativo: boolean
   onNecessitaAtualizar: () => void
 }) {
@@ -74,7 +68,6 @@ export function useOSStream({
 
         if (!res.ok || !res.body) throw new Error('SSE indisponível')
 
-        // Conexão SSE estabelecida — cancela polling se estava ativo
         usandoPolling = false
         if (pollTimer) { clearTimeout(pollTimer); pollTimer = null }
 
@@ -87,7 +80,6 @@ export function useOSStream({
           if (done || signal.aborted) break
 
           buf += decoder.decode(value, { stream: true })
-          // SSE usa \n\n como separador de blocos
           const blocos = buf.split('\n\n')
           buf = blocos.pop() ?? ''
 
@@ -95,22 +87,20 @@ export function useOSStream({
             for (const linha of bloco.split('\n')) {
               if (linha.startsWith('data: ')) {
                 try {
-                  JSON.parse(linha.slice(6)) // valida que é JSON
+                  JSON.parse(linha.slice(6)) 
                   triggerRefresh()
-                } catch { /* linha mal-formada — ignorar */ }
+                } catch {  }
               }
             }
           }
         }
 
-        // Servidor encerrou a conexão normalmente — reconectar após delay
         if (!signal.aborted) {
           reconnectTimer = setTimeout(() => void connectSSE(), RECONNECT_DELAY)
         }
       } catch {
-        if (signal.aborted) return // abort intencional no cleanup, não reconectar
+        if (signal.aborted) return
 
-        // Falha real — ativar polling e tentar reconectar SSE em background
         if (!usandoPolling) {
           usandoPolling = true
           schedulePoll()
@@ -121,13 +111,9 @@ export function useOSStream({
 
     function handleVisibility() {
       if (!document.hidden && navigator.onLine) {
-        // Aba ficou visível: cancela timer de hide pendente.
-        // Só reconecta se a conexão foi realmente encerrada enquanto oculta.
         if (hideTimer) { clearTimeout(hideTimer); hideTimer = null }
         else if (!abort) void connectSSE()
       } else {
-        // Aba ficou oculta: debounce de 500ms antes de parar, evitando flickeres
-        // rápidos (abertura de DevTools, notificações do SO, clique em menu).
         if (hideTimer) clearTimeout(hideTimer)
         hideTimer = setTimeout(() => { hideTimer = null; stopAll() }, 500)
       }

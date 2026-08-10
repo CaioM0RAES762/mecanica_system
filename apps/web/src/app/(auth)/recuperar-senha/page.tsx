@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { IconMail, IconKey, IconShieldCheck } from '@tabler/icons-react'
 import { SolicitarRecuperacaoSenhaSchema, RedefinirSenhaSchema } from '@metalsider/shared'
 import styles from '../cadastro/page.module.css'
 
@@ -153,33 +155,77 @@ export default function RecuperarSenhaPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <img src="/images/logo.png" alt="Metalsider" className={styles.logo} />
+      <aside className={styles.panel}>
+        <svg
+          className={styles.panelDecoration}
+          viewBox="0 0 440 760"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <circle cx="400" cy="-80" r="320" stroke="white" strokeOpacity="0.06" strokeWidth="1" />
+          <circle cx="400" cy="-80" r="230" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
+          <circle cx="400" cy="-80" r="145" stroke="white" strokeOpacity="0.04" strokeWidth="1" />
+          <circle cx="20" cy="840" r="300" stroke="white" strokeOpacity="0.05" strokeWidth="1" />
+          <circle cx="20" cy="840" r="200" stroke="white" strokeOpacity="0.04" strokeWidth="1" />
+          <line x1="-30" y1="400" x2="470" y2="180" stroke="white" strokeOpacity="0.025" strokeWidth="1" />
+          <line x1="-30" y1="460" x2="470" y2="240" stroke="white" strokeOpacity="0.02" strokeWidth="1" />
+          <line x1="-30" y1="520" x2="470" y2="300" stroke="white" strokeOpacity="0.015" strokeWidth="1" />
+          <rect x="170" y="340" width="100" height="100" rx="4" stroke="white" strokeOpacity="0.045" strokeWidth="1" />
+          <rect x="186" y="356" width="68" height="68" rx="2" stroke="white" strokeOpacity="0.03" strokeWidth="1" />
+        </svg>
+
+        <div className={styles.brand}>
+          <img src="/images/logo.png" alt="Metalsider" className={styles.logoImg} />
+          <p className={styles.brandTagline}>Gestão de Ordens de Serviço</p>
+          <div className={styles.brandDivider} />
+          <div className={styles.brandFeatures}>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureIcon}><IconMail size={14} stroke={1.5} /></span>
+              Código enviado por e-mail corporativo
+            </div>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureIcon}><IconKey size={14} stroke={1.5} /></span>
+              Código de 6 dígitos válido por 30 minutos
+            </div>
+            <div className={styles.brandFeature}>
+              <span className={styles.brandFeatureIcon}><IconShieldCheck size={14} stroke={1.5} /></span>
+              Redefinição segura em poucos passos
+            </div>
+          </div>
+        </div>
+        <p className={styles.panelFooter}>© {new Date().getFullYear()} Metalsider</p>
+      </aside>
+
+      <main className={styles.formArea}>
+        <div className={styles.formWrapper}>
+          <div className={styles.mobileLogo}>
+            <img src="/images/logo.png" alt="Metalsider" className={styles.mobileLogoImg} />
+          </div>
+
           <h1 className={styles.title}>Recuperar senha</h1>
           <p className={styles.subtitle}>Enviaremos um código para seu e-mail corporativo</p>
-        </div>
 
-        {/* Stepper */}
-        <div className={styles.stepper}>
-          {([1, 2, 3] as const).map((n) => (
-            <div key={n} className={styles.stepItem}>
-              <div className={`${styles.stepCircle} ${etapa >= n ? styles.stepActive : ''}`}>
-                {etapa > n ? '✓' : n}
+          {/* Stepper */}
+          <div className={styles.stepper}>
+            {([1, 2, 3] as const).map((n) => (
+              <div key={n} className={styles.stepItem}>
+                <div className={`${styles.stepCircle} ${etapa >= n ? styles.stepActive : ''}`}>
+                  {etapa > n ? '✓' : n}
+                </div>
+                {n < 3 && <div className={`${styles.stepLine} ${etapa > n ? styles.stepLineActive : ''}`} />}
               </div>
-              {n < 3 && <div className={`${styles.stepLine} ${etapa > n ? styles.stepLineActive : ''}`} />}
-            </div>
-          ))}
-        </div>
-
-        {erro && (
-          <div className={styles.toast} role="alert">
-            {erro}
+            ))}
           </div>
-        )}
 
-        {/* Etapa 1 */}
-        {etapa === 1 && (
+          {erro && (
+            <div className={styles.toast} role="alert">
+              {erro}
+            </div>
+          )}
+
+          {/* Etapa 1 */}
+          {etapa === 1 && (
           <form className={styles.form} onSubmit={handleEtapa1} noValidate>
             <div className={styles.field}>
               <label className={styles.label}>E-mail corporativo</label>
@@ -292,13 +338,19 @@ export default function RecuperarSenhaPage() {
           </form>
         )}
 
-        <p className={styles.loginLink}>
-          Lembrou a senha?{' '}
-          <a href="/login" className={styles.link}>
-            Fazer login
-          </a>
-        </p>
-      </div>
+          <div className={styles.divider}>
+            <span className={styles.dividerLine} />
+            <span className={styles.dividerText}>ou</span>
+            <span className={styles.dividerLine} />
+          </div>
+          <p className={styles.loginLink}>
+            Lembrou a senha?{' '}
+            <Link href="/login" className={styles.link}>
+              Fazer login
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

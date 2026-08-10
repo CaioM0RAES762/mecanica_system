@@ -18,10 +18,7 @@ function resolveGlobalRange(filter: AnalyticsParams): { de: Date; ate: Date } {
   return { de, ate }
 }
 
-// Formata a data usando os componentes locais (ano/mês/dia), nunca toISOString —
-// toISOString converte para UTC, e em fusos negativos (ex.: Brasil, UTC-3) um
-// horário local como 23:59:59 "vira o dia" ao converter, deslocando a data
-// exibida/enviada em +1 dia e quebrando as comparações de limite (min/max).
+
 export function toLocalDateInput(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -35,10 +32,6 @@ function clampToGlobalRange(de: Date, globalRange: { de: Date; ate: Date }): Dat
   return new Date(de)
 }
 
-// Só a data de início é editável pelo usuário — a data de fim é sempre
-// derivada (início + maxDays, sem passar do período global). Isso evita o
-// problema de dois campos que se "auto-corrigem" um ao outro, que confundia
-// e fazia parecer que o filtro estava bugado.
 function deriveWindowAte(de: Date, globalRange: { de: Date; ate: Date }, maxDays: number): Date {
   const ate = new Date(de)
   ate.setDate(ate.getDate() + maxDays)
@@ -62,7 +55,6 @@ export function useLocalPeriodFilter(
 ): UseLocalPeriodFilterReturn {
   const globalRange = useMemo(
     () => resolveGlobalRange(globalFilter),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [globalFilter.periodo, globalFilter.de, globalFilter.ate],
   )
   const diffDays = Math.round((globalRange.ate.getTime() - globalRange.de.getTime()) / DAY_MS)
@@ -70,17 +62,6 @@ export function useLocalPeriodFilter(
 
   const [windowDe, setWindowDe] = useState<Date | null>(null)
 
-  // A janela é sempre calculada, mesmo quando o período global já é ≤ maxDays
-  // (nesse caso ela acaba sendo o próprio período global, e as duas setas
-  // ficam desabilitadas) — isso garante que os controles fiquem sempre
-  // visíveis, mostrando claramente o limite atual em vez de simplesmente
-  // não aparecer nada quando o usuário tenta ver datas fora do período
-  // selecionado no topo do dashboard.
-  // Reinicia a janela (para os 30 dias mais recentes do período global) sempre
-  // que o período global mudar. Ajustado durante a renderização (em vez de em
-  // um useEffect) para que `localFilter` já reflita a janela correta no mesmo
-  // ciclo de render — evita um fetch transitório com o período global inteiro
-  // (ex.: 90 dias) no instante em que isLimited passa a ser true.
   const [trackedRangeKey, setTrackedRangeKey] = useState('')
   const rangeKey = `${globalRange.de.getTime()}:${globalRange.ate.getTime()}:${maxDays}`
   if (rangeKey !== trackedRangeKey) {

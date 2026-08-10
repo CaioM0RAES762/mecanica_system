@@ -345,8 +345,14 @@
 }
 
 /* ---- Tabela de Mecânicos ---- */
+.tableScroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .mechTable {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
